@@ -1,0 +1,67 @@
+/* Tokens e base. O fundo da janela é o Mica do Windows 11; aqui só tingimos. */
+:root {
+  --text: #e9eaf0;
+  --muted: #9aa0b4;
+  --faint: #6b7086;
+  --line: rgba(255, 255, 255, 0.08);
+  --line2: rgba(255, 255, 255, 0.16);
+  --tint: rgba(18, 20, 30, 0.55);
+  --pane: rgba(12, 13, 20, 0.78);
+  --glass: rgba(24, 26, 40, 0.94);
+  --accent: #8aa2ff;
+  --warn: #e5a33a;
+  --ok: #3fb27f;
+  --bad: #e5534b;
+  --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
+  --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+html, body { height: 100%; margin: 0; overflow: hidden; }
+body {
+  background: var(--tint);
+  color: var(--text);
+  font: 13px/1.4 var(--sans);
+  user-select: none;
+}
+/* Sem Mica (Windows 10): fundo sólido. */
+body.no-mica {
+  background: radial-gradient(1000px 700px at 10% 0%, #1d2b6b 0, transparent 60%),
+    radial-gradient(900px 700px at 100% 100%, #3b1d5e 0, transparent 55%), #0e1020;
+}
+body.grabbing, body.grabbing * { cursor: grabbing !important; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+svg { flex: none; }
+input { font: inherit; }
+kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line2); color: var(--faint); }
+
+.app { position: fixed; inset: 0; display: flex; flex-direction: column; }
+.main { flex: 1; display: flex; min-height: 0; padding: 0 10px 10px 0; }
+.content { flex: 1; position: relative; min-width: 0; }
+
+.primary { height: 32px; padding: 0 14px; border-radius: 8px; background: var(--accent); color: #0b1020; font-weight: 600; font-size: 12.5px; }
+.primary:hover { filter: brightness(1.08); }
+.primary:disabled { opacity: 0.5; cursor: default; }
+.ghost { height: 32px; padding: 0 12px; border-radius: 8px; color: var(--muted); }
+.ghost:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
+.ibtn { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--muted); }
+.ibtn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+
+.bar { display: block; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 3px; }
+
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 9px; border-radius: 99px; white-space: nowrap; flex: none; color: var(--faint); }
+.st i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.st.working { color: var(--acc); background: color-mix(in srgb, var(--acc) 15%, transparent); }
+.st.working i { width: 9px; height: 9px; background: none; border: 1.6px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+.st.waiting { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
+.st.waiting i { animation: pulse 1.4s infinite; }
+.st.exited, .st.error { color: var(--bad); }
+.st.paused { color: var(--muted); background: rgba(255, 255, 255, 0.06); }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+@keyframes flash { 0% { box-shadow: 0 0 0 0 var(--acc); } 100% { box-shadow: 0 0 0 16px transparent; } }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }

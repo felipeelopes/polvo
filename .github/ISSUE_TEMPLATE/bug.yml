@@ -1,0 +1,21 @@
+name: 🐛 Bug
+description: Algo não funciona como deveria
+labels: [bug]
+body:
+  - type: textarea
+    attributes:
+      label: O que aconteceu?
+      description: Passos para reproduzir e o que você esperava.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Versão do Polvo
+      placeholder: "0.1.0 (Ajustes → rodapé)"
+  - type: input
+    attributes:
+      label: Windows e CLIs
+      placeholder: "Windows 11 23H2 · claude 2.1 · codex 0.159 · opencode 1.15"
+  - type: textarea
+    attributes:
+      label: Prints ou logs

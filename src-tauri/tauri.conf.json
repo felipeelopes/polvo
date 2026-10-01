@@ -1,0 +1,58 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Polvo",
+  "mainBinaryName": "polvo",
+  "version": "0.1.0",
+  "identifier": "dev.polvo.app",
+  "build": {
+    "beforeDevCommand": "pnpm dev",
+    "devUrl": "http://localhost:1420",
+    "beforeBuildCommand": "pnpm build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Polvo",
+        "width": 1440,
+        "height": 900,
+        "minWidth": 900,
+        "minHeight": 560,
+        "center": true,
+        "decorations": false,
+        "transparent": true,
+        "windowEffects": { "effects": ["mica"] }
+      }
+    ],
+    "security": {
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": ["nsis", "msi"],
+    "createUpdaterArtifacts": true,
+    "publisher": "Polvo contributors",
+    "homepage": "https://github.com/felipeelopes/polvo",
+    "category": "DeveloperTool",
+    "shortDescription": "Seus agentes de IA lado a lado",
+    "longDescription": "Polvo organiza sessões de Claude Code, Codex, OpenCode e shells em painéis arrastáveis, retoma tudo ao reabrir e mostra os limites de uso de cada provedor.",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "windows": {
+      "nsis": { "installMode": "currentUser" }
+    }
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4NDFGNkQ3MTY2MUE3ODIKUldTQ3AyRVcxL1pCZUhtb2dhbllPa25POFl4bWlobXpZTVR3K0Q1b3E2NTBUWjY5RVA2MG95L3UK",
+      "endpoints": ["https://github.com/felipeelopes/polvo/releases/latest/download/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  }
+}

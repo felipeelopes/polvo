@@ -1,0 +1,21 @@
+# Dependências e builds
+node_modules/
+dist/
+src-tauri/target/
+src-tauri/gen/
+
+# Editores e sistema
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.log
+.DS_Store
+Thumbs.db
+
+# Segredos (a chave de assinatura das atualizações NUNCA vai para o repositório)
+*.key
+.env
+.env.*
+
+# Configuração local de agentes
+.claude/
