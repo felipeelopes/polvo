@@ -26,6 +26,8 @@ pub struct Settings {
     pub disabled_tools: Vec<ToolKind>,
     /// "Abrir no Polvo" no menu do Explorer (Shift + clique direito).
     pub explorer_menu: bool,
+    /// Iniciar o Claude Code com `--permission-mode bypassPermissions`.
+    pub claude_bypass_permissions: bool,
 }
 
 impl Default for Settings {
@@ -38,6 +40,7 @@ impl Default for Settings {
             check_updates: true,
             disabled_tools: Vec::new(),
             explorer_menu: true,
+            claude_bypass_permissions: true,
         }
     }
 }

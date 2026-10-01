@@ -1,13 +1,14 @@
 // Mantém um terminal para cada sessão desta janela e informa o status ao backend.
 import { ipc } from "../core/ipc";
 import { isRunning, store } from "../core/store";
-import { contextFromScreen, detectStatus, previewLines, StatusDebouncer } from "./detector";
+import { cleanTitle, contextFromScreen, detectStatus, previewLines, StatusDebouncer } from "./detector";
 import { SessionTerminal } from "./session-terminal";
 
 export class Terminals {
   private map = new Map<string, SessionTerminal>();
   private reported = new Map<string, string>();
   private debouncer = new StatusDebouncer(2);
+  private titleTimers = new Map<string, number>();
   /** Contexto lido da tela, para CLIs sem fonte melhor (ex.: OpenCode). */
   readonly screenContext = new Map<string, number>();
 
@@ -33,7 +34,8 @@ export class Terminals {
     for (const s of mine.values()) {
       let t = this.map.get(s.id);
       if (!t) {
-        t = new SessionTerminal(s.id, s.tool, this.isAppShortcut);
+        const id = s.id;
+        t = new SessionTerminal(id, s.tool, this.isAppShortcut, (raw) => this.onTitle(id, raw));
         this.map.set(s.id, t);
       }
       // Um novo início (retomar/reiniciar) muda `since` com status "starting".
@@ -41,6 +43,23 @@ export class Terminals {
         void t.connect(s.runtime.since);
       }
     }
+  }
+
+  /** O nome do chat acompanha o título do terminal (se o usuário não renomeou). */
+  private onTitle(id: string, raw: string): void {
+    const title = cleanTitle(raw);
+    if (!title) return;
+    clearTimeout(this.titleTimers.get(id));
+    this.titleTimers.set(
+      id,
+      window.setTimeout(() => {
+        const s = store.session(id);
+        if (!s || s.titleLocked || s.title === title) return;
+        store.patchLocal(id, { title });
+        store.emit("runtime");
+        ipc.sessionUpdate(id, { autoTitle: title }).catch(() => {});
+      }, 600),
+    );
   }
 
   private tick(): void {

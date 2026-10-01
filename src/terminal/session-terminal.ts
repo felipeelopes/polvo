@@ -63,7 +63,12 @@ export class SessionTerminal {
   private fitTimer: number | undefined;
   private observer: ResizeObserver;
 
-  constructor(readonly id: string, readonly tool: ToolKind, isAppShortcut: (e: KeyboardEvent) => boolean) {
+  constructor(
+    readonly id: string,
+    readonly tool: ToolKind,
+    isAppShortcut: (e: KeyboardEvent) => boolean,
+    onTitle?: (title: string) => void,
+  ) {
     this.host.className = "term-host";
     this.term = new Terminal({
       allowProposedApi: true,
@@ -88,6 +93,7 @@ export class SessionTerminal {
     });
     this.host.addEventListener("pointerdown", () => this.stimulus(), true);
     this.term.attachCustomKeyEventHandler((e) => this.onKey(e, isAppShortcut));
+    if (onTitle) this.term.onTitleChange(onTitle);
     this.host.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       this.copyOrPaste();

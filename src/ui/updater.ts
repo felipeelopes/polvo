@@ -5,16 +5,30 @@ import { store } from "../core/store";
 import { esc, h } from "./dom";
 import { logo } from "./logo";
 
-const SIX_HOURS = 6 * 60 * 60 * 1000;
+const CHECK_EVERY = 30 * 60 * 1000;
 let banner: HTMLDivElement | null = null;
 let dismissed: string | null = null;
+let pending: Update | null = null;
+const listeners = new Set<() => void>();
+
+/** Versão nova encontrada (para o selo na barra de título). */
+export const availableUpdate = (): string | null => pending?.version ?? null;
+
+export function onUpdateAvailable(fn: () => void): void {
+  listeners.add(fn);
+}
+
+/** Abre o aviso da atualização encontrada (clique no selo). */
+export function showUpdate(): void {
+  if (pending && !banner) show(pending);
+}
 
 export function startUpdateChecks(): void {
   const run = () => {
     if (store.settings.checkUpdates) void checkForUpdates(false);
   };
   window.setTimeout(run, 8000);
-  window.setInterval(run, SIX_HOURS);
+  window.setInterval(run, CHECK_EVERY);
 }
 
 /** Procura uma versão nova. `manual` ignora o "Depois" dado antes. Devolve se achou. */
@@ -26,6 +40,9 @@ export async function checkForUpdates(manual: boolean): Promise<boolean> {
     return false; // sem rede ou nenhuma release publicada ainda
   }
   if (!update) return false;
+  const isNew = pending?.version !== update.version;
+  pending = update;
+  if (isNew) listeners.forEach((fn) => fn());
   if ((manual || update.version !== dismissed) && !banner) show(update);
   return true;
 }

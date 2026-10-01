@@ -3,9 +3,9 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ipc } from "./ipc";
 import { clone } from "./layout";
-import type { DisplayInfo, LayoutNode, Runtime, Session, Settings, ToolKind, UsageSnapshot, View, WindowRecord } from "./types";
+import type { DisplayInfo, LayoutNode, RepoInfo, Runtime, Session, Settings, ToolKind, UsageSnapshot, View, WindowRecord } from "./types";
 
-export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage" | "windows" | "context";
+export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage" | "windows" | "context" | "git";
 
 const RUNNING = new Set(["starting", "working", "waiting", "idle"]);
 export const isRunning = (s: Session) => RUNNING.has(s.runtime.status);
@@ -19,7 +19,9 @@ class Store {
   zoom: string | null = null;
   selected: string | null = null;
   recentDirs: string[] = [];
-  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true };
+  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true };
+  /** Informações de git por pasta de sessão (para agrupar a barra lateral). */
+  git: Record<string, RepoInfo | null> = {};
   /** Percentual de contexto usado por sessão. */
   context: Record<string, number> = {};
   windows: WindowRecord[] = [];
@@ -87,7 +89,7 @@ class Store {
   }
 
   /** Atualização otimista: aplica já e deixa o backend confirmar pelo evento. */
-  patchLocal(id: string, patch: Partial<Pick<Session, "minimized" | "window" | "title">>): void {
+  patchLocal(id: string, patch: Partial<Pick<Session, "minimized" | "window" | "title" | "titleLocked">>): void {
     const s = this.session(id);
     if (s) Object.assign(s, patch);
   }

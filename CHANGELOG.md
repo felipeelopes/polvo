@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.3
+
+- **Barra lateral por projeto**: sessões agrupadas por repositório, com os worktrees de cada um (como no Claude Code) e o percentual de contexto de cada chat. Recolhe para o trilho de ícones.
+- **Nome do chat automático**: acompanha o título que o CLI define no terminal; renomear (ou dar nome ao criar) fixa o nome.
+- **Nova sessão sem perguntas**: com um chat em foco, ou pelo “+” de um projeto ou worktree, abre direto ali. Shift+clique em “+ Nova sessão” abre o diálogo.
+- **Claude Code em modo bypass de permissões** por padrão (pode desligar em Ajustes).
+- **Aviso de atualização na barra de cima**, com verificação a cada 30 minutos.
+
 ## 0.1.2
 
 - Percentual de contexto do Claude Code correto também em sessões retomadas (antes ficava em 0%).

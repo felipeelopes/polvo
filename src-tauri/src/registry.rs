@@ -39,6 +39,9 @@ pub struct SessionRecord {
     pub minimized: bool,
     #[serde(default)]
     pub created_at: i64,
+    /// O usuário renomeou: o título do terminal não substitui mais o nome.
+    #[serde(default)]
+    pub title_locked: bool,
 }
 
 fn main_window() -> String {
@@ -228,13 +231,14 @@ impl Registry {
             )));
         }
         let settings = app.state::<SettingsState>().get();
-        let opts = if rec.tool == ToolKind::Claude && settings.claude_usage_bridge {
-            PlanOptions {
-                claude_settings: bridge::claude_settings_file().ok(),
-                user_statusline: discovery::claude_user_statusline(),
-            }
-        } else {
-            PlanOptions::default()
+        let opts = PlanOptions {
+            claude_settings: (rec.tool == ToolKind::Claude && settings.claude_usage_bridge)
+                .then(|| bridge::claude_settings_file().ok())
+                .flatten(),
+            user_statusline: (rec.tool == ToolKind::Claude && settings.claude_usage_bridge)
+                .then(discovery::claude_user_statusline)
+                .flatten(),
+            claude_bypass: settings.claude_bypass_permissions,
         };
         let mode = if mode == StartMode::Resume
             && rec.session_id.is_none()
@@ -528,6 +532,8 @@ pub fn session_create(
         .file_name()
         .map(|f| f.to_string_lossy().into_owned())
         .unwrap_or_else(|| cwd.clone());
+    // Um nome dado na criação fica fixo; sem nome, o título do terminal assume.
+    let named = req.title.as_ref().is_some_and(|t| !t.trim().is_empty());
     let title = req.title.filter(|t| !t.trim().is_empty()).unwrap_or(folder);
     {
         let mut inner = reg.inner.lock();
@@ -540,6 +546,7 @@ pub fn session_create(
             window: req.window,
             minimized: false,
             created_at: paths::now_ms(),
+            title_locked: named,
         });
         inner.runtime.insert(id.clone(), Runtime::new("starting"));
         inner.ws.recent_dirs.retain(|d| !paths::same_path(d, &cwd));
@@ -559,6 +566,8 @@ pub fn session_start(app: AppHandle, reg: State<Registry>, id: String) {
 #[serde(rename_all = "camelCase")]
 pub struct SessionPatch {
     title: Option<String>,
+    /// Título vindo do terminal (o CLI o define); ignorado se o nome estiver travado.
+    auto_title: Option<String>,
     minimized: Option<bool>,
     window: Option<String>,
 }
@@ -580,6 +589,12 @@ pub fn session_update(
             .ok_or_else(|| AppError::msg("Sessão não encontrada"))?;
         if let Some(t) = patch.title.filter(|t| !t.trim().is_empty()) {
             r.title = t.trim().to_string();
+            r.title_locked = true;
+        }
+        if let Some(t) = patch.auto_title.filter(|t| !t.trim().is_empty()) {
+            if !r.title_locked {
+                r.title = t.trim().to_string();
+            }
         }
         if let Some(m) = patch.minimized {
             r.minimized = m;

@@ -6,6 +6,7 @@ import type { ToolKind, View } from "../core/types";
 import { h } from "./dom";
 import { ICON } from "./icons";
 import { logo } from "./logo";
+import { availableUpdate, onUpdateAvailable, showUpdate } from "./updater";
 import { openUsage, renderRings } from "./usage";
 
 export interface TitlebarHost {
@@ -47,7 +48,8 @@ export class Titlebar {
       <button class="ibtn" data-pop data-x="monitor" title="Levar esta janela para outro monitor">${ICON.monitor}</button>
       <button class="ibtn" data-pop data-x="help" title="Dicas e atalhos">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="Ajustes">${ICON.gear}</button>
-      <button class="primary new-btn" data-new title="Nova sessão (Ctrl+Shift+N)">+<span class="lbl-n"> Nova sessão</span></button>
+      <button class="upd-pill" data-x="update" hidden></button>
+      <button class="primary new-btn" data-new title="Nova sessão no projeto do chat em foco (Ctrl+Shift+N) · Shift+clique abre o diálogo">+<span class="lbl-n"> Nova sessão</span></button>
       <div class="wc">
         <button data-w="min" title="Minimizar">${ICON.winMin}</button>
         <button data-w="max" title="Maximizar">${ICON.winMax}</button>
@@ -71,6 +73,7 @@ export class Titlebar {
       if (x?.dataset.x === "settings") return host.openSettings(x);
       if (x?.dataset.x === "window") return host.newWindow();
       if (x?.dataset.x === "about") return host.openAbout();
+      if (x?.dataset.x === "update") return showUpdate();
       if (x?.dataset.x === "monitor") return host.openMonitors(x);
       const w = t.closest<HTMLElement>("[data-w]")?.dataset.w;
       if (w === "min") void win.minimize();
@@ -91,6 +94,19 @@ export class Titlebar {
     };
     void win.onResized(() => void syncMax());
     void syncMax();
+    onUpdateAvailable(() => this.renderUpdate());
+    this.renderUpdate();
+  }
+
+  /** Selo "Atualizar para vX" quando há versão nova. */
+  private renderUpdate(): void {
+    const pill = this.el.querySelector<HTMLButtonElement>(".upd-pill")!;
+    const v = availableUpdate();
+    pill.hidden = !v;
+    if (v) {
+      pill.innerHTML = `${ICON.update}<span>Atualizar para v${v}</span>`;
+      pill.title = `Polvo ${v} disponível — clique para ver as novidades e atualizar`;
+    }
   }
 
   render(): void {

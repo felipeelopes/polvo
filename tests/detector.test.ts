@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { contextFromScreen, detectStatus, previewLines, StatusDebouncer } from "../src/terminal/detector";
+import { cleanTitle, contextFromScreen, detectStatus, previewLines, StatusDebouncer } from "../src/terminal/detector";
 
 describe("detector de status", () => {
   it("reconhece pedido de permissão do Claude Code", () => {
@@ -46,5 +46,13 @@ describe("detector de status", () => {
     expect(contextFromScreen(["tokens 12k · 34% context used"])).toBe(34);
     expect(contextFromScreen(["Context: 81%"])).toBe(81);
     expect(contextFromScreen(["nada aqui"])).toBeNull();
+  });
+
+  it("usa o título do terminal como nome do chat, sem spinners nem títulos genéricos", () => {
+    expect(cleanTitle("✳ Refatorar o gateway de pagamentos")).toBe("Refatorar o gateway de pagamentos");
+    expect(cleanTitle("⠂ Revisar layout")).toBe("Revisar layout");
+    expect(cleanTitle("Claude Code")).toBeNull();
+    expect(cleanTitle("C:\Windows\System32\pwsh.exe")).toBeNull();
+    expect(cleanTitle("✳")).toBeNull();
   });
 });

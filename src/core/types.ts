@@ -21,6 +21,8 @@ export interface Session {
   window: string;
   minimized: boolean;
   createdAt: number;
+  /** Renomeada pelo usuário: o título do terminal não substitui mais o nome. */
+  titleLocked: boolean;
   runtime: Runtime;
 }
 
@@ -50,6 +52,22 @@ export interface Settings {
   disabledTools: ToolKind[];
   /** "Abrir no Polvo" no menu do Explorer (Shift + clique direito). */
   explorerMenu: boolean;
+  /** Iniciar o Claude Code em modo bypass de permissões. */
+  claudeBypassPermissions: boolean;
+}
+
+export interface Worktree {
+  path: string;
+  branch: string | null;
+  main: boolean;
+}
+
+/** Repositório git de uma pasta: raiz, projeto (worktree principal) e worktrees. */
+export interface RepoInfo {
+  root: string;
+  project: string;
+  branch: string | null;
+  worktrees: Worktree[];
 }
 
 export interface UsageWindow {

@@ -5,6 +5,7 @@ mod context;
 mod discovery;
 mod error;
 mod explorer;
+mod git;
 mod paths;
 mod pty;
 mod registry;
@@ -96,6 +97,7 @@ pub fn run() {
             windows::window_to_monitor,
             windows::open_url,
             explorer::open_folder_take,
+            git::git_info,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

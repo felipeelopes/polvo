@@ -37,6 +37,8 @@ Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polv
 | 📐 **Resize inteligente** | Ímã em ⅓, ½ e ⅔, alinhamento com outras divisórias, divisórias alinhadas que se movem juntas, tamanho mínimo garantido e colunas × linhas do terminal ao vivo. |
 | ⚡ **Facilitadores** | Grade, principal + pilha, colunas, linhas, igualar, desfazer, maximizar, atalhos de teclado. |
 | 🗂️ **Quadro** | Kanban automático: *Aguardando você*, *Trabalhando*, *Ocioso*, com prévia ao vivo e gaveta para abrir a sessão. |
+| 🗂️ **Barra lateral por projeto** | Sessões agrupadas por repositório, com os worktrees de cada um. O nome do chat acompanha o título que o CLI define no terminal. |
+| ⚡ **Nova sessão sem perguntas** | Com um chat em foco (ou pelo “+” de um projeto/worktree), a sessão nova abre direto ali. Shift+clique abre o diálogo completo. |
 | 🖥️ **Várias janelas** | Abra quantas janelas quiser e leve cada uma para o monitor certo. Abrir o Polvo de novo cria outra janela. |
 | 🔁 **Retomada automática** | Ao abrir, todas as janelas voltam no mesmo monitor e cada sessão continua a mesma conversa. |
 | 📊 **Limites de uso** | Claude com dois anéis (semanal por fora, 5h por dentro), Codex (arquivos de sessão), OpenCode (`opencode stats`). |

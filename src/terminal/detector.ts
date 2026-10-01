@@ -66,6 +66,18 @@ export class StatusDebouncer {
   }
 }
 
+/**
+ * Título que o CLI define no terminal (ex.: o Claude Code usa o assunto da
+ * conversa). Remove spinners e ignora títulos genéricos.
+ */
+export function cleanTitle(raw: string): string | null {
+  const t = raw.replace(/^[\s\u2800-\u28ff✳✻✶✢✽·*•◐◓◑◒⏺]+/u, "").trim();
+  if (t.length < 2) return null;
+  if (/^(claude( code)?|codex( cli)?|opencode|(windows )?powershell|pwsh|cmd|administrador:.*|administrator:.*)$/i.test(t)) return null;
+  if (/^[a-z]:\\/i.test(t) || /\.exe$/i.test(t)) return null;
+  return t.length > 60 ? `${t.slice(0, 59)}…` : t;
+}
+
 /** Percentual de contexto usado, quando o CLI o mostra na tela. */
 export function contextFromScreen(screen: string[]): number | null {
   const tail = screen.slice(-12).join("\n");

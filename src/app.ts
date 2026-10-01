@@ -3,7 +3,7 @@
 import { events, ipc } from "./core/ipc";
 import { clone, insertAt, leaves, removeLeaf, smartInsert, type Preset } from "./core/layout";
 import { store } from "./core/store";
-import type { Side, View } from "./core/types";
+import type { Side, ToolKind, View } from "./core/types";
 import { Terminals } from "./terminal/terminals";
 import { BoardView } from "./ui/board";
 import { esc, h } from "./ui/dom";
@@ -14,7 +14,7 @@ import { openHelp } from "./ui/help";
 import { openNewSession, type NewSessionTarget } from "./ui/new-session";
 import { openSettings } from "./ui/onboarding";
 import type { PaneAction, PaneHandlers } from "./ui/pane";
-import { Rail } from "./ui/rail";
+import { Sidebar } from "./ui/sidebar";
 import { TilesView } from "./ui/tiles";
 import { Titlebar } from "./ui/titlebar";
 import { isZoomKey, zoomKey } from "./ui/zoom";
@@ -32,7 +32,7 @@ export function isAppShortcut(e: KeyboardEvent): boolean {
 export class App {
   readonly terms = new Terminals(isAppShortcut);
   private titlebar: Titlebar;
-  private rail: Rail;
+  private rail: Sidebar;
   private tiles: TilesView;
   private board: BoardView;
   private placements = new Map<string, NewSessionTarget>();
@@ -51,9 +51,14 @@ export class App {
       openMonitors: (a) => void this.openMonitors(a),
       openAbout: () => openAbout(),
     });
-    this.rail = new Rail((e, id) => {
-      if (store.view === "tiles") this.tiles.startDrag(e, id, true);
-      else this.board.select(id);
+    this.rail = new Sidebar({
+      sessionDown: (e, id) => {
+        if (store.view === "tiles") this.tiles.startDrag(e, id, true);
+        else this.board.select(id);
+      },
+      newIn: (cwd, tool) => void this.newIn(cwd, tool),
+      openDialog: () => this.newSession(),
+      resized: () => this.tiles.layout(),
     });
     this.tiles = new TilesView({ terms: this.terms, handlers, rail: () => this.rail.el, minimize: (id) => this.minimize(id) });
     this.board = new BoardView({ terms: this.terms, handlers, focusWindow: (l) => void ipc.windowFocus(l) });
@@ -65,7 +70,9 @@ export class App {
     root.append(this.titlebar.el, main);
 
     document.addEventListener("click", (e) => {
-      if ((e.target as Element).closest("[data-new]")) this.newSession();
+      const el = (e.target as Element).closest<HTMLElement>("[data-new]");
+      // Botões da barra lateral tratam o próprio "data-new" (com pasta e ferramenta).
+      if (el && el.dataset.new === "") this.quickNew(e.shiftKey);
     });
     document.addEventListener("keydown", (e) => this.onKey(e), true);
     window.addEventListener("focus", () => void refreshUsage());
@@ -88,6 +95,43 @@ export class App {
     requestAnimationFrame(() => this.tiles.reconcile());
     void this.refreshContext();
     window.setInterval(() => void this.refreshContext(), 4000);
+    void this.refreshGit();
+    window.setInterval(() => void this.refreshGit(), 30_000);
+  }
+
+  /** Repositório e worktrees de cada pasta, para agrupar a barra lateral. */
+  private async refreshGit(): Promise<void> {
+    const paths = [...new Set(store.mine.map((s) => s.cwd))];
+    if (!paths.length) return;
+    try {
+      const info = await ipc.gitInfo(paths);
+      if (JSON.stringify(info) !== JSON.stringify(Object.fromEntries(paths.map((p) => [p, store.git[p] ?? null])))) {
+        Object.assign(store.git, info);
+        store.emit("git");
+      }
+    } catch {
+      /* git indisponível: agrupa só por pasta */
+    }
+  }
+
+  /** Nova sessão direto numa pasta, sem diálogo, ao lado da sessão ativa. */
+  async newIn(cwd: string, tool: ToolKind): Promise<void> {
+    closePopover();
+    const near = store.active && store.session(store.active)?.window === store.label ? store.active : null;
+    const r = near ? this.tiles.geo.leaves.get(near) : undefined;
+    try {
+      const id = await ipc.sessionCreate({ tool, cwd, mode: "new", window: store.label });
+      this.onCreated(id, near && store.view === "tiles" ? { id: near, side: r && r.w >= r.h ? "right" : "bottom" } : undefined);
+    } catch (e) {
+      toast(String(e));
+    }
+  }
+
+  /** "+ Nova sessão": com um chat em foco, abre direto no mesmo projeto e ferramenta. */
+  quickNew(forceDialog = false): void {
+    const s = store.session(store.active);
+    if (!forceDialog && s && s.window === store.label) void this.newIn(s.cwd, store.toolEnabled(s.tool) ? s.tool : "shell");
+    else this.newSession();
   }
 
   /** Contexto usado: backend (Claude/Codex) e, na falta, o que a tela mostra. */
@@ -180,7 +224,11 @@ export class App {
 
   private onStore(topic: string): void {
     switch (topic) {
+      case "git":
+        this.rail.render();
+        break;
       case "sessions":
+        void this.refreshGit();
         this.terms.sync();
         this.placeNew();
         this.tiles.reconcile();
@@ -215,6 +263,7 @@ export class App {
         this.board.renderDrawer();
         break;
       case "context":
+        this.rail.render();
         this.tiles.updatePanes();
         this.board.render();
         break;
@@ -322,7 +371,7 @@ export class App {
       }
       case "rename":
         if (extra) {
-          store.patchLocal(id, { title: extra });
+          store.patchLocal(id, { title: extra, titleLocked: true });
           void ipc.sessionUpdate(id, { title: extra });
         }
         break;
@@ -399,7 +448,7 @@ export class App {
     }
     switch (e.code) {
       case "KeyN":
-        this.newSession();
+        this.quickNew();
         break;
       case "KeyT":
         if (store.active) void this.openTerminalHere(store.active);

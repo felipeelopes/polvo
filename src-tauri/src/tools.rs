@@ -122,6 +122,8 @@ pub struct PlanOptions {
     pub claude_settings: Option<PathBuf>,
     /// Comando de statusline do próprio usuário, repassado pela ponte.
     pub user_statusline: Option<String>,
+    /// Pular as confirmações de permissão do Claude Code.
+    pub claude_bypass: bool,
 }
 
 /// Como iniciar um processo e o que já se sabe sobre a sessão.
@@ -172,6 +174,9 @@ pub fn plan(
                     args.extend(["--session-id".into(), id.clone()]);
                     session_id = Some(id);
                 }
+            }
+            if opts.claude_bypass {
+                args.extend(["--permission-mode".into(), "bypassPermissions".into()]);
             }
             if let Some(file) = &opts.claude_settings {
                 args.extend(["--settings".into(), file.to_string_lossy().into_owned()]);

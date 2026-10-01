@@ -7,6 +7,7 @@ import type {
   Runtime,
   Session,
   MonitorInfo,
+  RepoInfo,
   Settings,
   Snapshot,
   StartMode,
@@ -35,7 +36,7 @@ export const ipc = {
   sessionCreate: (req: { tool: ToolKind; cwd: string; title?: string; mode: StartMode; window: string }) =>
     invoke<string>("session_create", { req }),
   sessionStart: (id: string) => invoke<void>("session_start", { id }),
-  sessionUpdate: (id: string, patch: { title?: string; minimized?: boolean; window?: string }) =>
+  sessionUpdate: (id: string, patch: { title?: string; autoTitle?: string; minimized?: boolean; window?: string }) =>
     invoke<void>("session_update", { id, patch }),
   sessionClose: (id: string) => invoke<void>("session_close", { id }),
   sessionReport: (id: string, status: string, preview: string[]) =>
@@ -54,6 +55,8 @@ export const ipc = {
   usage: () => invoke<UsageSnapshot[]>("usage_get"),
   /** Pasta pedida pelo "Abrir no Polvo" ao iniciar o app (uma vez só). */
   openFolderTake: () => invoke<string | null>("open_folder_take"),
+  /** Repositório, branch e worktrees de cada pasta (null se não for git). */
+  gitInfo: (paths: string[]) => invoke<Record<string, RepoInfo | null>>("git_info", { paths }),
   /** Percentual de contexto usado por sessão (Claude e Codex). */
   context: () => invoke<Record<string, number>>("context_get"),
 };
