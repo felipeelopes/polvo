@@ -17,8 +17,10 @@ Thumbs.db
 .env
 .env.*
 
-# Configuração local de agentes
-.claude/
+# Claude Code: .claude/settings.json é do projeto (versionado);
+# o resto é configuração local de cada pessoa.
+.claude/*
+!.claude/settings.json
 
 # Gerado pelo scripts/contributors.mjs
 src/generated/
