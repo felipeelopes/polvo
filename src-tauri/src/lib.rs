@@ -7,6 +7,7 @@ mod error;
 mod explorer;
 mod files;
 mod git;
+pub mod i18n;
 mod paths;
 mod projects;
 mod pty;

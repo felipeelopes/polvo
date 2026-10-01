@@ -1,6 +1,7 @@
 // Diagramas mermaid com zoom e arrastar: no documento (Ctrl + roda, arrastar,
 // botões) e em tela cheia (roda, arrastar, + − 0, Esc).
-import { h } from "../ui/dom";
+import { t } from "../i18n";
+import { esc, h } from "../ui/dom";
 import { toast } from "../ui/feedback";
 
 type Mermaid = typeof import("mermaid").default;
@@ -146,7 +147,7 @@ function toolbar(pz: () => PanZoom | null, extra: string): HTMLElement {
   const bar = h(
     "div",
     "mmd-bar",
-    `<button data-z="out" title="Diminuir">${ICONS.minus}</button><span class="mmd-pct">100%</span><button data-z="in" title="Aumentar">${ICONS.plus}</button><button data-z="fit" title="Enquadrar (duplo clique)">${ICONS.fit}</button>${extra}`,
+    `<button data-z="out" title="${esc(t("docs.mermaid.zoomOut"))}">${ICONS.minus}</button><span class="mmd-pct">100%</span><button data-z="in" title="${esc(t("docs.mermaid.zoomIn"))}">${ICONS.plus}</button><button data-z="fit" title="${esc(t("docs.mermaid.fit"))}">${ICONS.fit}</button>${extra}`,
   );
   bar.addEventListener("click", (e) => {
     const z = (e.target as Element).closest<HTMLElement>("[data-z]")?.dataset.z;
@@ -179,7 +180,7 @@ export async function renderDiagrams(root: HTMLElement): Promise<void> {
     } catch (e) {
       document.getElementById(`dmmd-${seq}`)?.remove();
       block.classList.add("mmd-err");
-      block.innerHTML = `<b>Diagrama mermaid inválido</b><pre></pre>`;
+      block.innerHTML = `<b>${esc(t("docs.mermaid.invalid"))}</b><pre></pre>`;
       block.querySelector("pre")!.textContent = String((e as Error)?.message ?? e).slice(0, 600);
     }
   }
@@ -191,9 +192,9 @@ function mount(block: HTMLElement, svgText: string, src: string): void {
   const svg = stage.querySelector("svg");
   if (!svg) return;
   let pz: PanZoom | null = null;
-  const bar = toolbar(() => pz, `<button data-act="code" title="Copiar código mermaid">${ICONS.code}</button><button data-act="full" title="Tela cheia">${ICONS.full}</button>`);
+  const bar = toolbar(() => pz, `<button data-act="code" title="${esc(t("docs.mermaid.copyCode"))}">${ICONS.code}</button><button data-act="full" title="${esc(t("docs.mermaid.fullscreen"))}">${ICONS.full}</button>`);
   const pct = bar.querySelector<HTMLElement>(".mmd-pct")!;
-  block.replaceChildren(stage, bar, h("div", "mmd-hint", "Ctrl + roda para zoom · arraste para mover · duplo clique enquadra"));
+  block.replaceChildren(stage, bar, h("div", "mmd-hint", esc(t("docs.mermaid.hint"))));
   pz = new PanZoom(stage, svg, { wheelNeedsCtrl: true, onChange: () => (pct.textContent = `${Math.round(pz!.scale * 100)}%`) });
   const { w, h: hh } = pz.size;
   const sizeStage = () => {
@@ -210,7 +211,7 @@ function mount(block: HTMLElement, svgText: string, src: string): void {
   bar.addEventListener("click", (e) => {
     const act = (e.target as Element).closest<HTMLElement>("[data-act]")?.dataset.act;
     if (act === "full") openLightbox(svgText);
-    if (act === "code") navigator.clipboard.writeText(src).then(() => toast("Código do diagrama copiado"), () => {});
+    if (act === "code") navigator.clipboard.writeText(src).then(() => toast(t("docs.mermaid.codeCopied")), () => {});
   });
 }
 
@@ -220,9 +221,9 @@ function openLightbox(svgText: string): void {
   stage.innerHTML = svgText;
   const svg = stage.querySelector("svg")!;
   let pz: PanZoom | null = null;
-  const bar = toolbar(() => pz, `<button data-act="close" title="Fechar (Esc)">${ICONS.close}</button>`);
+  const bar = toolbar(() => pz, `<button data-act="close" title="${esc(t("docs.mermaid.close"))}">${ICONS.close}</button>`);
   const pct = bar.querySelector<HTMLElement>(".mmd-pct")!;
-  box.append(stage, bar, h("div", "mmd-hint", "Roda para zoom · arraste para mover · + − 0 · Esc fecha"));
+  box.append(stage, bar, h("div", "mmd-hint", esc(t("docs.mermaid.hintFull"))));
   document.body.append(box);
   pz = new PanZoom(stage, svg, { wheelNeedsCtrl: false, onChange: () => (pct.textContent = `${Math.round(pz!.scale * 100)}%`) });
   pz.fit(4);

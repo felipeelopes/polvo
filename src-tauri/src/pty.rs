@@ -76,7 +76,7 @@ impl PtyManager {
                 pixel_width: 0,
                 pixel_height: 0,
             })
-            .ctx("Falha ao abrir o pseudo-terminal")?;
+            .ctx(&crate::i18n::tr("pty.openFailed", &[]))?;
 
         let mut cmd = CommandBuilder::new(&plan.program);
         cmd.args(&plan.args);
@@ -100,18 +100,18 @@ impl PtyManager {
         let mut child = pair
             .slave
             .spawn_command(cmd)
-            .ctx("Falha ao iniciar o processo")?;
+            .ctx(&crate::i18n::tr("pty.spawnFailed", &[]))?;
         drop(pair.slave);
 
         let killer = child.clone_killer();
         let mut reader = pair
             .master
             .try_clone_reader()
-            .ctx("Falha ao ler o terminal")?;
+            .ctx(&crate::i18n::tr("pty.readFailed", &[]))?;
         let writer = pair
             .master
             .take_writer()
-            .ctx("Falha ao escrever no terminal")?;
+            .ctx(&crate::i18n::tr("pty.writeFailed", &[]))?;
         let output = Arc::new(Mutex::new(Output::default()));
         let generation = self.generation.fetch_add(1, Ordering::SeqCst) + 1;
 
@@ -167,7 +167,7 @@ impl PtyManager {
         let ptys = self.ptys.lock();
         let pty = ptys
             .get(id)
-            .ok_or_else(|| AppError::msg("Sessão não está em execução"))?;
+            .ok_or_else(|| AppError::msg(crate::i18n::tr("pty.notRunning", &[])))?;
         let mut o = pty.output.lock();
         o.subscriber = Some(channel);
         let mut history = o.history.clone();
@@ -185,7 +185,7 @@ impl PtyManager {
         let mut ptys = self.ptys.lock();
         let pty = ptys
             .get_mut(id)
-            .ok_or_else(|| AppError::msg("Sessão não está em execução"))?;
+            .ok_or_else(|| AppError::msg(crate::i18n::tr("pty.notRunning", &[])))?;
         pty.writer.write_all(data)?;
         pty.writer.flush()?;
         Ok(())
@@ -204,7 +204,7 @@ impl PtyManager {
                     pixel_width: 0,
                     pixel_height: 0,
                 })
-                .ctx("Falha ao redimensionar")?;
+                .ctx(&crate::i18n::tr("pty.resizeFailed", &[]))?;
         }
         Ok(())
     }

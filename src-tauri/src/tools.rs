@@ -146,10 +146,7 @@ pub fn plan(
     opts: &PlanOptions,
 ) -> AppResult<LaunchPlan> {
     let program = resolve_tool(tool).ok_or_else(|| {
-        AppError::msg(format!(
-            "{} não foi encontrado no PATH. Instale-o e tente de novo.",
-            tool.label()
-        ))
+        AppError::msg(crate::i18n::tr("tools.notFound", &[("tool", tool.label())]))
     })?;
     let mut args = program.prefix.clone();
     let mut env = Vec::new();

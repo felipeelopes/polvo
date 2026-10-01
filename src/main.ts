@@ -6,7 +6,7 @@ import "./styles/dialogs.css";
 import "./styles/logo.css";
 
 import { App } from "./app";
-import { ipc } from "./core/ipc";
+import { events, ipc } from "./core/ipc";
 import { store } from "./core/store";
 import { openNewSession } from "./ui/new-session";
 import { openOnboarding } from "./ui/onboarding";
@@ -14,6 +14,7 @@ import { startUpdateChecks } from "./ui/updater";
 import { initZoom } from "./ui/zoom";
 import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
+import { resolveLocale, setLocale, t } from "./i18n";
 
 async function boot(): Promise<void> {
   const [settings, tools, display, snapshot, windows, projects] = await Promise.all([
@@ -27,6 +28,11 @@ async function boot(): Promise<void> {
   store.projects = projects;
   store.windows = windows;
   store.settings = settings;
+  setLocale(resolveLocale(settings.language));
+  // Mudou o idioma (nesta ou em outra janela): recarrega a interface. As sessões continuam rodando.
+  await events.onSettings((s) => {
+    if (s.language !== store.settings.language) location.reload();
+  });
   store.tools = tools;
   store.display = display;
   store.sessions = snapshot.sessions;
@@ -57,5 +63,5 @@ async function boot(): Promise<void> {
 }
 
 boot().catch((err) => {
-  document.body.innerHTML = `<pre style="color:#f88;padding:24px;white-space:pre-wrap">Falha ao iniciar o Polvo:\n${String(err)}</pre>`;
+  document.body.innerHTML = `<pre style="color:#f88;padding:24px;white-space:pre-wrap">${t("app.bootFailed")}\n${String(err)}</pre>`;
 });

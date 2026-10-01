@@ -2,6 +2,7 @@
 // o documento no visualizador do Polvo. Só sublinha arquivos que existem.
 import type { IBufferCellPosition, ILink, ILinkProvider, Terminal } from "@xterm/xterm";
 import { ipc } from "../core/ipc";
+import { t } from "../i18n";
 import { findMdPaths, resolvePath } from "../docs/paths";
 
 export interface FileLinkHost {
@@ -29,7 +30,7 @@ function showHint(e: MouseEvent): void {
   hideHint();
   hint = document.createElement("div");
   hint.className = "tip";
-  hint.innerHTML = "<kbd>Ctrl</kbd> + clique <span>para abrir no Polvo</span>";
+  hint.innerHTML = `<kbd>Ctrl</kbd> + ${t("terminal.ctrlClick.click")} <span>${t("terminal.ctrlClick.openInPolvo")}</span>`;
   hint.style.left = `${e.clientX + 12}px`;
   hint.style.top = `${e.clientY + 16}px`;
   document.body.appendChild(hint);

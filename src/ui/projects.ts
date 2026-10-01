@@ -7,6 +7,7 @@ import type { ToolKind } from "../core/types";
 import { basename, esc, h } from "./dom";
 import { closePopover, popover, toast } from "./feedback";
 import { ICON, TOOLS, toolIcon } from "./icons";
+import { t } from "../i18n";
 
 export interface ProjectHost {
   /** Inicia uma sessão no projeto recém-aberto. */
@@ -17,7 +18,7 @@ export interface ProjectHost {
 
 /** Ferramenta padrão para começar num projeto novo. */
 export function defaultTool(): ToolKind {
-  return (["claude", "codex", "opencode", "shell"] as ToolKind[]).find((t) => store.toolEnabled(t)) ?? "shell";
+  return (["claude", "codex", "opencode", "shell"] as ToolKind[]).find((k) => store.toolEnabled(k)) ?? "shell";
 }
 
 /** Pasta-mãe sugerida para criar ou clonar: ao lado do projeto em foco ou do mais recente. */
@@ -33,11 +34,11 @@ export function openProjectMenu(anchor: HTMLElement, host: ProjectHost): void {
     "projects",
     anchor,
     (el) => {
-      el.innerHTML = `<div class="mh">Projeto</div>
-        <button data-p="open">${ICON.folder} Abrir projeto…<small>pasta existente</small></button>
-        <button data-p="new">${ICON.plus} Novo projeto…<small>cria a pasta</small></button>
-        <button data-p="clone">${ICON.branch} Clonar repositório…<small>git clone</small></button>
-        <hr><button data-p="session">${ICON.terminal} Nova sessão…<small>qualquer pasta e agente</small></button>`;
+      el.innerHTML = `<div class="mh">${t("projects.menu.title")}</div>
+        <button data-p="open">${ICON.folder} ${t("projects.menu.open")}<small>${t("projects.menu.openSub")}</small></button>
+        <button data-p="new">${ICON.plus} ${t("projects.menu.new")}<small>${t("projects.menu.newSub")}</small></button>
+        <button data-p="clone">${ICON.branch} ${t("projects.menu.clone")}<small>git clone</small></button>
+        <hr><button data-p="session">${ICON.terminal} ${t("projects.menu.session")}<small>${t("projects.menu.sessionSub")}</small></button>`;
       el.onclick = (e) => {
         const p = (e.target as Element).closest<HTMLElement>("[data-p]")?.dataset.p;
         if (!p) return;
@@ -54,7 +55,7 @@ export function openProjectMenu(anchor: HTMLElement, host: ProjectHost): void {
 
 /** Escolhe uma pasta existente, adiciona como projeto e já inicia uma sessão. */
 export async function openProject(host: ProjectHost): Promise<void> {
-  const picked = await open({ directory: true, title: "Abrir projeto", defaultPath: suggestedParent() || undefined });
+  const picked = await open({ directory: true, title: t("projects.openTitle"), defaultPath: suggestedParent() || undefined });
   if (typeof picked !== "string") return;
   try {
     const p = await ipc.projectAdd(picked);
@@ -66,10 +67,10 @@ export async function openProject(host: ProjectHost): Promise<void> {
 
 function toolPicker(selected: ToolKind): string {
   return `<div class="tools">${(Object.keys(TOOLS) as ToolKind[])
-    .filter((t) => !store.settings.disabledTools.includes(t))
+    .filter((k) => !store.settings.disabledTools.includes(k))
     .map(
-      (t) =>
-        `<button class="tool${t === selected ? " on" : ""}" data-t="${t}" style="--acc:${TOOLS[t].color}" ${store.tools[t] ? "" : "disabled"}><span class="ic">${toolIcon(t, 17)}</span><b>${TOOLS[t].short}</b><small>${store.tools[t] ? TOOLS[t].vendor : "não instalado"}</small></button>`,
+      (k) =>
+        `<button class="tool${k === selected ? " on" : ""}" data-t="${k}" style="--acc:${TOOLS[k].color}" ${store.tools[k] ? "" : "disabled"}><span class="ic">${toolIcon(k, 17)}</span><b>${TOOLS[k].short}</b><small>${store.tools[k] ? TOOLS[k].vendor : t("projects.notInstalled")}</small></button>`,
     )
     .join("")}</div>`;
 }
@@ -97,13 +98,13 @@ export function newProjectDialog(host: ProjectHost): void {
     const render = () => {
       const name = box.querySelector<HTMLInputElement>("[data-name]")?.value ?? "";
       const parent = box.querySelector<HTMLInputElement>("[data-parent]")?.value ?? suggestedParent();
-      box.innerHTML = `<h2>Novo projeto</h2><div class="sub">Cria a pasta do projeto e já abre um agente nela.</div>
-        <span class="lbl">Nome</span><input class="txt" data-name placeholder="ex.: minha-api" value="${esc(name)}" autocomplete="off" spellcheck="false">
-        <span class="lbl">Criar dentro de</span><div class="path"><input class="txt" data-parent value="${esc(parent)}" spellcheck="false"><button class="ghost" data-browse>Procurar…</button></div>
-        <label class="chk"><input type="checkbox" data-git checked> Iniciar repositório git</label>
-        <span class="lbl">Começar com</span>${toolPicker(tool)}
+      box.innerHTML = `<h2>${t("projects.newDialog.title")}</h2><div class="sub">${t("projects.newDialog.sub")}</div>
+        <span class="lbl">${t("projects.newDialog.name")}</span><input class="txt" data-name placeholder="${esc(t("projects.newDialog.namePlaceholder"))}" value="${esc(name)}" autocomplete="off" spellcheck="false">
+        <span class="lbl">${t("projects.newDialog.parent")}</span><div class="path"><input class="txt" data-parent value="${esc(parent)}" spellcheck="false"><button class="ghost" data-browse>${t("projects.browse")}</button></div>
+        <label class="chk"><input type="checkbox" data-git checked> ${t("projects.newDialog.git")}</label>
+        <span class="lbl">${t("projects.startWith")}</span>${toolPicker(tool)}
         <div class="err"></div>
-        <div class="mfoot"><span class="hk">Enter cria · Esc cancela</span><button class="ghost" data-cancel>Cancelar</button><button class="primary" data-create>Criar projeto</button></div>`;
+        <div class="mfoot"><span class="hk">${t("projects.newDialog.hint")}</span><button class="ghost" data-cancel>${t("projects.cancel")}</button><button class="primary" data-create>${t("projects.newDialog.create")}</button></div>`;
     };
     const create = async () => {
       const name = box.querySelector<HTMLInputElement>("[data-name]")!.value.trim();
@@ -118,18 +119,18 @@ export function newProjectDialog(host: ProjectHost): void {
       }
     };
     box.addEventListener("click", async (e) => {
-      const t = e.target as Element;
-      const tb = t.closest<HTMLButtonElement>("[data-t]");
+      const target = e.target as Element;
+      const tb = target.closest<HTMLButtonElement>("[data-t]");
       if (tb && !tb.disabled) {
         tool = tb.dataset.t as ToolKind;
         box.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === tb));
       }
-      if (t.closest("[data-browse]")) {
-        const picked = await open({ directory: true, title: "Criar projeto dentro de…" });
+      if (target.closest("[data-browse]")) {
+        const picked = await open({ directory: true, title: t("projects.newDialog.parentPicker") });
         if (typeof picked === "string") box.querySelector<HTMLInputElement>("[data-parent]")!.value = picked;
       }
-      if (t.closest("[data-cancel]")) close();
-      if (t.closest("[data-create]")) void create();
+      if (target.closest("[data-cancel]")) close();
+      if (target.closest("[data-create]")) void create();
     });
     box.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
@@ -145,42 +146,42 @@ export function newProjectDialog(host: ProjectHost): void {
 export function cloneDialog(host: ProjectHost): void {
   let tool = defaultTool();
   dialog((box, close) => {
-    box.innerHTML = `<h2>Clonar repositório</h2><div class="sub">Baixa o repositório com git clone e já abre um agente nele.</div>
-      <span class="lbl">Endereço</span><input class="txt" data-url placeholder="https://github.com/usuario/repositorio.git" autocomplete="off" spellcheck="false">
-      <span class="lbl">Clonar dentro de</span><div class="path"><input class="txt" data-parent value="${esc(suggestedParent())}" spellcheck="false"><button class="ghost" data-browse>Procurar…</button></div>
-      <span class="lbl">Começar com</span>${toolPicker(tool)}
+    box.innerHTML = `<h2>${t("projects.cloneDialog.title")}</h2><div class="sub">${t("projects.cloneDialog.sub")}</div>
+      <span class="lbl">${t("projects.cloneDialog.url")}</span><input class="txt" data-url placeholder="${esc(t("projects.cloneDialog.urlPlaceholder"))}" autocomplete="off" spellcheck="false">
+      <span class="lbl">${t("projects.cloneDialog.parent")}</span><div class="path"><input class="txt" data-parent value="${esc(suggestedParent())}" spellcheck="false"><button class="ghost" data-browse>${t("projects.browse")}</button></div>
+      <span class="lbl">${t("projects.startWith")}</span>${toolPicker(tool)}
       <div class="err"></div>
-      <div class="mfoot"><span class="hk">Enter clona · Esc cancela</span><button class="ghost" data-cancel>Cancelar</button><button class="primary" data-create>Clonar</button></div>`;
+      <div class="mfoot"><span class="hk">${t("projects.cloneDialog.hint")}</span><button class="ghost" data-cancel>${t("projects.cancel")}</button><button class="primary" data-create>${t("projects.cloneDialog.create")}</button></div>`;
     const create = async () => {
       const url = box.querySelector<HTMLInputElement>("[data-url]")!.value.trim();
       const parent = box.querySelector<HTMLInputElement>("[data-parent]")!.value.trim();
       const btn = box.querySelector<HTMLButtonElement>("[data-create]")!;
       btn.disabled = true;
-      btn.textContent = "Clonando…";
+      btn.textContent = t("projects.cloneDialog.cloning");
       try {
         const p = await ipc.projectClone(url, parent);
         close();
-        toast(`“${basename(p.path)}” clonado`);
+        toast(t("projects.cloneDialog.cloned", { name: basename(p.path) }));
         host.start(p.path, tool);
       } catch (e) {
         box.querySelector<HTMLElement>(".err")!.textContent = String(e);
         btn.disabled = false;
-        btn.textContent = "Clonar";
+        btn.textContent = t("projects.cloneDialog.create");
       }
     };
     box.addEventListener("click", async (e) => {
-      const t = e.target as Element;
-      const tb = t.closest<HTMLButtonElement>("[data-t]");
+      const target = e.target as Element;
+      const tb = target.closest<HTMLButtonElement>("[data-t]");
       if (tb && !tb.disabled) {
         tool = tb.dataset.t as ToolKind;
         box.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === tb));
       }
-      if (t.closest("[data-browse]")) {
-        const picked = await open({ directory: true, title: "Clonar dentro de…" });
+      if (target.closest("[data-browse]")) {
+        const picked = await open({ directory: true, title: t("projects.cloneDialog.parentPicker") });
         if (typeof picked === "string") box.querySelector<HTMLInputElement>("[data-parent]")!.value = picked;
       }
-      if (t.closest("[data-cancel]")) close();
-      if (t.closest("[data-create]")) void create();
+      if (target.closest("[data-cancel]")) close();
+      if (target.closest("[data-create]")) void create();
     });
     box.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {

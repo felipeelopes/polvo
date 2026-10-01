@@ -1,5 +1,15 @@
 # Changelog
 
+## Não publicado
+
+- **10 idiomas**: English, Português, Español, Français, Deutsch, Italiano, 日本語, 简体中文, 한국어 e Русский. Segue o idioma do Windows ou o escolhido em Ajustes (também no onboarding).
+- README em cada idioma, com seção de Markdown e Mermaid e diagramas Mermaid renderizados pelo GitHub.
+- “Abrir no Polvo” no clique direito comum (sem Shift).
+- Com um só agente configurado, cada projeto mostra apenas o “+”.
+- Branches e worktrees sempre visíveis na barra lateral, mesmo com uma branch só.
+- Ícone de Ajustes virou uma engrenagem (não parece mais o de tema claro/escuro).
+- Menus se ajustam ao tamanho do texto.
+
 ## 0.1.4
 
 - **Projetos**: botão “+ Projeto” para abrir uma pasta, criar um projeto novo (com `git init`) ou clonar um repositório. Projetos salvos aparecem na barra lateral mesmo sem sessões.

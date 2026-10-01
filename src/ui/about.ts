@@ -1,6 +1,7 @@
 // Tela "Sobre": versão, links, colaboradores (gerados do git) e atualizações.
 import contributors from "../generated/contributors.json";
 import { ipc } from "../core/ipc";
+import { t, tn } from "../i18n";
 import { esc, h } from "./dom";
 import { appIcon } from "./logo";
 import { checkForUpdates } from "./updater";
@@ -34,35 +35,35 @@ export function openAbout(): void {
   const people = (contributors as Contributor[])
     .map(
       (c) =>
-        `<li title="${c.commits} ${c.commits === 1 ? "commit" : "commits"}"><span class="av" style="--h:${hue(c.name)}">${esc(initials(c.name))}</span>${esc(c.name)}</li>`,
+        `<li title="${esc(tn("about.commits", c.commits))}"><span class="av" style="--h:${hue(c.name)}">${esc(initials(c.name))}</span>${esc(c.name)}</li>`,
     )
     .join("");
   box.innerHTML = `
     <div class="bubbles"><i></i><i></i><i></i><i></i><i></i></div>
-    <div class="about-hero">${appIcon(104, "wave")}<div><h2>Polvo</h2><div class="ver">Versão ${__APP_VERSION__}</div>
-      <p>Seus agentes de IA lado a lado. Um braço para cada agente.</p></div></div>
+    <div class="about-hero">${appIcon(104, "wave")}<div><h2>Polvo</h2><div class="ver">${t("about.version", { version: __APP_VERSION__ })}</div>
+      <p>${t("about.tagline")}</p></div></div>
     <div class="about-links">
       <button class="ghost" data-url="${REPO}">GitHub</button>
-      <button class="ghost" data-url="${REPO}/issues/new/choose">Reportar problema</button>
-      <button class="ghost" data-url="${REPO}/blob/main/LICENSE">Licença MIT</button>
-      <button class="ghost" data-update>Procurar atualizações</button>
+      <button class="ghost" data-url="${REPO}/issues/new/choose">${t("about.reportIssue")}</button>
+      <button class="ghost" data-url="${REPO}/blob/main/LICENSE">${t("about.license")}</button>
+      <button class="ghost" data-update>${t("about.checkUpdates")}</button>
     </div>
-    <span class="lbl">Colaboradores</span>
+    <span class="lbl">${t("about.contributors")}</span>
     <ul class="people">${people || "<li>—</li>"}</ul>
-    <p class="hk">Quer aparecer aqui? Contribuições são bem-vindas: veja o CONTRIBUTING.md no GitHub.</p>
-    <div class="mfoot"><span class="hk"></span><button class="primary" data-close>Fechar</button></div>`;
+    <p class="hk">${t("about.contribute")}</p>
+    <div class="mfoot"><span class="hk"></span><button class="primary" data-close>${t("about.close")}</button></div>`;
   box.addEventListener("click", async (e) => {
-    const t = e.target as Element;
-    const url = t.closest<HTMLElement>("[data-url]")?.dataset.url;
+    const tg = e.target as Element;
+    const url = tg.closest<HTMLElement>("[data-url]")?.dataset.url;
     if (url) void ipc.openUrl(url);
-    const upd = t.closest<HTMLButtonElement>("[data-update]");
+    const upd = tg.closest<HTMLButtonElement>("[data-update]");
     if (upd) {
       upd.disabled = true;
-      upd.textContent = "Procurando…";
+      upd.textContent = t("about.checking");
       const found = await checkForUpdates(true);
-      upd.textContent = found ? "Atualização disponível!" : "Você está na versão mais recente";
+      upd.textContent = found ? t("about.found") : t("about.upToDate");
     }
-    if (t.closest("[data-close]")) modal.remove();
+    if (tg.closest("[data-close]")) modal.remove();
   });
   modal.addEventListener("pointerdown", (e) => {
     if (e.target === modal) modal.remove();

@@ -1,11 +1,12 @@
 // Ícones (SVG inline) e metadados visuais das ferramentas.
 import type { ToolKind } from "../core/types";
+import { t } from "../i18n";
 
 export const TOOLS: Record<ToolKind, { name: string; short: string; color: string; vendor: string }> = {
   claude: { name: "Claude Code", short: "Claude", color: "#D97757", vendor: "Anthropic" },
   codex: { name: "Codex CLI", short: "Codex", color: "#10A37F", vendor: "OpenAI" },
-  opencode: { name: "OpenCode", short: "OpenCode", color: "#4F8CFF", vendor: "Open source · qualquer modelo" },
-  shell: { name: "PowerShell", short: "Shell", color: "#A78BFA", vendor: "Terminal comum" },
+  opencode: { name: "OpenCode", short: "OpenCode", color: "#4F8CFF", get vendor() { return t("tools.opencode.vendor"); } },
+  shell: { name: "PowerShell", short: "Shell", color: "#A78BFA", get vendor() { return t("tools.shell.vendor"); } },
 };
 
 /** Cores aceitas pelo `/color` do Claude Code (e do Polvo). */

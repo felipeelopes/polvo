@@ -2,6 +2,7 @@
 // compartilhada entre janelas); layout, visão e foco são desta janela.
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ipc } from "./ipc";
+import { t } from "../i18n";
 import { clone } from "./layout";
 import type { DisplayInfo, LayoutNode, ProjectRecord, RepoInfo, Runtime, Session, Settings, ToolKind, ToolVersion, UsageSnapshot, View, WindowRecord } from "./types";
 
@@ -22,7 +23,7 @@ class Store {
   zoom: string | null = null;
   selected: string | null = null;
   recentDirs: string[] = [];
-  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true };
+  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true, language: "auto" };
   /** Versões dos CLIs (instalada, publicada, comando de atualização). */
   versions: Partial<Record<ToolKind, ToolVersion>> = {};
   /** Informações de git por pasta de sessão (para agrupar a barra lateral). */
@@ -62,7 +63,12 @@ class Store {
 
   /** Nome amigável de uma janela ("Janela 1", "Janela 2"…). */
   windowName(label: string): string {
-    return this.windows.find((w) => w.label === label)?.name ?? (label === "main" ? "Janela 1" : "outra janela");
+    const name = this.windows.find((w) => w.label === label)?.name ?? (label === "main" ? "Janela 1" : null);
+    if (name === null) return t("windows.other");
+    // O backend grava o nome no idioma da época ("Janela 2", "Window 2", "ウィンドウ 2"…):
+    // as janelas não são renomeadas pelo usuário, então mostra o número no idioma atual.
+    const n = /^\D{0,24}?(\d+)\D{0,8}$/.exec(name)?.[1];
+    return n ? t("windows.numbered", { n }) : name;
   }
 
   get myName(): string {

@@ -22,6 +22,7 @@ import { isZoomKey, zoomKey } from "./ui/zoom";
 import { outdatedSessions, refreshUsage, refreshUsagePopovers, versionActions } from "./ui/usage";
 import { TOOLS } from "./ui/icons";
 import type { DocsPanel } from "./docs/panel";
+import { t, tn } from "./i18n";
 
 /** O painel de documentos estava aberto nesta janela (reabre ao iniciar). */
 function docsWereOpen(): boolean {
@@ -177,7 +178,7 @@ export class App {
       void ipc.sessionStart(s.id);
     }
     store.emit("runtime");
-    toast(`${old.length} ${old.length === 1 ? "sessão reiniciada" : "sessões reiniciadas"} com ${TOOLS[tool].name} v${store.versions[tool]?.installed}`);
+    toast(tn("app.restarted", old.length, { tool: TOOLS[tool].name, version: store.versions[tool]?.installed ?? "" }));
   }
 
   /** Roda o atualizador do CLI num PowerShell ao lado. */
@@ -186,13 +187,13 @@ export class App {
     if (!cmd) return;
     closePopover();
     const cwd = store.session(store.active)?.cwd ?? store.mine[0]?.cwd ?? store.recentDirs[0];
-    if (!cwd) return toast("Abra um projeto primeiro.");
+    if (!cwd) return toast(t("app.openProjectFirst"));
     try {
-      const id = await ipc.sessionCreate({ tool: "shell", cwd, title: `Atualizar ${TOOLS[tool].name}`, mode: "new", window: store.label });
+      const id = await ipc.sessionCreate({ tool: "shell", cwd, title: t("app.updateTitle", { tool: TOOLS[tool].name }), mode: "new", window: store.label });
       this.onCreated(id);
       // Espera o PowerShell abrir e digita o comando de atualização.
       window.setTimeout(() => void ipc.ptyWrite(id, `${cmd}\r`), 2500);
-      toast(`Atualizando ${TOOLS[tool].name}… quando terminar, use “Reiniciar” no popup de limites.`);
+      toast(t("app.updating", { tool: TOOLS[tool].name }));
     } catch (e) {
       toast(String(e));
     }
@@ -269,12 +270,12 @@ export class App {
       "monitors",
       anchor,
       (el) => {
-        el.innerHTML = `<div class="mh">Levar esta janela para</div>${monitors
+        el.innerHTML = `<div class="mh">${t("app.monitors.title")}</div>${monitors
           .map(
             (m) =>
-              `<button data-m="${m.index}" class="${m.current ? "cur" : ""}">${ICON.monitor} Monitor ${m.index + 1}${m.primary ? " (principal)" : ""}<small>${m.width}×${m.height}${m.current ? " · aqui" : ""}</small></button>`,
+              `<button data-m="${m.index}" class="${m.current ? "cur" : ""}">${ICON.monitor} ${t("app.monitors.monitor", { n: m.index + 1 })}${m.primary ? t("app.monitors.primary") : ""}<small>${m.width}×${m.height}${m.current ? t("app.monitors.here") : ""}</small></button>`,
           )
-          .join("")}<hr><button data-new>${ICON.window} Nova janela<small>outro monitor</small></button>`;
+          .join("")}<hr><button data-new>${ICON.window} ${t("app.monitors.newWindow")}<small>${t("app.monitors.otherMonitor")}</small></button>`;
         el.onclick = (e) => {
           const b = (e.target as Element).closest<HTMLElement>("[data-m]");
           if (b) {
@@ -294,9 +295,9 @@ export class App {
       `move:${id}`,
       anchor,
       (el) => {
-        el.innerHTML = `<div class="mh">Mover sessão para</div>${others
-          .map((w) => `<button data-w="${esc(w.label)}">${ICON.window} ${esc(w.name)}</button>`)
-          .join("")}${others.length ? "<hr>" : ""}<button data-w="__new">${ICON.window} Nova janela<small>abre em outro monitor</small></button>`;
+        el.innerHTML = `<div class="mh">${t("app.move.title")}</div>${others
+          .map((w) => `<button data-w="${esc(w.label)}">${ICON.window} ${esc(store.windowName(w.label))}</button>`)
+          .join("")}${others.length ? "<hr>" : ""}<button data-w="__new">${ICON.window} ${t("app.move.newWindow")}<small>${t("app.move.newWindowHint")}</small></button>`;
         el.onclick = async (e) => {
           const target = (e.target as Element).closest<HTMLElement>("[data-w]")?.dataset.w;
           if (!target) return;
@@ -517,7 +518,7 @@ export class App {
     const r = this.tiles.geo.leaves.get(id);
     const side: Side = r && r.w >= r.h ? "right" : "bottom";
     try {
-      const newId = await ipc.sessionCreate({ tool: "shell", cwd: s.cwd, title: `Terminal · ${s.title}`, mode: "new", window: store.label });
+      const newId = await ipc.sessionCreate({ tool: "shell", cwd: s.cwd, title: t("app.terminalTitle", { title: s.title }), mode: "new", window: store.label });
       if (store.view === "tiles") this.onCreated(newId, { id, side });
       else this.onCreated(newId);
     } catch (e) {
@@ -532,7 +533,7 @@ export class App {
     store.setTree(removeLeaf(clone(store.tree), id), { undo: false });
     void ipc.sessionUpdate(id, { minimized: true });
     this.rail.render();
-    toast(`“${store.session(id)?.title}” foi para o trilho`, { label: "Desfazer", run: () => this.tiles.undo() });
+    toast(t("app.minimized", { title: store.session(id)?.title ?? "" }), { label: t("app.undo"), run: () => this.tiles.undo() });
   }
 
   private openInTiles(id: string): void {
@@ -562,7 +563,7 @@ export class App {
     store.setTree(removeLeaf(clone(store.tree), id), { undo: false });
     ipc
       .sessionUpdate(id, { window: label, minimized: false })
-      .then(() => toast(`Sessão movida para a ${store.windowName(label)}`))
+      .then(() => toast(t("app.movedTo", { window: store.windowName(label) })))
       .catch((e) => toast(String(e)));
   }
 

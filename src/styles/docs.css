@@ -139,7 +139,7 @@ body.resizing-docs .content { pointer-events: none; }
 
 /* ---------------------------------------------------------- mermaid */
 .md .mmd { position: relative; border: 1px solid var(--line); border-radius: 12px; background: radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.05) 1px, transparent 0) 0 0 / 18px 18px, rgba(0, 0, 0, 0.2); min-height: 80px; }
-.md .mmd:not(.ready)::before { content: "Desenhando diagrama…"; position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; color: var(--faint); }
+.md .mmd:not(.ready)::before { content: attr(data-loading); position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; color: var(--faint); }
 .mmd-stage { position: relative; overflow: hidden; cursor: grab; touch-action: none; border-radius: inherit; }
 .mmd-stage.panning { cursor: grabbing; }
 .mmd-bar { position: absolute; top: 8px; right: 8px; display: flex; align-items: center; gap: 1px; padding: 3px; border-radius: 9px; background: rgba(20, 22, 34, 0.92); border: 1px solid var(--line2); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); opacity: 0; transform: translateY(-3px); transition: 0.15s; }

@@ -7,6 +7,24 @@ import { toast } from "./feedback";
 import { ICON, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { openAbout } from "./about";
+import { LOCALES, t, tn } from "../i18n";
+
+/** Seletor de idioma: "Automático" segue o idioma do Windows. */
+function languageSelect(current: string): string {
+  const opts = [["auto", t("onboarding.languageAuto")], ...Object.entries(LOCALES)]
+    .map(([code, name]) => `<option value="${code}"${code === current ? " selected" : ""}>${name}</option>`)
+    .join("");
+  return `<select class="lang-sel" data-lang>${opts}</select>`;
+}
+
+/** Salva o idioma; as janelas recarregam sozinhas (evento settings-changed). */
+async function saveLanguage(settings: Settings, language: string): Promise<void> {
+  try {
+    store.settings = await ipc.settingsSet({ ...settings, language });
+  } catch (err) {
+    toast(String(err));
+  }
+}
 
 const monitorHint = `<span style="display:inline-flex;vertical-align:-3px">${ICON.window}</span>`;
 
@@ -28,32 +46,37 @@ export function openOnboarding(onFinish: () => void): void {
     const s = STEPS[step];
     let body = "";
     if (s === "welcome") {
-      body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>Bem-vindo ao Polvo</h2><div class="sub" style="margin:0">Um braço para cada agente: Claude Code, Codex, OpenCode e shells lado a lado.</div></div></div>
-        <span class="lbl">Quais fornecedores você quer usar?</span>
+      body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>${t("onboarding.welcome.title")}</h2><div class="sub" style="margin:0">${t("onboarding.welcome.tagline")}</div></div></div>
+        <div class="lang-row"><span class="lbl">${t("onboarding.language")}</span>${languageSelect(store.settings.language)}</div>
+        <span class="lbl">${t("onboarding.welcome.providers")}</span>
         <div class="detected">${providerToggles(draft)}</div>
-        <div class="sub" style="margin-top:12px">Desligue os que não quer ver (mesmo instalados). Depois são só 2 perguntas rápidas; tudo pode mudar em Ajustes.</div>`;
+        <div class="sub" style="margin-top:12px">${t("onboarding.welcome.hint")}</div>`;
     } else if (s === "autostart") {
-      body = `<div class="step">Pergunta 1 de 2</div><h2>Abrir o Polvo junto com o Windows?</h2><div class="sub">Suas sessões já ficam prontas quando você liga o computador.</div>
-        <div class="opts">${opt("autostart", "1", draft.autostart, "Sim, abrir ao iniciar", "Abre em segundo plano assim que você entrar no Windows.")}${opt("autostart", "0", !draft.autostart, "Não, eu abro quando quiser", "Você inicia o Polvo pelo menu Iniciar.")}</div>`;
+      body = `<div class="step">${t("onboarding.step", { n: 1, total: 2 })}</div><h2>${t("onboarding.autostart.title")}</h2><div class="sub">${t("onboarding.autostart.sub")}</div>
+        <div class="opts">${opt("autostart", "1", draft.autostart, t("onboarding.autostart.yes"), t("onboarding.autostart.yesText"))}${opt("autostart", "0", !draft.autostart, t("onboarding.autostart.no"), t("onboarding.autostart.noText"))}</div>`;
     } else if (s === "resume") {
-      body = `<div class="step">Pergunta 2 de 2</div><h2>Retomar as últimas sessões automaticamente?</h2><div class="sub">Ao reabrir o Polvo, todas as janelas voltam no mesmo monitor e cada sessão continua de onde parou (claude --resume, codex resume, opencode --session).</div>
-        <div class="opts">${opt("autoResume", "1", draft.autoResume, "Sim, retomar tudo", "Janelas e conversas voltam sozinhas, no mesmo lugar.")}${opt("autoResume", "0", !draft.autoResume, "Não, deixar pausadas", "O layout volta igual; você retoma cada sessão com um clique.")}</div>`;
+      body = `<div class="step">${t("onboarding.step", { n: 2, total: 2 })}</div><h2>${t("onboarding.resume.title")}</h2><div class="sub">${t("onboarding.resume.sub", { commands: "claude --resume, codex resume, opencode --session" })}</div>
+        <div class="opts">${opt("autoResume", "1", draft.autoResume, t("onboarding.resume.yes"), t("onboarding.resume.yesText"))}${opt("autoResume", "0", !draft.autoResume, t("onboarding.resume.no"), t("onboarding.resume.noText"))}</div>`;
     } else {
-      body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>Tudo pronto!</h2><div class="sub" style="margin:0">Dica: abra quantas janelas quiser (botão ${monitorHint} na barra) e coloque cada uma no monitor que preferir.</div></div></div>
+      body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>${t("onboarding.done.title")}</h2><div class="sub" style="margin:0">${t("onboarding.done.tip", { icon: monitorHint })}</div></div></div>
         <div class="rows">
-          <div class="row" data-toggle="claudeUsageBridge"><div><b>Mostrar limites do Claude Code</b><small>Lê os limites de 5h e semanal pela statusline. A sua statusline atual continua igual.</small></div><span class="switch${draft.claudeUsageBridge ? " on" : ""}"></span></div>
-          <div class="row" data-toggle="claudeBypassPermissions"><div><b>Claude Code sem pedir permissão</b><small>Inicia com --permission-mode bypassPermissions (o Claude executa sem confirmar cada ação).</small></div><span class="switch${draft.claudeBypassPermissions ? " on" : ""}"></span></div>
-          <div class="row" data-toggle="explorerMenu"><div><b>"Abrir no Polvo" no Explorer</b><small>Clique direito numa pasta para abrir um agente nela (no Windows 11, em “Mostrar mais opções”).</small></div><span class="switch${draft.explorerMenu ? " on" : ""}"></span></div>
-          <div class="row" data-toggle="checkUpdates"><div><b>Atualizar automaticamente</b><small>Procura novas versões no GitHub e avisa quando houver.</small></div><span class="switch${draft.checkUpdates ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="claudeUsageBridge"><div><b>${t("onboarding.done.usageBridge")}</b><small>${t("onboarding.done.usageBridgeText")}</small></div><span class="switch${draft.claudeUsageBridge ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="claudeBypassPermissions"><div><b>${t("onboarding.done.bypass")}</b><small>${t("onboarding.done.bypassText", { flag: "--permission-mode bypassPermissions" })}</small></div><span class="switch${draft.claudeBypassPermissions ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="explorerMenu"><div><b>${t("onboarding.done.explorer")}</b><small>${t("onboarding.done.explorerText")}</small></div><span class="switch${draft.explorerMenu ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="checkUpdates"><div><b>${t("onboarding.done.updates")}</b><small>${t("onboarding.done.updatesText")}</small></div><span class="switch${draft.checkUpdates ? " on" : ""}"></span></div>
         </div>`;
     }
     box.innerHTML = `${body}<div class="mfoot" style="margin-top:20px"><div class="dots">${STEPS.map((_, i) => `<i class="${i === step ? "on" : ""}"></i>`).join("")}</div>
-      ${step > 0 ? '<button class="ghost" data-back>Voltar</button>' : ""}<button class="primary" data-next>${step === STEPS.length - 1 ? "Começar a usar" : step === 0 ? "Vamos lá" : "Continuar"}</button></div>`;
+      ${step > 0 ? `<button class="ghost" data-back>${t("onboarding.back")}</button>` : ""}<button class="primary" data-next>${step === STEPS.length - 1 ? t("onboarding.finish") : step === 0 ? t("onboarding.start") : t("onboarding.next")}</button></div>`;
   };
 
+  box.addEventListener("change", (e) => {
+    const sel = (e.target as Element).closest<HTMLSelectElement>("[data-lang]");
+    if (sel) void saveLanguage({ ...store.settings, ...draft }, sel.value);
+  });
   box.addEventListener("click", async (e) => {
-    const t = e.target as Element;
-    const o = t.closest<HTMLElement>(".opt");
+    const target = e.target as Element;
+    const o = target.closest<HTMLElement>(".opt");
     if (o) {
       const k = o.dataset.k!;
       if (k === "autostart") draft.autostart = o.dataset.v === "1";
@@ -61,23 +84,23 @@ export function openOnboarding(onFinish: () => void): void {
       render();
       return;
     }
-    const tool = t.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
+    const tool = target.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
     if (tool) {
       draft.disabledTools = toggleTool(draft.disabledTools, tool);
       render();
       return;
     }
-    const tg = t.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as "claudeUsageBridge" | "checkUpdates" | "explorerMenu" | "claudeBypassPermissions" | undefined;
+    const tg = target.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as "claudeUsageBridge" | "checkUpdates" | "explorerMenu" | "claudeBypassPermissions" | undefined;
     if (tg) {
       draft[tg] = !draft[tg];
       render();
       return;
     }
-    if (t.closest("[data-back]")) {
+    if (target.closest("[data-back]")) {
       step--;
       render();
     }
-    if (t.closest("[data-next]")) {
+    if (target.closest("[data-next]")) {
       if (step < STEPS.length - 1) {
         step++;
         render();
@@ -97,16 +120,16 @@ export function openOnboarding(onFinish: () => void): void {
   document.body.append(modal);
 }
 
-const toggleTool = (list: ToolKind[], t: ToolKind) => (list.includes(t) ? list.filter((x) => x !== t) : [...list, t]);
+const toggleTool = (list: ToolKind[], k: ToolKind) => (list.includes(k) ? list.filter((x) => x !== k) : [...list, k]);
 
 /** Fornecedores com chave liga/desliga. Os não instalados aparecem desligados. */
 function providerToggles(s: Settings): string {
   return (Object.keys(TOOLS) as ToolKind[])
-    .filter((t) => t !== "shell")
-    .map((t) => {
-      const installed = store.tools[t];
-      const on = installed && !s.disabledTools.includes(t);
-      return `<div class="prov${installed ? "" : " off"}" ${installed ? `data-tool="${t}"` : ""}>${toolIcon(t, 16)}<span>${TOOLS[t].name}<small>${installed ? (on ? "ativo" : "desativado") : "não instalado"}</small></span><span class="switch${on ? " on" : ""}"></span></div>`;
+    .filter((k) => k !== "shell")
+    .map((k) => {
+      const installed = store.tools[k];
+      const on = installed && !s.disabledTools.includes(k);
+      return `<div class="prov${installed ? "" : " off"}" ${installed ? `data-tool="${k}"` : ""}>${toolIcon(k, 16)}<span>${TOOLS[k].name}<small>${installed ? (on ? t("onboarding.provider.on") : t("onboarding.provider.off")) : t("onboarding.provider.missing")}</small></span><span class="switch${on ? " on" : ""}"></span></div>`;
     })
     .join("");
 }
@@ -121,20 +144,21 @@ export function openSettings(): void {
     `<div class="row" data-toggle="${key}"><div><b>${title}</b><small>${text}</small></div><span class="switch${store.settings[key] ? " on" : ""}"></span></div>`;
 
   const render = () => {
-    box.innerHTML = `<h2>Ajustes</h2><div class="sub">As mudanças valem na hora.</div>
-      <span class="lbl">Fornecedores</span>
+    box.innerHTML = `<h2>${t("settings.title")}</h2><div class="sub">${t("settings.sub")}</div>
+      <div class="lang-row"><span class="lbl">${t("settings.language")}</span>${languageSelect(store.settings.language)}</div>
+      <span class="lbl">${t("settings.providers")}</span>
       <div class="detected">${providerToggles(store.settings)}</div>
       <div class="rows" style="margin-top:12px">
-        ${row("autostart", "Abrir junto com o Windows", "Inicia o Polvo quando você entra no Windows.")}
-        <div class="row" style="cursor:default"><div><b>Janelas</b><small>${store.windows.length} ${store.windows.length === 1 ? "aberta" : "abertas"} · ${store.display.monitors} ${store.display.monitors > 1 ? "monitores" : "monitor"}. Todas reabrem no mesmo lugar.</small></div>
-          <button class="ghost" data-newwin>+ Nova janela</button></div>
-        ${row("autoResume", "Retomar sessões ao abrir", "Reabre cada sessão exatamente onde parou.")}
-        ${row("claudeBypassPermissions", "Claude Code sem pedir permissão", "Inicia com --permission-mode bypassPermissions. Vale para sessões novas ou retomadas.")}
-        ${row("claudeUsageBridge", "Limites do Claude Code", "Lidos pela statusline (planos Pro/Max). Vale para sessões novas ou retomadas.")}
-        ${row("explorerMenu", "\"Abrir no Polvo\" no Explorer", "Clique direito numa pasta para abrir um agente nela (no Windows 11, em “Mostrar mais opções”).")}
-        ${row("checkUpdates", "Atualizações automáticas", "Procura novas versões no GitHub.")}
+        ${row("autostart", t("settings.autostart"), t("settings.autostartText"))}
+        <div class="row" style="cursor:default"><div><b>${t("settings.windows")}</b><small>${t("settings.windowsText", { windows: tn("settings.windowsOpen", store.windows.length), monitors: tn("settings.monitors", store.display.monitors) })}</small></div>
+          <button class="ghost" data-newwin>${t("settings.newWindow")}</button></div>
+        ${row("autoResume", t("settings.autoResume"), t("settings.autoResumeText"))}
+        ${row("claudeBypassPermissions", t("settings.bypass"), t("settings.bypassText", { flag: "--permission-mode bypassPermissions" }))}
+        ${row("claudeUsageBridge", t("settings.usageBridge"), t("settings.usageBridgeText"))}
+        ${row("explorerMenu", t("settings.explorer"), t("settings.explorerText"))}
+        ${row("checkUpdates", t("settings.updates"), t("settings.updatesText"))}
       </div>
-      <div class="mfoot" style="margin-top:16px"><button class="ghost" data-about>Sobre o Polvo ${__APP_VERSION__}</button><span class="hk"></span><button class="primary" data-close>Pronto</button></div>`;
+      <div class="mfoot" style="margin-top:16px"><button class="ghost" data-about>${t("settings.about", { version: __APP_VERSION__ })}</button><span class="hk"></span><button class="primary" data-close>${t("settings.done")}</button></div>`;
   };
 
   const save = async (patch: Partial<Settings>) => {
@@ -147,22 +171,26 @@ export function openSettings(): void {
     render();
   };
 
+  box.addEventListener("change", (e) => {
+    const sel = (e.target as Element).closest<HTMLSelectElement>("[data-lang]");
+    if (sel) void saveLanguage(store.settings, sel.value);
+  });
   box.addEventListener("click", (e) => {
-    const t = e.target as Element;
-    const key = t.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as keyof Settings | undefined;
+    const target = e.target as Element;
+    const key = target.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as keyof Settings | undefined;
     if (key) void save({ [key]: !store.settings[key] });
-    const tool = t.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
+    const tool = target.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
     if (tool) void save({ disabledTools: toggleTool(store.settings.disabledTools, tool) });
-    if (t.closest("[data-about]")) {
+    if (target.closest("[data-about]")) {
       modal.remove();
       openAbout();
     }
-    if (t.closest("[data-newwin]")) {
+    if (target.closest("[data-newwin]")) {
       void ipc.windowNew().then(() => {
         modal.remove();
       });
     }
-    if (t.closest("[data-close]")) modal.remove();
+    if (target.closest("[data-close]")) modal.remove();
   });
   modal.addEventListener("pointerdown", (e) => {
     if (e.target === modal) modal.remove();

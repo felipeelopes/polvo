@@ -77,8 +77,16 @@ fn claude() -> Option<UsageSnapshot> {
         })
     };
     let windows: Vec<_> = [
-        win("fiveHour", "Sessão (janela de 5h)", "5h"),
-        win("sevenDay", "Semanal", "sem"),
+        win(
+            "fiveHour",
+            &crate::i18n::tr("usage.claudeSession", &[]),
+            "5h",
+        ),
+        win(
+            "sevenDay",
+            &crate::i18n::tr("usage.weekly", &[]),
+            &crate::i18n::tr("usage.weeklyShort", &[]),
+        ),
     ]
     .into_iter()
     .flatten()
@@ -97,13 +105,19 @@ fn codex() -> Option<UsageSnapshot> {
             let window = |w: &Value| {
                 let minutes = w.get("window_minutes").and_then(Value::as_i64).unwrap_or(0);
                 let (label, short) = match minutes {
-                    300 => ("Janela de 5h".to_string(), "5h".to_string()),
-                    10080 => ("Semanal".to_string(), "sem".to_string()),
-                    m if m % 1440 == 0 && m > 0 => (
-                        format!("Janela de {} dias", m / 1440),
-                        format!("{}d", m / 1440),
+                    300 => (crate::i18n::tr("usage.window5h", &[]), "5h".to_string()),
+                    10080 => (
+                        crate::i18n::tr("usage.weekly", &[]),
+                        crate::i18n::tr("usage.weeklyShort", &[]),
                     ),
-                    m => (format!("Janela de {}h", m / 60), format!("{}h", m / 60)),
+                    m if m % 1440 == 0 && m > 0 => (
+                        crate::i18n::tr("usage.windowDays", &[("n", &(m / 1440).to_string())]),
+                        crate::i18n::tr("usage.windowDaysShort", &[("n", &(m / 1440).to_string())]),
+                    ),
+                    m => (
+                        crate::i18n::tr("usage.windowHours", &[("n", &(m / 60).to_string())]),
+                        crate::i18n::tr("usage.windowHoursShort", &[("n", &(m / 60).to_string())]),
+                    ),
                 };
                 UsageWindow {
                     label,
@@ -158,16 +172,16 @@ fn opencode() -> Option<UsageSnapshot> {
     let today = opencode_cost(1)?;
     let month = opencode_cost(30);
     let mut windows = vec![UsageWindow {
-        label: "Gasto hoje".into(),
-        short: "hoje".into(),
+        label: crate::i18n::tr("usage.spentToday", &[]),
+        short: crate::i18n::tr("usage.spentTodayShort", &[]),
         used_percent: None,
         resets_at: None,
         value: Some(today),
     }];
     if let Some(m) = month {
         windows.push(UsageWindow {
-            label: "Gasto em 30 dias".into(),
-            short: "30d".into(),
+            label: crate::i18n::tr("usage.spent30d", &[]),
+            short: crate::i18n::tr("usage.spent30dShort", &[]),
             used_percent: None,
             resets_at: None,
             value: Some(m),
@@ -175,7 +189,7 @@ fn opencode() -> Option<UsageSnapshot> {
     }
     Some(UsageSnapshot {
         provider: ToolKind::Opencode,
-        plan: Some("Chaves de API próprias".into()),
+        plan: Some(crate::i18n::tr("usage.ownApiKeys", &[])),
         windows,
         observed_at: paths::now_ms(),
     })

@@ -30,6 +30,7 @@ import { toast } from "./feedback";
 import { TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { Pane, type PaneHandlers } from "./pane";
+import { t, tn } from "../i18n";
 
 type DropTarget =
   | { kind: "rail" }
@@ -37,19 +38,10 @@ type DropTarget =
   | { kind: "edge"; side: Side }
   | { kind: "pane"; id: string; side: Side | "center"; rect: Rect };
 
-const SIDE_LABEL: Record<Side | "center", string> = {
-  left: "Dividir à esquerda",
-  right: "Dividir à direita",
-  top: "Dividir acima",
-  bottom: "Dividir abaixo",
-  center: "Trocar de lugar",
-};
-const EDGE_LABEL: Record<Side, string> = {
-  left: "Coluna inteira à esquerda",
-  right: "Coluna inteira à direita",
-  top: "Linha inteira em cima",
-  bottom: "Linha inteira embaixo",
-};
+/** Rótulo do alvo ao soltar sobre um painel (dividir num lado ou trocar). */
+const sideLabel = (side: Side | "center"): string => t(`tiles.side.${side}`);
+/** Rótulo do alvo ao soltar na borda da área (coluna/linha inteira). */
+const edgeLabel = (side: Side): string => t(`tiles.edge.${side}`);
 
 export interface TilesHost {
   terms: Terminals;
@@ -76,7 +68,7 @@ export class TilesView {
   private drag: { id: string; fromRail: boolean; sx: number; sy: number; moved: boolean; target: DropTarget | null } | null = null;
 
   constructor(private host: TilesHost) {
-    this.empty.innerHTML = `<div>${logo(88, "idle")}<h3>Nenhuma sessão aberta aqui</h3>Crie uma sessão ou arraste uma do trilho para cá.<br><button class="primary" data-new>+ Nova sessão</button></div>`;
+    this.empty.innerHTML = `<div>${logo(88, "idle")}<h3>${t("tiles.empty.title")}</h3>${t("tiles.empty.hint")}<br><button class="primary" data-new>+ ${t("tiles.empty.newSession")}</button></div>`;
     this.compass.hidden = true;
     this.badge.hidden = true;
     this.ghost.hidden = true;
@@ -157,7 +149,7 @@ export class TilesView {
         el = h("div");
         el.addEventListener("pointerdown", (e) => this.startResize(e, Number(el.dataset.i)));
         el.addEventListener("dblclick", () => this.equalizeNode(Number(el.dataset.i)));
-        el.title = "Arraste para redimensionar · duplo clique iguala";
+        el.title = t("tiles.dividerHint");
         this.el.appendChild(el);
         this.dividerEls[i] = el;
       }
@@ -204,7 +196,7 @@ export class TilesView {
 
   undo(): void {
     const u = store.popUndo();
-    if (!u) return toast("Nada para desfazer");
+    if (!u) return toast(t("tiles.nothingToUndo"));
     store.zoom = null;
     for (const s of store.mine) {
       const min = u.minimized.includes(s.id);
@@ -214,7 +206,7 @@ export class TilesView {
       }
     }
     store.setTree(u.tree, { undo: false });
-    toast("Layout desfeito");
+    toast(t("tiles.undone"));
   }
 
   focusNeighbor(dx: number, dy: number, move: boolean): void {
@@ -237,7 +229,7 @@ export class TilesView {
     store.pushUndo();
     d.node.sizes = d.node.sizes.map(() => 1 / d.node.sizes.length);
     store.setTree(store.tree, { undo: false });
-    toast("Divisão igualada");
+    toast(t("tiles.equalized"));
   }
 
   // ------------------------------------------------------------ divisórias
@@ -254,7 +246,7 @@ export class TilesView {
     this.resize = { node: d.node, index: d.index, horizontal: d.dir === "row", linked, origin: this.el.getBoundingClientRect(), moved: false };
     this.el.classList.add("live");
     document.body.style.cursor = this.resize.horizontal ? "col-resize" : "row-resize";
-    if (linked.length) this.hint(`${linked.length + 1} divisórias alinhadas se movem juntas · segure Alt para mover só esta`);
+    if (linked.length) this.hint(tn("tiles.linkedDividers", linked.length + 1));
     const move = (ev: PointerEvent) => this.onResize(ev);
     addEventListener("pointermove", move);
     addEventListener(
@@ -281,7 +273,7 @@ export class TilesView {
     ];
     for (const o of this.geo.dividers) {
       const same = (o.node === rs.node && o.index === rs.index) || rs.linked.some((l) => l.node === o.node && l.index === o.index);
-      if (!same && o.dir === (rs.horizontal ? "row" : "col")) candidates.push({ p: dividerCenter(o), label: "alinhar" });
+      if (!same && o.dir === (rs.horizontal ? "row" : "col")) candidates.push({ p: dividerCenter(o), label: t("tiles.align") });
     }
     let best: { p: number; label: string; dist: number } | null = null;
     for (const c of candidates) {
@@ -293,8 +285,8 @@ export class TilesView {
     for (const l of rs.linked) setBoundary(this.geo, l.node, l.index, b);
     this.layout();
 
-    const t = rs.node.sizes[rs.index] + rs.node.sizes[rs.index + 1];
-    const pa = Math.round((rs.node.sizes[rs.index] / t) * 100);
+    const sum = rs.node.sizes[rs.index] + rs.node.sizes[rs.index + 1];
+    const pa = Math.round((rs.node.sizes[rs.index] / sum) * 100);
     this.badge.hidden = false;
     this.badge.innerHTML = `${pa}% <b>|</b> ${100 - pa}%${best ? ` · <b>${best.label}</b>` : ""}`;
     this.badge.style.left = `${e.clientX + 16}px`;
@@ -356,7 +348,7 @@ export class TilesView {
       this.ghost.hidden = false;
       this.panes.get(d.id)?.el.classList.add("lifting");
       document.body.classList.add("grabbing");
-      this.hint("Solte na borda de um painel para dividir · no centro para trocar · na borda da área para coluna/linha inteira · no trilho para recolher");
+      this.hint(t("tiles.dragHint"));
     }
     this.ghost.style.left = `${e.clientX}px`;
     this.ghost.style.top = `${e.clientY}px`;
@@ -391,12 +383,12 @@ export class TilesView {
     return null;
   }
 
-  private showDrop(t: DropTarget | null): void {
+  private showDrop(dt: DropTarget | null): void {
     const s = store.session(this.drag!.id);
     // Classe própria: "drop" é a camada de pré-visualização e mudaria o layout do trilho.
-    this.host.rail().classList.toggle("rail-drop", t?.kind === "rail" && !s?.minimized);
-    this.compass.hidden = t?.kind !== "pane";
-    if (!t || t.kind === "rail") {
+    this.host.rail().classList.toggle("rail-drop", dt?.kind === "rail" && !s?.minimized);
+    this.compass.hidden = dt?.kind !== "pane";
+    if (!dt || dt.kind === "rail") {
       this.drop.classList.remove("on");
       return;
     }
@@ -404,31 +396,31 @@ export class TilesView {
     const H = this.el.clientHeight;
     let r: Rect;
     let label: string;
-    if (t.kind === "empty") {
+    if (dt.kind === "empty") {
       r = { x: 0, y: 0, w: W, h: H };
-      label = "Abrir aqui";
-    } else if (t.kind === "edge") {
+      label = t("tiles.openHere");
+    } else if (dt.kind === "edge") {
       const f = 0.32;
-      label = EDGE_LABEL[t.side];
+      label = edgeLabel(dt.side);
       r = {
         left: { x: 0, y: 0, w: W * f, h: H },
         right: { x: W * (1 - f), y: 0, w: W * f, h: H },
         top: { x: 0, y: 0, w: W, h: H * f },
         bottom: { x: 0, y: H * (1 - f), w: W, h: H * f },
-      }[t.side];
+      }[dt.side];
     } else {
-      const p = t.rect;
-      label = SIDE_LABEL[t.side];
+      const p = dt.rect;
+      label = sideLabel(dt.side);
       r = {
         left: { x: p.x, y: p.y, w: p.w / 2, h: p.h },
         right: { x: p.x + p.w / 2, y: p.y, w: p.w / 2, h: p.h },
         top: { x: p.x, y: p.y, w: p.w, h: p.h / 2 },
         bottom: { x: p.x, y: p.y + p.h / 2, w: p.w, h: p.h / 2 },
         center: p,
-      }[t.side];
+      }[dt.side];
       this.compass.style.left = `${p.x + p.w / 2}px`;
       this.compass.style.top = `${p.y + p.h / 2}px`;
-      const cls = { top: "t", left: "l", center: "c", right: "r", bottom: "b" }[t.side];
+      const cls = { top: "t", left: "l", center: "c", right: "r", bottom: "b" }[dt.side];
       this.compass.querySelectorAll("i").forEach((i) => i.classList.toggle("on", i.classList.contains(cls)));
     }
     Object.assign(this.drop.style, { left: `${r.x}px`, top: `${r.y}px`, width: `${r.w}px`, height: `${r.h}px` });
@@ -454,33 +446,33 @@ export class TilesView {
     if (d.target) this.applyDrop(d.id, d.target);
   }
 
-  private applyDrop(id: string, t: DropTarget): void {
+  private applyDrop(id: string, dt: DropTarget): void {
     const s = store.session(id);
     if (!s) return;
     const inTree = leaves(store.tree).includes(id);
-    if (t.kind === "rail") {
+    if (dt.kind === "rail") {
       if (inTree) this.host.minimize(id);
       return;
     }
     store.pushUndo();
     store.zoom = null;
     let tree: LayoutNode | null = clone(store.tree);
-    if (t.kind === "empty") {
+    if (dt.kind === "empty") {
       tree = { type: "leaf", id };
-    } else if (t.kind === "edge") {
+    } else if (dt.kind === "edge") {
       if (inTree) tree = removeLeaf(tree, id);
-      tree = insertAt(tree, null, id, t.side);
-    } else if (t.side === "center") {
-      if (inTree) tree = swapLeaves(tree, id, t.id);
+      tree = insertAt(tree, null, id, dt.side);
+    } else if (dt.side === "center") {
+      if (inTree) tree = swapLeaves(tree, id, dt.id);
       else {
-        tree = replaceLeaf(tree, t.id, id);
-        store.patchLocal(t.id, { minimized: true });
-        ipc.sessionUpdate(t.id, { minimized: true }).catch(() => {});
-        toast(`“${store.session(t.id)?.title}” foi para o trilho`);
+        tree = replaceLeaf(tree, dt.id, id);
+        store.patchLocal(dt.id, { minimized: true });
+        ipc.sessionUpdate(dt.id, { minimized: true }).catch(() => {});
+        toast(t("tiles.sentToRail", { title: store.session(dt.id)?.title ?? "" }));
       }
     } else {
       if (inTree) tree = removeLeaf(tree, id);
-      tree = insertAt(tree, t.id, id, t.side);
+      tree = insertAt(tree, dt.id, id, dt.side);
     }
     if (s.minimized) {
       store.patchLocal(id, { minimized: false });

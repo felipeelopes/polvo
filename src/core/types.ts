@@ -65,6 +65,8 @@ export interface Settings {
   explorerMenu: boolean;
   /** Iniciar o Claude Code em modo bypass de permissões. */
   claudeBypassPermissions: boolean;
+  /** Idioma da interface: "auto" (o do Windows) ou um código ("en", "pt"…). */
+  language: string;
 }
 
 export interface Worktree {

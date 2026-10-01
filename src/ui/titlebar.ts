@@ -3,6 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Preset } from "../core/layout";
 import { store } from "../core/store";
 import type { ToolKind, View } from "../core/types";
+import { t } from "../i18n";
 import { esc, h } from "./dom";
 import { ICON } from "./icons";
 import { logo } from "./logo";
@@ -31,32 +32,32 @@ export class Titlebar {
   constructor(host: TitlebarHost) {
     const win = getCurrentWindow();
     this.el.innerHTML = `
-      <button class="brand" data-x="about" title="Sobre o Polvo">${logo(24, "still")}<span class="bn">Polvo</span> <small class="wname"></small></button>
+      <button class="brand" data-x="about" title="${t("titlebar.about")}">${logo(24, "still")}<span class="bn">Polvo</span> <small class="wname"></small></button>
       <div class="seg views">
-        <button data-v="tiles" title="Painéis (Ctrl+Shift+1)">${ICON.tiles}<span class="lbl-v">Painéis</span></button>
-        <button data-v="board" title="Quadro por status (Ctrl+Shift+2)">${ICON.board}<span class="lbl-v">Quadro</span></button>
+        <button data-v="tiles" title="${t("titlebar.tilesHint")}">${ICON.tiles}<span class="lbl-v">${t("titlebar.tiles")}</span></button>
+        <button data-v="board" title="${t("titlebar.boardHint")}">${ICON.board}<span class="lbl-v">${t("titlebar.board")}</span></button>
       </div>
       <div class="tg layout-tools">
-        <button data-p="grid" title="Organizar em grade">${ICON.grid}</button>
-        <button data-p="main" title="Principal + pilha">${ICON.main}</button>
-        <button data-p="cols" title="Colunas">${ICON.cols}</button>
-        <button data-p="rows" title="Linhas">${ICON.rows}</button>
-        <button data-p="equal" title="Igualar tamanhos">${ICON.equal}</button>
-        <button data-p="undo" title="Desfazer layout (Ctrl+Shift+Z)">${ICON.undo}</button>
+        <button data-p="grid" title="${t("titlebar.presets.grid")}">${ICON.grid}</button>
+        <button data-p="main" title="${t("titlebar.presets.main")}">${ICON.main}</button>
+        <button data-p="cols" title="${t("titlebar.presets.cols")}">${ICON.cols}</button>
+        <button data-p="rows" title="${t("titlebar.presets.rows")}">${ICON.rows}</button>
+        <button data-p="equal" title="${t("titlebar.presets.equal")}">${ICON.equal}</button>
+        <button data-p="undo" title="${t("titlebar.presets.undo")}">${ICON.undo}</button>
       </div>
       <div class="sp"></div>
       <button class="pchip" data-x="unfocus" hidden></button>
       <div class="rings"></div>
-      <button class="ibtn" data-x="window" title="Nova janela (abre em outro monitor, se houver)">${ICON.window}</button>
-      <button class="ibtn" data-pop data-x="monitor" title="Levar esta janela para outro monitor">${ICON.monitor}</button>
-      <button class="ibtn" data-pop data-x="help" title="Dicas e atalhos">${ICON.help}</button>
-      <button class="ibtn" data-pop data-x="settings" title="Ajustes">${ICON.gear}</button>
+      <button class="ibtn" data-x="window" title="${t("titlebar.newWindow")}">${ICON.window}</button>
+      <button class="ibtn" data-pop data-x="monitor" title="${t("titlebar.monitor")}">${ICON.monitor}</button>
+      <button class="ibtn" data-pop data-x="help" title="${t("titlebar.help")}">${ICON.help}</button>
+      <button class="ibtn" data-pop data-x="settings" title="${t("titlebar.settings")}">${ICON.gear}</button>
       <button class="upd-pill" data-x="update" hidden></button>
-      <button class="primary new-btn" data-x="projects" title="Abrir projeto, novo projeto, clonar repositório · Ctrl+Shift+N abre sessão no projeto em foco">+<span class="lbl-n"> Projeto</span></button>
+      <button class="primary new-btn" data-x="projects" title="${t("titlebar.projects")}">+<span class="lbl-n"> ${t("titlebar.projectBtn")}</span></button>
       <div class="wc">
-        <button data-w="min" title="Minimizar">${ICON.winMin}</button>
-        <button data-w="max" title="Maximizar">${ICON.winMax}</button>
-        <button data-w="close" class="x" title="Fechar">${ICON.winClose}</button>
+        <button data-w="min" title="${t("titlebar.minimize")}">${ICON.winMin}</button>
+        <button data-w="max" title="${t("titlebar.maximize")}">${ICON.winMax}</button>
+        <button data-w="close" class="x" title="${t("titlebar.close")}">${ICON.winClose}</button>
       </div>`;
     this.views = this.el.querySelector(".views")!;
     this.tools = this.el.querySelector(".layout-tools")!;
@@ -64,14 +65,14 @@ export class Titlebar {
     this.maxBtn = this.el.querySelector('[data-w="max"]')!;
 
     this.el.addEventListener("click", (e) => {
-      const t = e.target as Element;
-      const v = t.closest<HTMLElement>("[data-v]")?.dataset.v as View | undefined;
+      const tg = e.target as Element;
+      const v = tg.closest<HTMLElement>("[data-v]")?.dataset.v as View | undefined;
       if (v) return host.setView(v);
-      const p = t.closest<HTMLElement>("[data-p]");
+      const p = tg.closest<HTMLElement>("[data-p]");
       if (p && this.tools.contains(p)) return host.preset(p.dataset.p as Preset | "equal" | "undo");
-      const ring = t.closest<HTMLElement>(".ur");
+      const ring = tg.closest<HTMLElement>(".ur");
       if (ring) return openUsage(ring.dataset.p as ToolKind, ring);
-      const x = t.closest<HTMLElement>("[data-x]");
+      const x = tg.closest<HTMLElement>("[data-x]");
       if (x?.dataset.x === "help") return host.openHelp(x);
       if (x?.dataset.x === "settings") return host.openSettings(x);
       if (x?.dataset.x === "window") return host.newWindow();
@@ -80,7 +81,7 @@ export class Titlebar {
       if (x?.dataset.x === "monitor") return host.openMonitors(x);
       if (x?.dataset.x === "projects") return host.projectMenu(x);
       if (x?.dataset.x === "unfocus") return host.clearProject();
-      const w = t.closest<HTMLElement>("[data-w]")?.dataset.w;
+      const w = tg.closest<HTMLElement>("[data-w]")?.dataset.w;
       if (w === "min") void win.minimize();
       if (w === "max") void win.toggleMaximize();
       if (w === "close") void win.close();
@@ -95,7 +96,7 @@ export class Titlebar {
     const syncMax = async () => {
       const max = await win.isMaximized();
       this.maxBtn.innerHTML = max ? ICON.winRestore : ICON.winMax;
-      this.maxBtn.title = max ? "Restaurar" : "Maximizar";
+      this.maxBtn.title = max ? t("titlebar.restore") : t("titlebar.maximize");
     };
     void win.onResized(() => void syncMax());
     void syncMax();
@@ -109,8 +110,8 @@ export class Titlebar {
     const v = availableUpdate();
     pill.hidden = !v;
     if (v) {
-      pill.innerHTML = `${ICON.update}<span>Atualizar para v${v}</span>`;
-      pill.title = `Polvo ${v} disponível — clique para ver as novidades e atualizar`;
+      pill.innerHTML = `${ICON.update}<span>${t("titlebar.updatePill", { version: v })}</span>`;
+      pill.title = t("titlebar.updatePillHint", { version: v });
     }
   }
 
@@ -122,7 +123,7 @@ export class Titlebar {
     chip.hidden = !store.project;
     if (store.project) {
       chip.innerHTML = `${ICON.focus}<span>${esc(store.projectName)}</span>${ICON.close}`;
-      chip.title = "Mostrando só este projeto — clique para ver todos";
+      chip.title = t("titlebar.projectChip");
     }
     const many = store.windows.length > 1;
     this.el.querySelector<HTMLElement>(".wname")!.textContent = many ? `· ${store.myName}` : "";

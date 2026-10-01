@@ -48,8 +48,20 @@ Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para entender o fluxo completo
 
 - `pnpm check` precisa passar (typecheck, testes, `cargo fmt`, `cargo clippy -D warnings`).
 - Lógica pura ganha teste (veja `tests/layout.test.ts`).
-- Textos da interface em português do Brasil, curtos e diretos.
+- Textos da interface curtos e diretos, escritos primeiro em português do Brasil (veja [Traduções](#traduções)).
 - Commits pequenos e com mensagem clara (ex.: `fix: divisória ignora mínimo ao arrastar rápido`).
+
+## Traduções
+
+A interface está em 10 idiomas. O português (pt-BR) é a origem:
+
+- Textos da interface: `src/i18n/pt/<namespace>.ts`, usados no código com `t("ns.chave")` e, para plurais, `tn("ns.chave", n)` (chaves `one`/`other`; o russo usa também `few`/`many`).
+- Traduções: `src/i18n/locales/<idioma>.ts`, com as mesmas chaves (o TypeScript reclama se faltar alguma).
+- Mensagens do backend (erros, menu do Explorer): `src-tauri/i18n/<idioma>.json`, usadas com `crate::i18n::tr("ns.chave", &[...])`.
+- Nunca chame `t()` no topo de um módulo: o idioma é definido depois que os módulos carregam.
+- `pnpm test` confere se todos os idiomas têm as mesmas chaves, `{marcadores}` e tags HTML.
+
+Para adicionar um idioma: crie `src/i18n/locales/<código>.ts` e `src-tauri/i18n/<código>.json`, registre o código em `LOCALES`/`LOCALE_TAGS` (`src/i18n/index.ts`) e em `CATALOGS` (`src-tauri/src/i18n.rs`), e adicione um `README.<código>.md`.
 
 ## Pull requests
 

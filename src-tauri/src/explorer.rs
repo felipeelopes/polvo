@@ -71,7 +71,7 @@ pub fn sync_menu(enabled: bool) -> AppResult<()> {
         let exe = std::env::current_exe()?.to_string_lossy().into_owned();
         for key in KEYS {
             let (k, _) = hkcu.create_subkey(key)?;
-            k.set_value("", &"Abrir no Polvo")?;
+            k.set_value("", &crate::i18n::tr("explorer.openInPolvo", &[]))?;
             k.set_value("Icon", &format!("\"{exe}\",0"))?;
             // Versões antigas exigiam Shift (valor `Extended`); agora aparece sempre.
             let _ = k.delete_value("Extended");

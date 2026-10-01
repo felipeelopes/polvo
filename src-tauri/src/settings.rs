@@ -2,7 +2,7 @@
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, State};
+use tauri::{AppHandle, Emitter, State};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::error::{AppResult, Context};
@@ -28,6 +28,8 @@ pub struct Settings {
     pub explorer_menu: bool,
     /// Iniciar o Claude Code com `--permission-mode bypassPermissions`.
     pub claude_bypass_permissions: bool,
+    /// Idioma da interface: "auto" (o do Windows) ou um código como "en", "pt".
+    pub language: String,
 }
 
 impl Default for Settings {
@@ -41,6 +43,7 @@ impl Default for Settings {
             disabled_tools: Vec::new(),
             explorer_menu: true,
             claude_bypass_permissions: true,
+            language: "auto".into(),
         }
     }
 }
@@ -50,10 +53,11 @@ pub struct SettingsState(pub RwLock<Settings>);
 
 impl SettingsState {
     pub fn load() -> Self {
-        let s = std::fs::read(file())
+        let s: Settings = std::fs::read(file())
             .ok()
             .and_then(|b| serde_json::from_slice(&b).ok())
             .unwrap_or_default();
+        crate::i18n::set_language(&s.language);
         Self(RwLock::new(s))
     }
 
@@ -85,6 +89,8 @@ pub fn settings_set(
     settings: Settings,
 ) -> AppResult<Settings> {
     let saved = state.update(|s| *s = settings)?;
+    crate::i18n::set_language(&saved.language);
+    let _ = app.emit("settings-changed", &saved);
     sync_autostart(&app, saved.autostart)?;
     crate::explorer::sync_menu(saved.explorer_menu)?;
     Ok(saved)
@@ -102,11 +108,11 @@ pub fn sync_autostart(app: &AppHandle, wanted: bool) -> AppResult<()> {
     if wanted && !enabled {
         autolaunch
             .enable()
-            .ctx("Não foi possível ativar a inicialização com o Windows")?;
+            .ctx(&crate::i18n::tr("settings.autostartEnableFailed", &[]))?;
     } else if !wanted && enabled {
         autolaunch
             .disable()
-            .ctx("Não foi possível desativar a inicialização com o Windows")?;
+            .ctx(&crate::i18n::tr("settings.autostartDisableFailed", &[]))?;
     }
     Ok(())
 }

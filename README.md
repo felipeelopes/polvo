@@ -4,128 +4,170 @@
 
 <h1 align="center">Polvo</h1>
 
-<p align="center"><b>Seus agentes de IA, lado a lado.</b><br>
-Claude Code, Codex, OpenCode e shells num organizador nativo, leve e bonito para Windows.<br>
-Um braço para cada agente. 🐙</p>
+<p align="center"><b>Your AI agents, side by side.</b><br>
+Claude Code, Codex, OpenCode and shells in one native, lightweight and good-looking organizer for Windows.<br>
+One arm for each agent. 🐙</p>
+
+<p align="center">🌐 <b>English</b> · <a href="README.pt-BR.md">Português</a> · <a href="README.es.md">Español</a> · <a href="README.fr.md">Français</a> · <a href="README.de.md">Deutsch</a> · <a href="README.it.md">Italiano</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh-CN.md">简体中文</a> · <a href="README.ko.md">한국어</a> · <a href="README.ru.md">Русский</a></p>
 
 <p align="center">
-  <a href="https://github.com/felipeelopes/polvo/releases/latest">Baixar</a> ·
-  <a href="#recursos">Recursos</a> ·
-  <a href="docs/ARCHITECTURE.md">Arquitetura</a> ·
-  <a href="CONTRIBUTING.md">Contribuir</a> ·
-  <a href="#english">English</a>
+  <a href="https://github.com/felipeelopes/polvo/releases/latest">Download</a> ·
+  <a href="#features">Features</a> ·
+  <a href="docs/ARCHITECTURE.md">Architecture</a> ·
+  <a href="#markdown-mermaid">Markdown and Mermaid</a> ·
+  <a href="CONTRIBUTING.md">Contributing</a>
 </p>
 
 ---
 
-![Polvo com 3 sessões do Claude Code, Codex e PowerShell lado a lado](docs/media/paineis.png)
+![Polvo with Claude Code, Codex and PowerShell sessions side by side](docs/media/paineis.png)
 
-## Por que o Polvo?
+## Why Polvo?
 
-Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polvo junta tudo num só lugar:
+Running several agents at once quickly turns into a mess of tabs and windows. Polvo brings it all together in one place:
 
-- **Painéis que você arrasta e encaixa** em qualquer posição, com divisórias inteligentes.
-- **Reabre exatamente como você deixou**: cada conversa é retomada pelo próprio CLI (`claude --resume`, `codex resume`, `opencode --session`).
-- **Limites de uso à vista**: janela de 5h e semanal do Claude e do Codex, custo do OpenCode.
-- **Quadro por status**: veja de relance quem está trabalhando e quem está **aguardando você**.
+- **Tiles you drag and snap** into any position, with smart dividers.
+- **Reopens exactly as you left it**: each conversation is resumed by the CLI itself (`claude --resume`, `codex resume`, `opencode --session`).
+- **Usage limits at a glance**: 5-hour and weekly windows for Claude and Codex, plus OpenCode costs.
+- **Board by status**: see at a glance who is working and who is **waiting for you**.
 
-## Recursos
+<a id="features"></a>
+
+## Features
 
 | | |
 |---|---|
-| 🧩 **Painéis** | Arraste pelo cabeçalho e solte na borda de outro painel para dividir, no centro para trocar, na borda da área para uma coluna/linha inteira. |
-| 📐 **Resize inteligente** | Ímã em ⅓, ½ e ⅔, alinhamento com outras divisórias, divisórias alinhadas que se movem juntas, tamanho mínimo garantido e colunas × linhas do terminal ao vivo. |
-| ⚡ **Facilitadores** | Grade, principal + pilha, colunas, linhas, igualar, desfazer, maximizar, atalhos de teclado. |
-| 🗂️ **Quadro** | Kanban automático: *Aguardando você*, *Trabalhando*, *Ocioso*, com prévia ao vivo e gaveta para abrir a sessão. Colunas redimensionáveis e recolhíveis; o chat pode ser maximizado. |
-| 📁 **Projetos** | Abra uma pasta, crie um projeto (com `git init`) ou clone um repositório. “Ver só este projeto” filtra Painéis e Quadro, cada projeto com sua disposição. |
-| 📝 **Visualizador de Markdown** | Abas de documentos ao lado das sessões, com mermaid, fórmulas, edição e atualização ao vivo. `Ctrl` + clique num `.md` do terminal abre o arquivo. |
-| 🗂️ **Barra lateral por projeto** | Sessões agrupadas por repositório, com os worktrees de cada um. O nome do chat acompanha o título que o CLI define no terminal. |
-| ⚡ **Nova sessão sem perguntas** | Com um chat em foco (`Ctrl+Shift+N`) ou pelo “+” de um projeto/worktree, a sessão nova abre direto ali. |
-| 🎨 **`/rename` e `/color`** | O nome e a cor definidos no CLI aparecem no Polvo, na borda do painel e na barra lateral. |
-| 🖥️ **Várias janelas** | Abra quantas janelas quiser e leve cada uma para o monitor certo. Abrir o Polvo de novo cria outra janela. |
-| 🔁 **Retomada automática** | Ao abrir, todas as janelas voltam no mesmo monitor e cada sessão continua a mesma conversa (mesmo depois de um `/resume`). |
-| 📊 **Limites de uso** | Claude com dois anéis (semanal por fora, 5h por dentro), Codex (arquivos de sessão), OpenCode (`opencode stats`). |
-| 🧠 **Contexto por sessão** | Cada painel mostra quanto da janela de contexto a conversa já usou. |
-| ⬆️ **Versões dos CLIs** | O popup de limites avisa quando há versão nova do Claude Code, Codex ou OpenCode e reinicia as sessões na versão atualizada. |
-| 🎛️ **Fornecedores** | Desative Claude, Codex ou OpenCode mesmo que estejam instalados. |
-| 🚀 **Inicia com o Windows** e **atualiza sozinho** a partir das releases do GitHub. |
+| 🧩 **Tiles** | Drag by the header and drop on the edge of another tile to split it, in the center to swap, or on the edge of the area for a full column/row. |
+| 📐 **Smart resizing** | Snaps to ⅓, ½ and ⅔, lines up with other dividers, aligned dividers move together, a guaranteed minimum size and live terminal columns × rows. |
+| ⚡ **Quick layouts** | Grid, main + stack, columns, rows, equalize, undo, maximize, keyboard shortcuts. |
+| 🗂️ **Board** | Automatic kanban: *Waiting for you*, *Working*, *Idle*, with a live preview and a drawer to open the session. Resizable, collapsible columns; the chat can be maximized. |
+| 📁 **Projects** | Open a folder, create a project (with `git init`) or clone a repository. “Show only this project” filters Tiles and Board, and each project keeps its own layout. |
+| 📝 **Markdown and Mermaid** | Document tabs next to your sessions, with Mermaid diagrams, math, editing and live reload. `Ctrl` + click a `.md` path in the terminal to open it. [See below](#markdown-mermaid). |
+| 🗂️ **Project sidebar** | Sessions grouped by repository, with each one's worktrees. Chat names follow the title the CLI sets in the terminal. |
+| ⚡ **New session, no questions asked** | With a chat focused (`Ctrl+Shift+N`) or from a project/worktree “+”, the new session opens right there. |
+| 🎨 **`/rename` and `/color`** | The name and color set in the CLI show up in Polvo, on the tile border and in the sidebar. |
+| 🖥️ **Multiple windows** | Open as many windows as you like and put each one on the right monitor. Launching Polvo again opens another window. |
+| 🔁 **Automatic resume** | On launch, every window comes back on the same monitor and each session continues the same conversation (even after a `/resume`). |
+| 📊 **Usage limits** | Claude with two rings (weekly outside, 5h inside), Codex (session files), OpenCode (`opencode stats`). |
+| 🧠 **Per-session context** | Each tile shows how much of the context window the conversation has used. |
+| ⬆️ **CLI versions** | The limits popup tells you when a new version of Claude Code, Codex or OpenCode is out and restarts your sessions on it. |
+| 🎛️ **Providers** | Turn off Claude, Codex or OpenCode even if they're installed. |
+| 🌍 **10 languages** | Português, English, Español, Français, Deutsch, Italiano, 日本語, 简体中文, 한국어 and Русский. Follows your Windows language or whatever you pick in Settings. |
+| 🚀 **Starts with Windows** and **updates itself** from GitHub releases. |
 
-## Veja em ação
+## See it in action
 
-**Quadro por status**: quem está trabalhando, quem está ocioso e quem está aguardando você, com a sessão aberta na gaveta.
+**Board by status**: who is working, who is idle and who is waiting for you, with the session open in the drawer.
 
-![Quadro por status](docs/media/quadro.png)
+![Board by status](docs/media/quadro.png)
 
-**Retomada automática**: ao abrir, cada sessão volta na mesma conversa (o polvo puxa elas de volta 🐙).
+**Automatic resume**: on launch, each session comes back to the same conversation (the octopus pulls them back in 🐙).
 
-![Sessões sendo retomadas](docs/media/retomando.png)
+![Sessions being resumed](docs/media/retomando.png)
 
-**Sobre**: colaboradores do projeto vindos do histórico do git.
+**About**: project contributors pulled from the git history.
 
-![Tela Sobre](docs/media/sobre.png)
+![About screen](docs/media/sobre.png)
 
-## Instalação
+<a id="markdown-mermaid"></a>
 
-1. Baixe o instalador `.exe` da [última release](https://github.com/felipeelopes/polvo/releases/latest).
-2. Tenha pelo menos um dos CLIs no `PATH`: [Claude Code](https://docs.claude.com/claude-code), [Codex CLI](https://github.com/openai/codex) ou [OpenCode](https://opencode.ai). O PowerShell funciona sempre.
-3. Abra o Polvo e responda às 3 perguntas do onboarding.
+## Markdown and Mermaid
 
-Requer Windows 10 ou 11 (o efeito Mica aparece no Windows 11).
+Agents write plans, specs and reports in Markdown. Polvo opens those files **right next to your sessions**, without leaving the app:
 
-## Atalhos
+- **`Ctrl` + click** any `.md` path that shows up in the terminal to open the document in a tab.
+- **Read, edit and split modes** (CodeMirror editor), with code highlighting, tables, footnotes, GitHub alerts (`> [!NOTE]`) and KaTeX math (`$E = mc^2$`).
+- **Mermaid diagrams** rendered on the fly: flowcharts, sequence, Gantt, class, state, ER, mindmap and more.
+- **Live**: when the agent changes the file, the document updates by itself.
 
-| Atalho | Ação |
+A block like this one, written by an agent in a `PLAN.md`…
+
+````markdown
+```mermaid
+flowchart LR
+  A[You ask for a plan] --> B[Agent writes PLAN.md]
+  B --> C{Ctrl + click the path}
+  C --> D[Polvo opens the document alongside]
+  D --> E[Diagram rendered live]
+```
+````
+
+…shows up rendered in Polvo (and here on GitHub too):
+
+```mermaid
+flowchart LR
+  A[You ask for a plan] --> B[Agent writes PLAN.md]
+  B --> C{Ctrl + click the path}
+  C --> D[Polvo opens the document alongside]
+  D --> E[Diagram rendered live]
+```
+
+## Installation
+
+1. Download the `.exe` installer from the [latest release](https://github.com/felipeelopes/polvo/releases/latest).
+2. Have at least one of the CLIs on your `PATH`: [Claude Code](https://docs.claude.com/claude-code), [Codex CLI](https://github.com/openai/codex) or [OpenCode](https://opencode.ai). PowerShell always works.
+3. Open Polvo and answer the 3 onboarding questions.
+
+Requires Windows 10 or 11 (the Mica effect shows up on Windows 11).
+
+## Shortcuts
+
+| Shortcut | Action |
 |---|---|
-| `Ctrl+Shift+N` | Nova sessão |
-| `Ctrl+Shift+T` | Terminal (PowerShell) na pasta da sessão ativa |
-| `Ctrl+Shift+1` / `Ctrl+Shift+2` | Painéis / Quadro |
-| `Ctrl+Alt+←↑→↓` | Mover o foco entre painéis |
-| `Ctrl+Alt+Shift+←↑→↓` | Trocar o painel de lugar |
-| `Ctrl+Shift+M` | Maximizar / restaurar o painel |
-| `Ctrl+Shift+Z` | Desfazer layout |
-| `Ctrl +` / `Ctrl −` / `Ctrl 0` | Zoom da interface (como no VS Code) |
-| `Ctrl+C` com seleção · `Ctrl+V` · botão direito | Copiar · colar · copiar/colar |
+| `Ctrl+Shift+N` | New session |
+| `Ctrl+Shift+T` | Terminal (PowerShell) in the active session's folder |
+| `Ctrl+Shift+1` / `Ctrl+Shift+2` | Tiles / Board |
+| `Ctrl+Alt+←↑→↓` | Move focus between tiles |
+| `Ctrl+Alt+Shift+←↑→↓` | Swap tile position |
+| `Ctrl+Shift+M` | Maximize / restore the tile |
+| `Ctrl+Shift+Z` | Undo layout |
+| `Ctrl +` / `Ctrl −` / `Ctrl 0` | Interface zoom (like in VS Code) |
+| `Ctrl+C` with a selection · `Ctrl+V` · right-click | Copy · paste · copy/paste |
 
-## Como funciona
+## How it works
 
-- **Tauri 2** (Rust + WebView2): instalador pequeno e pouca memória.
-- **ConPTY** via [`portable-pty`](https://crates.io/crates/portable-pty): cada sessão é um terminal real.
-- **xterm.js** (WebGL) renderiza o terminal, com o tema do app.
-- O backend guarda as sessões em `%APPDATA%\Polvo\workspace.json` e descobre os ids de cada CLI para retomar depois.
+```mermaid
+flowchart LR
+  UI["Interface<br/>TypeScript + xterm.js"] <-->|IPC| Core["Rust backend<br/>Tauri 2"]
+  Core --> PTY["ConPTY<br/>portable-pty"]
+  PTY --> C1[claude]
+  PTY --> C2[codex]
+  PTY --> C3[opencode]
+  PTY --> C4[pwsh]
+  Core --> WS[("workspace.json<br/>sessions and layout")]
+  Core -. resume .-> C1
+```
 
-Detalhes em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+- **Tauri 2** (Rust + WebView2): small installer and low memory usage.
+- **ConPTY** via [`portable-pty`](https://crates.io/crates/portable-pty): every session is a real terminal.
+- **xterm.js** (WebGL) renders the terminal, using the app's theme.
+- The backend stores sessions in `%APPDATA%\Polvo\workspace.json` and discovers each CLI's ids so it can resume them later.
 
-## Desenvolvimento
+Details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) (in Portuguese).
 
-Pré-requisitos: [Rust](https://rustup.rs) (toolchain MSVC), [Node 20+](https://nodejs.org), [pnpm](https://pnpm.io) e as Build Tools do Visual Studio (C++).
+## Development
+
+Prerequisites: [Rust](https://rustup.rs) (MSVC toolchain), [Node 20+](https://nodejs.org), [pnpm](https://pnpm.io) and the Visual Studio Build Tools (C++).
 
 ```powershell
 pnpm install
-pnpm app:dev      # abre o app com recarregamento automático
-pnpm test         # testes do motor de layout
-pnpm check        # typecheck + testes + rustfmt + clippy
-pnpm app:build    # gera os instaladores em src-tauri/target/release/bundle
-pnpm release      # compila, assina e publica a release no GitHub (veja docs/RELEASING.md)
+pnpm app:dev      # opens the app with hot reload
+pnpm test         # layout engine tests
+pnpm check        # typecheck + tests + rustfmt + clippy
+pnpm app:build    # builds the installers into src-tauri/target/release/bundle
+pnpm release      # builds, signs and publishes the release on GitHub (see docs/RELEASING.md)
 ```
 
-Contribuições são muito bem-vindas: leia o [CONTRIBUTING.md](CONTRIBUTING.md).
+Contributions are very welcome: read [CONTRIBUTING.md](CONTRIBUTING.md) (in Portuguese).
 
 ## Roadmap
 
-- [ ] Arrastar uma sessão diretamente de uma janela para outra
-- [ ] Temas (claro, alto contraste) e fonte configurável
-- [ ] Notificações do Windows quando um agente pedir sua atenção
-- [ ] Perfis personalizados (modelo, variáveis de ambiente, WSL)
-- [ ] Enviar o mesmo prompt para várias sessões
+- [ ] Drag a session straight from one window to another
+- [ ] Themes (light, high contrast) and configurable font
+- [ ] Windows notifications when an agent needs your attention
+- [ ] Custom profiles (model, environment variables, WSL)
+- [ ] Send the same prompt to several sessions
 
-## Licença
+## License
 
-[MIT](LICENSE). Polvo é um projeto independente, sem vínculo com Anthropic, OpenAI ou OpenCode.
-
----
-
-<a id="english"></a>
-
-## English
-
-**Polvo** (Portuguese for *octopus*) is a native Windows app that runs Claude Code, Codex, OpenCode and shells side by side in draggable, snapping panes. It reopens every session exactly where you left off (using each CLI's own resume), shows plan usage limits and per-session context usage at a glance, offers a status board (*waiting for you* / *working* / *idle*), supports as many windows as you want across monitors, starts with Windows and updates itself from GitHub releases. Built with Tauri 2, Rust, ConPTY and xterm.js. MIT licensed. Contributions welcome!
+[MIT](LICENSE). Polvo is an independent project, not affiliated with Anthropic, OpenAI or OpenCode.

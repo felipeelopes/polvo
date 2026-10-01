@@ -5,6 +5,7 @@ import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
 import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { statusPill } from "./pane";
+import { t } from "../i18n";
 
 const COLLAPSED_KEY = "polvo.sidebar.collapsed";
 const CLOSED_KEY = "polvo.sidebar.closedGroups";
@@ -119,7 +120,7 @@ export class Sidebar {
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
-    foot.innerHTML = `<button class="sb-toggle" data-toggle title="Recolher / expandir a barra"></button>`;
+    foot.innerHTML = `<button class="sb-toggle" data-toggle title="${t("sidebar.toggle")}"></button>`;
     this.el.append(this.body, foot);
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("click", (e) => this.onClick(e));
@@ -143,12 +144,12 @@ export class Sidebar {
   }
 
   private renderGroups(mine: Session[]): string {
-    if (!mine.length && !store.projects.length) return '<div class="sb-empty">Nenhum projeto ainda.<br>Use “+ Projeto” no alto para abrir uma pasta, criar um projeto ou clonar um repositório.</div>';
+    if (!mine.length && !store.projects.length) return `<div class="sb-empty">${t("sidebar.empty.title")}<br>${t("sidebar.empty.hint")}</div>`;
     const agents = (["claude", "codex", "opencode"] as ToolKind[]).filter((t) => store.toolEnabled(t));
     // Com um só agente configurado, o "+" já basta (sem ícones repetidos).
     const tools = (cwd: string) =>
       (agents.length <= 1 ? [] : ([...agents, "shell"] as ToolKind[]))
-        .map((t) => `<button class="sb-tool" data-new="${esc(cwd)}" data-tool="${t}" title="Novo ${TOOLS[t].short} aqui">${toolIcon(t, 13)}</button>`)
+        .map((k) => `<button class="sb-tool" data-new="${esc(cwd)}" data-tool="${k}" title="${t("sidebar.newToolHere", { tool: TOOLS[k].short })}">${toolIcon(k, 13)}</button>`)
         .join("");
     return groupSessions(mine)
           .map((g) => {
@@ -157,11 +158,11 @@ export class Sidebar {
             const tree = g.git;
             const focused = store.project === g.key;
             const out = !!store.project && !focused;
-            const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? "Mostrar todos os projetos" : "Ver só este projeto (Painéis e Quadro)"}">${ICON.focus}</button>`;
-            const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="Tirar da barra (não apaga a pasta)">${ICON.close}</button>` : "";
+            const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
+            const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
             const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? '<span class="pg-flag">só este</span>' : ""}<span class="cnt">${all.length}</span>
-                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="Nova sessão ${TOOLS[lastTool(all)].short} neste projeto">+</button></span></div>`;
+                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}<span class="cnt">${all.length}</span>
+                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">+</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
             // Repositório: branch principal primeiro, depois os worktrees, todos sempre visíveis.
@@ -171,11 +172,11 @@ export class Sidebar {
                 const rows = w.sessions.map((s) => this.row(s)).join("");
                 if (!tree) return rows;
                 const tool = lastTool(w.sessions.length ? w.sessions : all);
-                return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : '<em>worktree</em>'}
-                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="Nova sessão ${TOOLS[tool].short} em ${esc(w.label)}">+</button></span></div>${rows || '<div class="wt-none">sem sessões</div>'}</div>`;
+                return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : `<em>${t("sidebar.worktree")}</em>`}
+                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="${t("sidebar.newInWorktree", { tool: TOOLS[tool].short, branch: esc(w.label) })}">+</button></span></div>${rows || `<div class="wt-none">${t("sidebar.noSessions")}</div>`}</div>`;
               })
               .join("");
-            return `<div class="${cls}">${head}${body || (all.length ? "" : '<div class="pg-none">Sem sessões · use o “+”</div>')}</div>`;
+            return `<div class="${cls}">${head}${body || (all.length ? "" : `<div class="pg-none">${t("sidebar.noSessionsHint")}</div>`)}</div>`;
           })
           .join("");
   }
@@ -232,7 +233,7 @@ export class Sidebar {
     if (!item || !s) return;
     showTip(
       item,
-      `<b>${esc(s.title)}</b> <span>· ${TOOLS[s.tool].short} · ${esc(basename(s.cwd))}${s.minimized ? " · recolhida" : ""}</span><div class="st ${s.runtime.status}" style="margin-top:6px;--acc:${sessionColor(s)}">${statusPill(s.runtime.status)}</div>`,
+      `<b>${esc(s.title)}</b> <span>· ${TOOLS[s.tool].short} · ${esc(basename(s.cwd))}${s.minimized ? ` · ${t("sidebar.minimized")}` : ""}</span><div class="st ${s.runtime.status}" style="margin-top:6px;--acc:${sessionColor(s)}">${statusPill(s.runtime.status)}</div>`,
     );
   }
 

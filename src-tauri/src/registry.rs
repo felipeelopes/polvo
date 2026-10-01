@@ -202,7 +202,7 @@ impl Registry {
             .iter()
             .find(|s| s.id == id)
             .cloned()
-            .ok_or_else(|| AppError::msg("Sessão não encontrada"))
+            .ok_or_else(|| AppError::msg(crate::i18n::tr("registry.sessionNotFound", &[])))
     }
 
     fn claimed_ids(&self, except: &str) -> HashSet<String> {
@@ -240,9 +240,9 @@ impl Registry {
         let rec = self.record(id)?;
         let cwd = PathBuf::from(&rec.cwd);
         if !cwd.is_dir() {
-            return Err(AppError::msg(format!(
-                "A pasta {} não existe mais.",
-                rec.cwd
+            return Err(AppError::msg(crate::i18n::tr(
+                "registry.folderGone",
+                &[("path", &rec.cwd)],
             )));
         }
         let settings = app.state::<SettingsState>().get();
@@ -405,7 +405,7 @@ impl Registry {
                     0,
                     WindowRecord {
                         label: windows::MAIN.into(),
-                        name: "Janela 1".into(),
+                        name: crate::i18n::tr("registry.windowName", &[("n", "1")]),
                     },
                 );
             }
@@ -559,12 +559,17 @@ impl Registry {
             let mut inner = self.inner.lock();
             let used: HashSet<String> = inner.ws.windows.iter().map(|w| w.name.clone()).collect();
             let n = (2..)
-                .find(|n| !used.contains(&format!("Janela {n}")))
+                .find(|n| {
+                    !used.contains(&crate::i18n::tr(
+                        "registry.windowName",
+                        &[("n", &n.to_string())],
+                    ))
+                })
                 .unwrap_or(2);
             let id = uuid::Uuid::new_v4().simple().to_string();
             let rec = WindowRecord {
                 label: format!("w-{}", &id[..8]),
-                name: format!("Janela {n}"),
+                name: crate::i18n::tr("registry.windowName", &[("n", &n.to_string())]),
             };
             inner.ws.windows.push(rec.clone());
             Self::save(&inner);
@@ -674,7 +679,10 @@ pub fn session_create(
 ) -> AppResult<String> {
     let cwd = req.cwd.trim().to_string();
     if !Path::new(&cwd).is_dir() {
-        return Err(AppError::msg("Escolha uma pasta que exista."));
+        return Err(AppError::msg(crate::i18n::tr(
+            "registry.folderMustExist",
+            &[],
+        )));
     }
     let id = uuid::Uuid::new_v4().simple().to_string()[..12].to_string();
     let folder = Path::new(&cwd)
@@ -740,7 +748,7 @@ pub fn session_update(
             .sessions
             .iter_mut()
             .find(|s| s.id == id)
-            .ok_or_else(|| AppError::msg("Sessão não encontrada"))?;
+            .ok_or_else(|| AppError::msg(crate::i18n::tr("registry.sessionNotFound", &[])))?;
         if let Some(t) = patch.title.filter(|t| !t.trim().is_empty()) {
             r.title = t.trim().to_string();
             r.title_locked = true;
@@ -761,7 +769,10 @@ pub fn session_update(
         }
         let window = r.window.clone();
         if !inner.ws.windows.iter().any(|w| w.label == window) {
-            return Err(AppError::msg("Essa janela não está aberta."));
+            return Err(AppError::msg(crate::i18n::tr(
+                "registry.windowNotOpen",
+                &[],
+            )));
         }
         Registry::save(&inner);
     }

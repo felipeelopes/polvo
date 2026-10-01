@@ -5,6 +5,7 @@ import { store } from "../core/store";
 import type { Side, StartMode, ToolKind } from "../core/types";
 import { basename, esc, h } from "./dom";
 import { TOOLS, toolIcon } from "./icons";
+import { t } from "../i18n";
 
 export interface NewSessionTarget {
   id: string;
@@ -34,22 +35,22 @@ export function openNewSession(
 
   const render = () => {
     box.innerHTML = `
-      <h2>${opts.cwd ? `Abrir “${esc(basename(opts.cwd))}” no Polvo` : "Nova sessão"}</h2>
-      <div class="sub">${opts.cwd ? "Escolha com qual agente abrir esta pasta." : near ? `Abre ${target!.side === "right" ? "à direita" : "abaixo"} de “${esc(near.title)}”.` : "Entra no maior espaço livre. Depois é só arrastar."}</div>
+      <h2>${opts.cwd ? t("newSession.openIn", { name: esc(basename(opts.cwd)) }) : t("newSession.title")}</h2>
+      <div class="sub">${opts.cwd ? t("newSession.openInSub") : near ? t(target!.side === "right" ? "newSession.nearRight" : "newSession.nearBelow", { title: esc(near.title) }) : t("newSession.freeSpace")}</div>
       <div class="tools" style="grid-template-columns:repeat(${choices.length},1fr)">${choices
         .map(
           (k) =>
-            `<button class="tool${k === tool ? " on" : ""}" data-t="${k}" style="--acc:${TOOLS[k].color}" ${store.tools[k] ? "" : 'disabled title="Não encontrado no PATH"'}><span class="ic">${toolIcon(k, 17)}</span><b>${TOOLS[k].short}</b><small>${store.tools[k] ? TOOLS[k].vendor : "não instalado"}</small></button>`,
+            `<button class="tool${k === tool ? " on" : ""}" data-t="${k}" style="--acc:${TOOLS[k].color}" ${store.tools[k] ? "" : `disabled title="${t("newSession.notInPath")}"`}><span class="ic">${toolIcon(k, 17)}</span><b>${TOOLS[k].short}</b><small>${store.tools[k] ? TOOLS[k].vendor : t("newSession.notInstalled")}</small></button>`,
         )
         .join("")}</div>
-      <span class="lbl">Pasta do projeto</span>
-      <div class="path"><input class="txt" data-cwd placeholder="C:\\caminho\\do\\projeto" value="${esc(cwd)}" spellcheck="false"><button class="ghost" data-browse>Procurar…</button></div>
+      <span class="lbl">${t("newSession.folder")}</span>
+      <div class="path"><input class="txt" data-cwd placeholder="${esc(t("newSession.folderPlaceholder"))}" value="${esc(cwd)}" spellcheck="false"><button class="ghost" data-browse>${t("newSession.browse")}</button></div>
       ${store.recentDirs.length ? `<div class="chips">${store.recentDirs.slice(0, 8).map((d) => `<button data-dir="${esc(d)}" class="${d === cwd ? "on" : ""}" title="${esc(d)}">${esc(basename(d))}</button>`).join("")}</div>` : ""}
-      <span class="lbl">Nome (opcional)</span>
-      <input class="txt" data-name placeholder="ex.: Migração do banco" autocomplete="off">
-      ${tool === "shell" ? "" : `<span class="lbl">Começar</span><div class="chips"><button data-mode="new" class="${mode === "new" ? "on" : ""}">Conversa nova</button><button data-mode="continue" class="${mode === "continue" ? "on" : ""}">Continuar a última desta pasta</button></div>`}
+      <span class="lbl">${t("newSession.name")}</span>
+      <input class="txt" data-name placeholder="${esc(t("newSession.namePlaceholder"))}" autocomplete="off">
+      ${tool === "shell" ? "" : `<span class="lbl">${t("newSession.start")}</span><div class="chips"><button data-mode="new" class="${mode === "new" ? "on" : ""}">${t("newSession.modeNew")}</button><button data-mode="continue" class="${mode === "continue" ? "on" : ""}">${t("newSession.modeContinue")}</button></div>`}
       <div class="err"></div>
-      <div class="mfoot"><span class="hk">Enter cria · Esc cancela</span><button class="ghost" data-cancel>Cancelar</button><button class="primary" data-create>Criar sessão</button></div>`;
+      <div class="mfoot"><span class="hk">${t("newSession.hint")}</span><button class="ghost" data-cancel>${t("newSession.cancel")}</button><button class="primary" data-create>${t("newSession.create")}</button></div>`;
     box.querySelector<HTMLInputElement>("[data-name]")!.focus();
   };
 
@@ -58,7 +59,7 @@ export function openNewSession(
     const err = box.querySelector<HTMLElement>(".err")!;
     cwd = box.querySelector<HTMLInputElement>("[data-cwd]")!.value.trim();
     if (!cwd) {
-      err.textContent = "Escolha a pasta do projeto.";
+      err.textContent = t("newSession.folderRequired");
       return;
     }
     const btn = box.querySelector<HTMLButtonElement>("[data-create]")!;
@@ -77,33 +78,33 @@ export function openNewSession(
   };
 
   box.addEventListener("click", async (e) => {
-    const t = e.target as Element;
-    const toolBtn = t.closest<HTMLButtonElement>("[data-t]");
+    const target = e.target as Element;
+    const toolBtn = target.closest<HTMLButtonElement>("[data-t]");
     if (toolBtn && !toolBtn.disabled) {
       tool = toolBtn.dataset.t as ToolKind;
       cwd = box.querySelector<HTMLInputElement>("[data-cwd]")!.value;
       render();
     }
-    const dir = t.closest<HTMLElement>("[data-dir]")?.dataset.dir;
+    const dir = target.closest<HTMLElement>("[data-dir]")?.dataset.dir;
     if (dir) {
       cwd = dir;
       render();
     }
-    const m = t.closest<HTMLElement>("[data-mode]")?.dataset.mode as StartMode | undefined;
+    const m = target.closest<HTMLElement>("[data-mode]")?.dataset.mode as StartMode | undefined;
     if (m) {
       mode = m;
       cwd = box.querySelector<HTMLInputElement>("[data-cwd]")!.value;
       render();
     }
-    if (t.closest("[data-browse]")) {
-      const picked = await open({ directory: true, defaultPath: cwd || undefined, title: "Pasta do projeto" });
+    if (target.closest("[data-browse]")) {
+      const picked = await open({ directory: true, defaultPath: cwd || undefined, title: t("newSession.folder") });
       if (typeof picked === "string") {
         cwd = picked;
         render();
       }
     }
-    if (t.closest("[data-cancel]")) close();
-    if (t.closest("[data-create]")) void create();
+    if (target.closest("[data-cancel]")) close();
+    if (target.closest("[data-create]")) void create();
   });
   modal.addEventListener("pointerdown", (e) => {
     if (e.target === modal) close();

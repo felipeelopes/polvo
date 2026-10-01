@@ -1,10 +1,11 @@
 // Limites de uso por provedor: anéis compactos na barra de título + detalhe.
 import { ipc } from "../core/ipc";
 import { store } from "../core/store";
-import type { ToolKind, UsageSnapshot } from "../core/types";
+import type { ToolKind, UsageSnapshot, UsageWindow } from "../core/types";
 import { ago, until } from "./dom";
 import { popover, refreshPopover } from "./feedback";
 import { TOOLS, toolIcon } from "./icons";
+import { t, tn } from "../i18n";
 
 const PROVIDERS: ToolKind[] = ["claude", "codex", "opencode"];
 
@@ -42,11 +43,31 @@ export const versionActions = {
   update: (_tool: ToolKind) => {},
 };
 
-const SOURCE: Record<string, string> = {
-  claude: "Lido pela statusline do Claude Code (planos Pro/Max).",
-  codex: "Lido dos arquivos de sessão do Codex.",
-  opencode: "Via opencode stats (chaves de API próprias, sem limite de plano).",
-};
+const source = (tool: ToolKind): string => (PROVIDERS.includes(tool) ? t(`usage.source.${tool}`) : "");
+
+/** O backend manda os rótulos das janelas em português; traduz os conhecidos. */
+function winLabel(w: UsageWindow): string {
+  const fixed: Record<string, string> = {
+    "Sessão (janela de 5h)": "usage.window.session5h",
+    Semanal: "usage.window.weekly",
+    "Gasto hoje": "usage.window.spentToday",
+    "Gasto em 30 dias": "usage.window.spent30d",
+  };
+  if (fixed[w.label]) return t(fixed[w.label]);
+  const days = /^Janela de (\d+) dias$/.exec(w.label);
+  if (days) return t("usage.window.days", { n: days[1] });
+  const hours = /^Janela de (\d+)h$/.exec(w.label);
+  if (hours) return t("usage.window.hours", { n: hours[1] });
+  return w.label;
+}
+
+function winShort(w: UsageWindow): string {
+  if (w.short === "sem") return t("usage.short.week");
+  if (w.short === "hoje") return t("usage.short.today");
+  return w.short;
+}
+
+const planLabel = (plan: string): string => (plan === "Chaves de API próprias" ? t("usage.plan.ownKeys") : plan);
 
 export const levelColor = (tool: ToolKind, p: number) => (p >= 85 ? "#E5534B" : p >= 75 ? "#E5A33A" : TOOLS[tool].color);
 
@@ -95,19 +116,19 @@ export function renderRings(container: HTMLElement): void {
     .map((p) => {
       const u = store.usage.find((x) => x.provider === p);
       const w = u?.windows.find((x) => x.usedPercent !== null);
-      const t = TOOLS[p];
+      const info = TOOLS[p];
       const { short, long } = split(u);
       if (short && long) {
         const s5 = Math.round(short.usedPercent!);
         const sl = Math.round(long.usedPercent!);
-        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}" title="Anel de fora: ${long.label} · anel de dentro: ${short.label}">${doubleRing(sl, s5, p)}<div><b>${t.short}</b><span>5h ${s5}% · ${long.short} ${sl}%</span></div></button>`;
+        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}" title="${t("usage.ringsTitle", { outer: winLabel(long), inner: winLabel(short) })}">${doubleRing(sl, s5, p)}<div><b>${info.short}</b><span>${winShort(short)} ${s5}% · ${winShort(long)} ${sl}%</span></div></button>`;
       }
       if (w) {
         const pct = Math.round(w.usedPercent!);
-        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(pct, levelColor(p, pct))}<div><b>${t.short}</b><span>${pct}% · ${w.short}</span></div></button>`;
+        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(pct, levelColor(p, pct))}<div><b>${info.short}</b><span>${pct}% · ${winShort(w)}</span></div></button>`;
       }
       const value = u?.windows[0]?.value;
-      return `<button class="ur${value ? "" : " none"}${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(0, t.color)}<div><b>${t.short}</b><span>${value ? `${value} ${u!.windows[0].short}` : "sem dados"}</span></div></button>`;
+      return `<button class="ur${value ? "" : " none"}${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(0, info.color)}<div><b>${info.short}</b><span>${value ? `${value} ${winShort(u!.windows[0])}` : t("usage.noData")}</span></div></button>`;
     })
     .join("");
 }
@@ -121,23 +142,23 @@ export function refreshUsagePopovers(): void {
 }
 
 function paint(el: HTMLElement, provider: ToolKind): void {
-  const t = TOOLS[provider];
+  const info = TOOLS[provider];
   const u: UsageSnapshot | undefined = store.usage.find((x) => x.provider === provider);
   const sessions = store.sessions.filter((s) => s.tool === provider);
   const rows = u
     ? u.windows
         .map((w) => {
           const pct = w.usedPercent;
-          return `<div class="pr"><div class="pl"><span>${w.label}</span><b>${pct !== null ? `${Math.round(pct)}%` : (w.value ?? "—")}</b></div>
+          return `<div class="pr"><div class="pl"><span>${winLabel(w)}</span><b>${pct !== null ? `${Math.round(pct)}%` : (w.value ?? "—")}</b></div>
             ${pct !== null ? `<span class="bar"><i style="width:${pct}%;background:${levelColor(provider, pct)}"></i></span>` : ""}
-            ${w.resetsAt ? `<div class="prs">reinicia em ${until(w.resetsAt)}</div>` : ""}</div>`;
+            ${w.resetsAt ? `<div class="prs">${t("usage.resetsIn", { time: until(w.resetsAt) })}</div>` : ""}</div>`;
         })
         .join("")
-    : `<p class="prs">Ainda sem dados. ${provider === "claude" ? "Os limites aparecem depois da primeira resposta numa sessão do Claude Code aberta pelo Polvo (planos Pro/Max)." : "Abra e use uma sessão para começar a medir."}</p>`;
-  el.innerHTML = `<div class="poph" style="--acc:${t.color}"><span class="ic">${toolIcon(provider, 16)}</span><div><b>${t.name}</b><span>${u?.plan ?? t.vendor}</span></div></div>
+    : `<p class="prs">${t("usage.empty")} ${provider === "claude" ? t("usage.emptyClaude") : t("usage.emptyOther")}</p>`;
+  el.innerHTML = `<div class="poph" style="--acc:${info.color}"><span class="ic">${toolIcon(provider, 16)}</span><div><b>${info.name}</b><span>${u?.plan ? planLabel(u.plan) : info.vendor}</span></div></div>
     ${rows}
     ${versionSection(provider)}
-    <div class="pf">${sessions.length} ${sessions.length === 1 ? "sessão" : "sessões"} · ${u ? `atualizado ${ago(u.observedAt)}` : "—"}<br>${SOURCE[provider]}</div>`;
+    <div class="pf">${tn("usage.sessions", sessions.length)} · ${u ? t("usage.updated", { ago: ago(u.observedAt) }) : "—"}<br>${source(provider)}</div>`;
   el.onclick = (e) => {
     const a = (e.target as Element).closest<HTMLElement>("[data-va]")?.dataset.va;
     if (a === "restart") versionActions.restart(provider);
@@ -152,8 +173,8 @@ function versionSection(tool: ToolKind): string {
   const newer = newerAvailable(tool);
   const oldVersions = [...new Set(old.map((s) => s.runtime.version))].join(", ");
   return `<div class="pv">
-    <div class="pl"><span>Versão instalada</span><b>v${v.installed}</b></div>
-    ${newer ? `<div class="pv-row"><span>Nova versão <b>v${newer}</b> disponível</span><button class="primary sm" data-va="update">Atualizar</button></div>` : '<div class="prs">Você está na versão mais recente.</div>'}
-    ${old.length ? `<div class="pv-row"><span>${old.length} ${old.length === 1 ? "sessão rodando" : "sessões rodando"} v${oldVersions}</span><button class="primary sm" data-va="restart">Reiniciar na v${v.installed}</button></div>` : ""}
+    <div class="pl"><span>${t("usage.installed")}</span><b>v${v.installed}</b></div>
+    ${newer ? `<div class="pv-row"><span>${t("usage.newer", { version: newer })}</span><button class="primary sm" data-va="update">${t("usage.update")}</button></div>` : `<div class="prs">${t("usage.latest")}</div>`}
+    ${old.length ? `<div class="pv-row"><span>${tn("usage.running", old.length, { versions: oldVersions })}</span><button class="primary sm" data-va="restart">${t("usage.restart", { version: v.installed })}</button></div>` : ""}
   </div>`;
 }

@@ -5,6 +5,7 @@ import "../styles/docs.css";
 import { open as openDialog } from "@tauri-apps/plugin-dialog";
 import { ipc } from "../core/ipc";
 import { store } from "../core/store";
+import { t, tn } from "../i18n";
 import { basename, esc, h } from "../ui/dom";
 import { closePopover, popover, toast } from "../ui/feedback";
 import type { DocEditor } from "./editor";
@@ -103,7 +104,7 @@ class Doc {
 
   renderTab(): void {
     this.tab.className = `dtab${this.panel.active === this ? " on" : ""}${this.dirty ? " dirty" : ""}`;
-    this.tab.innerHTML = `${I.doc}<span>${esc(this.name)}</span><i class="dtab-dot"></i><span class="dtab-x" title="Fechar (Ctrl+W)">${I.x}</span>`;
+    this.tab.innerHTML = `${I.doc}<span>${esc(this.name)}</span><i class="dtab-dot"></i><span class="dtab-x" title="${esc(t("docs.panel.closeTab"))}">${I.x}</span>`;
   }
 
   async setMode(mode: Mode): Promise<void> {
@@ -114,7 +115,7 @@ class Doc {
       const { createEditor } = await loadEditor();
       if (this.editor) return;
       this.editor = createEditor(this.edHost, this.text, {
-        change: (t) => this.onEdit(t),
+        change: (text) => this.onEdit(text),
         save: () => void this.save(),
         scroll: (r) => this.syncScroll(r),
       });
@@ -147,7 +148,7 @@ class Doc {
     try {
       tpl.innerHTML = renderMarkdown(this.text);
     } catch (e) {
-      tpl.innerHTML = `<p class="md-err">Não foi possível exibir este documento: ${esc(String(e))}</p>`;
+      tpl.innerHTML = `<p class="md-err">${esc(t("docs.panel.renderError", { error: String(e) }))}</p>`;
     }
     const frag = tpl.content;
     enhance(frag as unknown as HTMLElement);
@@ -185,9 +186,10 @@ class Doc {
 
   private buildToc(): void {
     const heads = [...this.article.querySelectorAll<HTMLElement>("h1[id], h2[id], h3[id], h4[id]")];
+    const tocH = `<div class="toc-h">${esc(t("docs.panel.toc"))}</div>`;
     this.toc.innerHTML = heads.length
-      ? `<div class="toc-h">Sumário</div>${heads.map((x) => `<button data-h="${esc(x.id)}" class="l${x.tagName[1]}">${esc(x.textContent ?? "")}</button>`).join("")}`
-      : `<div class="toc-h">Sumário</div><div class="toc-none">Sem títulos</div>`;
+      ? `${tocH}${heads.map((x) => `<button data-h="${esc(x.id)}" class="l${x.tagName[1]}">${esc(x.textContent ?? "")}</button>`).join("")}`
+      : `${tocH}<div class="toc-none">${esc(t("docs.panel.tocEmpty"))}</div>`;
     this.markToc();
   }
 
@@ -212,17 +214,17 @@ class Doc {
   }
 
   private onClick(e: MouseEvent): void {
-    const t = e.target as Element;
-    const copy = t.closest<HTMLElement>("[data-copy]");
+    const target = e.target as Element;
+    const copy = target.closest<HTMLElement>("[data-copy]");
     if (copy) {
       const code = copy.closest(".code")?.querySelector("code")?.textContent ?? "";
       navigator.clipboard.writeText(code).then(() => {
-        copy.textContent = "Copiado";
-        window.setTimeout(() => (copy.textContent = "Copiar"), 1400);
+        copy.textContent = t("docs.panel.copied");
+        window.setTimeout(() => (copy.textContent = t("docs.panel.copy")), 1400);
       }, () => {});
       return;
     }
-    const a = t.closest<HTMLAnchorElement>("a[href]");
+    const a = target.closest<HTMLAnchorElement>("a[href]");
     if (!a) return;
     e.preventDefault();
     const href = a.getAttribute("href") ?? "";
@@ -240,7 +242,7 @@ class Doc {
     }
     const path = resolvePath(dirname(this.path), rel);
     if (MD_EXT.test(path)) void this.panel.open(path, hash ? decodeURIComponent(hash) : undefined);
-    else ipc.fileReveal(path).catch(() => toast("Arquivo não encontrado"));
+    else ipc.fileReveal(path).catch(() => toast(t("docs.panel.fileNotFound")));
   }
 
   private onTask(e: Event): void {
@@ -263,9 +265,9 @@ class Doc {
       this.missing = false;
       this.renderTab();
       this.panel.renderHead();
-      if (!quiet) toast(`“${this.name}” salvo`);
+      if (!quiet) toast(t("docs.panel.saved", { name: this.name }));
     } catch (e) {
-      toast(`Não foi possível salvar: ${e}`);
+      toast(t("docs.panel.saveError", { error: String(e) }));
     }
   }
 
@@ -345,7 +347,7 @@ export class DocsPanel {
     const grip = h("div", "docs-grip");
     const top = h("div", "docs-h");
     const add = h("button", "dtab-add", I.plus);
-    add.title = "Abrir arquivo Markdown…";
+    add.title = t("docs.panel.openFile");
     add.onclick = () => void this.pick();
     const tabsWrap = h("div", "dtabs-wrap");
     tabsWrap.append(this.tabs, add);
@@ -422,22 +424,22 @@ export class DocsPanel {
   renderHead(): void {
     const d = this.active;
     if (!d) return;
-    const mode = (m: Mode, label: string, key: string) => `<button data-mode="${m}" class="${d.mode === m ? "on" : ""}" title="${label} (${key})">${label}</button>`;
+    const mode = (m: Mode, label: string, key: string) => `<button data-mode="${m}" class="${d.mode === m ? "on" : ""}" title="${esc(label)} (${key})">${esc(label)}</button>`;
     const tocOn = d.el.classList.contains("toc-on");
-    this.head.innerHTML = `<div class="seg dmode">${mode("read", "Ler", "Ctrl+1")}${mode("split", "Dividir", "Ctrl+2")}${mode("edit", "Editar", "Ctrl+3")}</div>
-      <button class="ibtn${tocOn ? " on" : ""}" data-a="toc" title="Sumário">${I.toc}</button>
-      <button class="ibtn${d.dirty ? " hot" : ""}" data-a="save" title="Salvar (Ctrl+S)" ${d.dirty ? "" : "disabled"}>${I.save}</button>
-      <button class="ibtn" data-a="more" data-pop title="Mais">${I.more}</button>
-      <button class="ibtn" data-a="max" title="${this.maximized ? "Restaurar" : "Expandir"}">${this.maximized ? I.min : I.max}</button>
-      <button class="ibtn" data-a="close" title="Fechar painel">${I.x}</button>`;
-    this.info.innerHTML = `<span class="docs-path" title="${esc(d.path)}">${esc(d.path)}</span><span class="docs-state${d.dirty ? " dirty" : ""}">${d.dirty ? "Não salvo" : "Salvo"}</span>`;
-    if (d.missing) this.showBar("O arquivo foi apagado ou movido.", `<button data-b="save">Salvar de novo</button><button data-b="close">Fechar aba</button>`);
-    else if (d.conflict) this.showBar("O arquivo mudou no disco e você tem alterações não salvas.", `<button data-b="reload">Usar a versão do disco</button><button data-b="keep">Manter as minhas</button>`);
+    this.head.innerHTML = `<div class="seg dmode">${mode("read", t("docs.panel.modeRead"), "Ctrl+1")}${mode("split", t("docs.panel.modeSplit"), "Ctrl+2")}${mode("edit", t("docs.panel.modeEdit"), "Ctrl+3")}</div>
+      <button class="ibtn${tocOn ? " on" : ""}" data-a="toc" title="${esc(t("docs.panel.toc"))}">${I.toc}</button>
+      <button class="ibtn${d.dirty ? " hot" : ""}" data-a="save" title="${esc(t("docs.panel.save"))}" ${d.dirty ? "" : "disabled"}>${I.save}</button>
+      <button class="ibtn" data-a="more" data-pop title="${esc(t("docs.panel.more"))}">${I.more}</button>
+      <button class="ibtn" data-a="max" title="${esc(t(this.maximized ? "docs.panel.restore" : "docs.panel.expand"))}">${this.maximized ? I.min : I.max}</button>
+      <button class="ibtn" data-a="close" title="${esc(t("docs.panel.closePanel"))}">${I.x}</button>`;
+    this.info.innerHTML = `<span class="docs-path" title="${esc(d.path)}">${esc(d.path)}</span><span class="docs-state${d.dirty ? " dirty" : ""}">${esc(t(d.dirty ? "docs.panel.stateUnsaved" : "docs.panel.stateSaved"))}</span>`;
+    if (d.missing) this.showBar(t("docs.panel.missing"), `<button data-b="save">${esc(t("docs.panel.saveAgain"))}</button><button data-b="close">${esc(t("docs.panel.closeTabButton"))}</button>`);
+    else if (d.conflict) this.showBar(t("docs.panel.conflict"), `<button data-b="reload">${esc(t("docs.panel.useDisk"))}</button><button data-b="keep">${esc(t("docs.panel.keepMine"))}</button>`);
     else this.bar.hidden = true;
   }
 
   private showBar(text: string, buttons: string): void {
-    this.bar.innerHTML = `<span>${text}</span>${buttons}`;
+    this.bar.innerHTML = `<span>${esc(text)}</span>${buttons}`;
     this.bar.hidden = false;
   }
 
@@ -459,16 +461,16 @@ export class DocsPanel {
   }
 
   private onAction(e: MouseEvent): void {
-    const t = e.target as Element;
+    const target = e.target as Element;
     const d = this.active;
     if (!d) return;
-    const mode = t.closest<HTMLElement>("[data-mode]")?.dataset.mode as Mode | undefined;
+    const mode = target.closest<HTMLElement>("[data-mode]")?.dataset.mode as Mode | undefined;
     if (mode) {
       void d.setMode(mode).then(() => this.renderHead());
       this.renderHead();
       return;
     }
-    const btn = t.closest<HTMLElement>("[data-a]");
+    const btn = target.closest<HTMLElement>("[data-a]");
     switch (btn?.dataset.a) {
       case "toc":
         d.el.classList.toggle("toc-on");
@@ -496,14 +498,14 @@ export class DocsPanel {
       "docs-more",
       anchor,
       (el) => {
-        el.innerHTML = `<button data-m="reload">Recarregar do disco</button><button data-m="reveal">Mostrar no Explorer</button><button data-m="copy">Copiar caminho</button><hr><button data-m="open">Abrir outro arquivo…</button>`;
+        el.innerHTML = `<button data-m="reload">${esc(t("docs.panel.reload"))}</button><button data-m="reveal">${esc(t("docs.panel.reveal"))}</button><button data-m="copy">${esc(t("docs.panel.copyPath"))}</button><hr><button data-m="open">${esc(t("docs.panel.openOther"))}</button>`;
         el.onclick = (e) => {
           const m = (e.target as Element).closest<HTMLElement>("[data-m]")?.dataset.m;
           if (!m) return;
           closePopover();
           if (m === "reload") void (d.dirty ? this.confirmDiscard([d]).then((ok) => (ok ? d.reload() : undefined)) : d.reload());
           if (m === "reveal") ipc.fileReveal(d.path).catch((err) => toast(String(err)));
-          if (m === "copy") navigator.clipboard.writeText(d.path).then(() => toast("Caminho copiado"), () => {});
+          if (m === "copy") navigator.clipboard.writeText(d.path).then(() => toast(t("docs.panel.pathCopied")), () => {});
           if (m === "open") void this.pick();
         };
       },
@@ -594,8 +596,8 @@ export class DocsPanel {
     return new Promise((resolve) => {
       const modal = h("div", "modal");
       const names = docs.map((d) => `<li>${I.doc}<span>${esc(d.name)}</span></li>`).join("");
-      modal.innerHTML = `<div class="mbox guard"><h2>Salvar alterações?</h2><div class="sub">${docs.length === 1 ? "Este documento tem alterações não salvas." : `${docs.length} documentos têm alterações não salvas.`}</div><ul class="busy">${names}</ul>
-        <div class="mfoot"><span class="hk"></span><button class="ghost" data-c="cancel">Cancelar</button><button class="ghost" data-c="discard">Descartar</button><button class="primary" data-c="save">Salvar</button></div></div>`;
+      modal.innerHTML = `<div class="mbox guard"><h2>${esc(t("docs.discard.title"))}</h2><div class="sub">${esc(tn("docs.discard.sub", docs.length))}</div><ul class="busy">${names}</ul>
+        <div class="mfoot"><span class="hk"></span><button class="ghost" data-c="cancel">${esc(t("docs.discard.cancel"))}</button><button class="ghost" data-c="discard">${esc(t("docs.discard.discard"))}</button><button class="primary" data-c="save">${esc(t("docs.discard.save"))}</button></div></div>`;
       const done = (ok: boolean) => {
         modal.remove();
         resolve(ok);

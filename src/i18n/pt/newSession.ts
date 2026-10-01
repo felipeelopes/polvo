@@ -1,0 +1,23 @@
+// Textos de origem (pt-BR) do namespace "newSession".
+export default {
+  title: "Nova sessão",
+  openIn: "Abrir “{name}” no Polvo",
+  openInSub: "Escolha com qual agente abrir esta pasta.",
+  nearRight: "Abre à direita de “{title}”.",
+  nearBelow: "Abre abaixo de “{title}”.",
+  freeSpace: "Entra no maior espaço livre. Depois é só arrastar.",
+  notInPath: "Não encontrado no PATH",
+  notInstalled: "não instalado",
+  folder: "Pasta do projeto",
+  folderPlaceholder: "C:\\caminho\\do\\projeto",
+  browse: "Procurar…",
+  name: "Nome (opcional)",
+  namePlaceholder: "ex.: Migração do banco",
+  start: "Começar",
+  modeNew: "Conversa nova",
+  modeContinue: "Continuar a última desta pasta",
+  hint: "Enter cria · Esc cancela",
+  cancel: "Cancelar",
+  create: "Criar sessão",
+  folderRequired: "Escolha a pasta do projeto.",
+};

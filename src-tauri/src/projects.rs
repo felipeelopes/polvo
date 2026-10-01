@@ -33,7 +33,7 @@ fn git(dir: &Path, args: &[&str]) -> AppResult<()> {
     hide_console(&mut cmd);
     let out = cmd
         .output()
-        .map_err(|_| AppError::msg("O git não foi encontrado no PATH."))?;
+        .map_err(|_| AppError::msg(crate::i18n::tr("projects.gitNotFound", &[])))?;
     if out.status.success() {
         Ok(())
     } else {
@@ -53,7 +53,10 @@ pub fn projects_list(reg: State<Registry>) -> Vec<ProjectRecord> {
 pub fn project_add(app: AppHandle, reg: State<Registry>, path: String) -> AppResult<ProjectRecord> {
     let p = PathBuf::from(path.trim());
     if !p.is_dir() {
-        return Err(AppError::msg("Escolha uma pasta que exista."));
+        return Err(AppError::msg(crate::i18n::tr(
+            "projects.folderMustExist",
+            &[],
+        )));
     }
     Ok(reg.add_project(&app, &p.to_string_lossy(), &name_of(&p)))
 }
@@ -69,16 +72,20 @@ pub async fn project_create(
 ) -> AppResult<ProjectRecord> {
     let name = name.trim();
     if name.is_empty() || name.contains(['\\', '/', ':', '*', '?', '"', '<', '>', '|']) {
-        return Err(AppError::msg("Dê um nome válido para a pasta do projeto."));
+        return Err(AppError::msg(crate::i18n::tr("projects.invalidName", &[])));
     }
     let parent = PathBuf::from(parent.trim());
     if !parent.is_dir() {
-        return Err(AppError::msg("A pasta onde criar o projeto não existe."));
+        return Err(AppError::msg(crate::i18n::tr(
+            "projects.parentMissing",
+            &[],
+        )));
     }
     let dir = parent.join(name);
     if dir.exists() {
-        return Err(AppError::msg(format!(
-            "Já existe uma pasta chamada “{name}” ali."
+        return Err(AppError::msg(crate::i18n::tr(
+            "projects.folderExists",
+            &[("name", name)],
         )));
     }
     std::fs::create_dir_all(&dir)?;
@@ -98,11 +105,14 @@ pub async fn project_clone(
 ) -> AppResult<ProjectRecord> {
     let url = url.trim().to_string();
     if url.is_empty() {
-        return Err(AppError::msg("Informe o endereço do repositório."));
+        return Err(AppError::msg(crate::i18n::tr("projects.urlRequired", &[])));
     }
     let parent = PathBuf::from(parent.trim());
     if !parent.is_dir() {
-        return Err(AppError::msg("A pasta de destino não existe."));
+        return Err(AppError::msg(crate::i18n::tr(
+            "projects.destinationMissing",
+            &[],
+        )));
     }
     let name = url
         .trim_end_matches('/')
@@ -113,8 +123,9 @@ pub async fn project_clone(
         .to_string();
     let dir = parent.join(&name);
     if dir.exists() {
-        return Err(AppError::msg(format!(
-            "Já existe uma pasta chamada “{name}” ali."
+        return Err(AppError::msg(crate::i18n::tr(
+            "projects.folderExists",
+            &[("name", &name)],
         )));
     }
     let target = dir.to_string_lossy().into_owned();

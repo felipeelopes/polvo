@@ -8,11 +8,21 @@ import { ago, basename, esc, h } from "./dom";
 import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { Pane, type PaneHandlers } from "./pane";
 import { levelColor } from "./usage";
+import { t } from "../i18n";
 
-const COLUMNS: { key: string; title: string; color: string; sub: string; match: (s: Status) => boolean }[] = [
-  { key: "waiting", title: "Aguardando você", color: "#E5A33A", sub: "responda para destravar", match: (s) => s === "waiting" },
-  { key: "working", title: "Trabalhando", color: "#8aa2ff", sub: "em andamento", match: (s) => s === "working" || s === "starting" },
-  { key: "idle", title: "Ocioso", color: "#5d6274", sub: "prontas ou pausadas", match: (s) => ["idle", "paused", "exited", "error"].includes(s) },
+interface Column {
+  key: string;
+  title: string;
+  color: string;
+  sub: string;
+  match: (s: Status) => boolean;
+}
+
+/** Colunas do Quadro (função: os títulos dependem do idioma atual). */
+const columns = (): Column[] => [
+  { key: "waiting", title: t("board.columns.waiting.title"), color: "#E5A33A", sub: t("board.columns.waiting.sub"), match: (s) => s === "waiting" },
+  { key: "working", title: t("board.columns.working.title"), color: "#8aa2ff", sub: t("board.columns.working.sub"), match: (s) => s === "working" || s === "starting" },
+  { key: "idle", title: t("board.columns.idle.title"), color: "#5d6274", sub: t("board.columns.idle.sub"), match: (s) => ["idle", "paused", "exited", "error"].includes(s) },
 ];
 
 const STATE_KEY = "polvo.board";
@@ -54,7 +64,7 @@ export class BoardView {
   private layout = loadLayout();
 
   constructor(private host: BoardHost) {
-    this.split.title = "Arraste para mudar a largura do chat · duplo clique maximiza";
+    this.split.title = t("board.drawerSplit");
     this.el.append(this.cols, this.split, this.drawer);
     this.cols.addEventListener("click", (e) => {
       const t = e.target as Element;
@@ -99,15 +109,16 @@ export class BoardView {
     const scrolls = [...this.cols.querySelectorAll(".klist")].map((l) => l.scrollTop);
     const sessions = store.sessions.filter((s) => store.inProject(s));
 
-    this.cols.innerHTML = COLUMNS.map((col, i) => {
+    const cols = columns();
+    this.cols.innerHTML = cols.map((col, i) => {
       const items = sessions.filter((s) => col.match(s.runtime.status)).sort((a, b) => b.runtime.since - a.runtime.since);
       const collapsed = this.layout.collapsed.includes(col.key);
-      const splitter = i < COLUMNS.length - 1 ? `<div class="ksplit" data-i="${i}" title="Arraste para mudar a largura · duplo clique iguala"></div>` : "";
+      const splitter = i < cols.length - 1 ? `<div class="ksplit" data-i="${i}" title="${t("board.columnSplit")}"></div>` : "";
       if (collapsed) {
-        return `<div class="kcol collapsed" data-collapse="${col.key}" title="Expandir “${col.title}”"><i style="background:${col.color}"></i><span class="vt">${col.title}</span><b>${items.length}</b></div>${splitter}`;
+        return `<div class="kcol collapsed" data-collapse="${col.key}" title="${t("board.expand", { title: col.title })}"><i style="background:${col.color}"></i><span class="vt">${col.title}</span><b>${items.length}</b></div>${splitter}`;
       }
-      return `<div class="kcol" style="flex:${this.layout.weights[col.key] ?? 1} 1 0"><div class="kch"><i style="background:${col.color}"></i>${col.title} <span>${items.length}</span><em>${col.sub}</em><button class="kmin" data-collapse="${col.key}" title="Recolher coluna">${ICON.min}</button></div>
-        <div class="klist">${items.length ? items.map((s) => this.card(s)).join("") : '<div class="knone">Nada aqui</div>'}</div></div>${splitter}`;
+      return `<div class="kcol" style="flex:${this.layout.weights[col.key] ?? 1} 1 0"><div class="kch"><i style="background:${col.color}"></i>${col.title} <span>${items.length}</span><em>${col.sub}</em><button class="kmin" data-collapse="${col.key}" title="${t("board.collapse")}">${ICON.min}</button></div>
+        <div class="klist">${items.length ? items.map((s) => this.card(s)).join("") : `<div class="knone">${t("board.empty")}</div>`}</div></div>${splitter}`;
     }).join("");
 
     const lists = this.cols.querySelectorAll(".klist");
@@ -130,15 +141,15 @@ export class BoardView {
   }
 
   private card(s: Session): string {
-    const t = TOOLS[s.tool];
+    const tool = TOOLS[s.tool];
     const usage = store.usage.find((u) => u.provider === s.tool)?.windows.find((w) => w.usedPercent !== null);
-    const where = s.window !== store.label ? `na ${store.windowName(s.window)}` : s.minimized ? "no trilho" : "em painel";
+    const where = s.window !== store.label ? t("board.where.window", { name: store.windowName(s.window) }) : s.minimized ? t("board.where.rail") : t("board.where.tile");
     const st = s.runtime.status;
-    const note = st === "paused" ? "pausada" : st === "exited" ? "encerrada" : st === "error" ? "erro ao iniciar" : "";
+    const note = st === "paused" ? t("board.note.paused") : st === "exited" ? t("board.note.exited") : st === "error" ? t("board.note.error") : "";
     return `<div class="kc ${st}${store.selected === s.id ? " sel" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
-      <div class="kh"><span class="ic">${toolIcon(s.tool, 16)}</span><div><b>${esc(s.title)}</b><span>${t.short} · ${esc(basename(s.cwd))}</span></div><em>${ago(s.runtime.since)}</em></div>
+      <div class="kh"><span class="ic">${toolIcon(s.tool, 16)}</span><div><b>${esc(s.title)}</b><span>${tool.short} · ${esc(basename(s.cwd))}</span></div><em>${ago(s.runtime.since)}</em></div>
       <div class="kp">${esc(s.runtime.preview.join("\n"))}</div>
-      <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${store.context[s.id] !== undefined ? `<span class="tag" title="Contexto usado">ctx ${Math.round(store.context[s.id])}%</span>` : ""}${
+      <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${store.context[s.id] !== undefined ? `<span class="tag" title="${t("board.context")}">${t("board.ctx", { pct: Math.round(store.context[s.id]) })}</span>` : ""}${
         usage
           ? `<span class="um">${usage.short} ${Math.round(usage.usedPercent!)}% <span class="bar"><i style="width:${usage.usedPercent}%;background:${levelColor(s.tool, usage.usedPercent!)}"></i></span></span>`
           : ""
@@ -152,12 +163,12 @@ export class BoardView {
       this.pane = null;
     }
     if (!s) {
-      this.drawer.innerHTML = '<div class="dempty"><div>Selecione um cartão para abrir a sessão aqui.<br><br>Duplo clique leva a sessão para os Painéis.</div></div>';
+      this.drawer.innerHTML = `<div class="dempty"><div>${t("board.drawerEmpty.select")}<br><br>${t("board.drawerEmpty.dblclick")}</div></div>`;
       return;
     }
     if (s.window !== store.label) {
       const other = store.windowName(s.window);
-      this.drawer.innerHTML = `<div class="dempty"><div>“${esc(s.title)}” está aberta na ${other}.<br><button class="primary">Ir para a ${other}</button></div></div>`;
+      this.drawer.innerHTML = `<div class="dempty"><div>${t("board.otherWindow.text", { title: esc(s.title), window: other })}<br><button class="primary">${t("board.otherWindow.go", { window: other })}</button></div></div>`;
       this.drawer.querySelector("button")!.onclick = () => this.host.focusWindow(s.window);
       return;
     }
@@ -213,8 +224,9 @@ export class BoardView {
     const a = cols[i];
     const b = cols[i + 1];
     if (!a || !b || a.classList.contains("collapsed") || b.classList.contains("collapsed")) return;
-    const ka = COLUMNS[i].key;
-    const kb = COLUMNS[i + 1].key;
+    const keys = columns().map((c) => c.key);
+    const ka = keys[i];
+    const kb = keys[i + 1];
     const wa = a.getBoundingClientRect().width;
     const wb = b.getBoundingClientRect().width;
     const total = (this.layout.weights[ka] ?? 1) + (this.layout.weights[kb] ?? 1);

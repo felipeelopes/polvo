@@ -1,6 +1,7 @@
 // Proteção ao fechar: com chats trabalhando ou aguardando você, pergunta antes.
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { store } from "../core/store";
+import { t, tn } from "../i18n";
 import { esc, h } from "./dom";
 import { TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
@@ -28,17 +29,17 @@ function confirmClose(busy: { title: string; tool: keyof typeof TOOLS; status: s
   const modal = h("div", "modal close-guard");
   const list = busy
     .slice(0, 6)
-    .map((b) => `<li>${toolIcon(b.tool, 14)}<span>${esc(b.title)}</span><em>${b.status === "waiting" ? "aguardando você" : "trabalhando"}</em></li>`)
+    .map((b) => `<li>${toolIcon(b.tool, 14)}<span>${esc(b.title)}</span><em>${b.status === "waiting" ? t("guard.waiting") : t("guard.working")}</em></li>`)
     .join("");
   modal.innerHTML = `<div class="mbox guard">
-    <div class="hero">${logo(56, "idle")}<div><h2>Fechar o Polvo?</h2><div class="sub" style="margin:0">${busy.length === 1 ? "Há 1 chat em andamento." : `Há ${busy.length} chats em andamento.`} Se fechar agora, eles param e serão retomados quando você abrir o Polvo de novo.</div></div></div>
-    <ul class="busy">${list}${busy.length > 6 ? `<li><span>e mais ${busy.length - 6}…</span></li>` : ""}</ul>
-    <div class="mfoot"><span class="hk"></span><button class="ghost" data-stay>Continuar usando</button><button class="danger" data-close>Fechar mesmo assim</button></div>
+    <div class="hero">${logo(56, "idle")}<div><h2>${t("guard.title")}</h2><div class="sub" style="margin:0">${tn("guard.busy", busy.length)} ${t("guard.explain")}</div></div></div>
+    <ul class="busy">${list}${busy.length > 6 ? `<li><span>${t("guard.more", { n: busy.length - 6 })}</span></li>` : ""}</ul>
+    <div class="mfoot"><span class="hk"></span><button class="ghost" data-stay>${t("guard.stay")}</button><button class="danger" data-close>${t("guard.close")}</button></div>
   </div>`;
   modal.addEventListener("click", (e) => {
-    const t = e.target as Element;
-    if (t.closest("[data-stay]") || t === modal) modal.remove();
-    if (t.closest("[data-close]")) {
+    const tg = e.target as Element;
+    if (tg.closest("[data-stay]") || tg === modal) modal.remove();
+    if (tg.closest("[data-close]")) {
       modal.remove();
       onConfirm();
     }

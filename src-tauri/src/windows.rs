@@ -33,7 +33,7 @@ pub fn open(
 ) -> AppResult<WebviewWindow> {
     let mut builder =
         WebviewWindowBuilder::new(app, &rec.label, WebviewUrl::App("index.html".into()))
-            .title(format!("Polvo · {}", rec.name))
+            .title(crate::i18n::tr("windows.title", &[("name", &rec.name)]))
             .decorations(false)
             .transparent(true)
             .effects(WindowEffectsConfig {
@@ -151,7 +151,7 @@ pub async fn window_to_monitor(window: WebviewWindow, index: usize) -> AppResult
     let monitors = window.available_monitors()?;
     let m = monitors
         .get(index)
-        .ok_or_else(|| AppError::msg("Monitor não encontrado"))?;
+        .ok_or_else(|| AppError::msg(crate::i18n::tr("windows.monitorNotFound", &[])))?;
     window.unmaximize()?;
     let pos = m.position();
     window.set_position(PhysicalPosition::new(pos.x + 60, pos.y + 60))?;
@@ -181,7 +181,7 @@ pub fn display_info(window: WebviewWindow) -> DisplayInfo {
 pub fn window_focus(app: AppHandle, label: String) -> AppResult<()> {
     let w = app
         .get_webview_window(&label)
-        .ok_or_else(|| AppError::msg("Janela não encontrada"))?;
+        .ok_or_else(|| AppError::msg(crate::i18n::tr("windows.windowNotFound", &[])))?;
     w.unminimize()?;
     w.show()?;
     w.set_focus()?;
@@ -192,7 +192,10 @@ pub fn window_focus(app: AppHandle, label: String) -> AppResult<()> {
 #[tauri::command]
 pub fn open_url(url: String) -> AppResult<()> {
     if !(url.starts_with("https://") || url.starts_with("http://")) {
-        return Err(AppError::msg("Endereço não suportado"));
+        return Err(AppError::msg(crate::i18n::tr(
+            "windows.unsupportedUrl",
+            &[],
+        )));
     }
     std::process::Command::new("explorer").arg(&url).spawn()?;
     Ok(())

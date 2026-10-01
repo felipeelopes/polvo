@@ -50,13 +50,20 @@ fn absolute(path: &str) -> AppResult<PathBuf> {
 #[tauri::command]
 pub fn file_read(path: String) -> AppResult<FileDoc> {
     let p = absolute(&path)?;
-    let meta = std::fs::metadata(&p)
-        .map_err(|_| AppError::msg(format!("Arquivo não encontrado: {}", p.display())))?;
+    let meta = std::fs::metadata(&p).map_err(|_| {
+        AppError::msg(crate::i18n::tr(
+            "files.notFound",
+            &[("path", &p.display().to_string())],
+        ))
+    })?;
     if !meta.is_file() {
-        return Err(AppError::msg("Não é um arquivo"));
+        return Err(AppError::msg(crate::i18n::tr("files.notAFile", &[])));
     }
     if meta.len() > MAX_TEXT {
-        return Err(AppError::msg("Arquivo grande demais para abrir no editor"));
+        return Err(AppError::msg(crate::i18n::tr(
+            "files.tooLargeForEditor",
+            &[],
+        )));
     }
     let bytes = std::fs::read(&p)?;
     let content =
@@ -96,7 +103,7 @@ pub fn files_exist(paths: Vec<String>) -> Vec<bool> {
 pub fn file_bytes(path: String) -> AppResult<Response> {
     let p = absolute(&path)?;
     if std::fs::metadata(&p)?.len() > MAX_BYTES {
-        return Err(AppError::msg("Arquivo grande demais"));
+        return Err(AppError::msg(crate::i18n::tr("files.tooLarge", &[])));
     }
     Ok(Response::new(std::fs::read(&p)?))
 }

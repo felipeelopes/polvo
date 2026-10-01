@@ -90,6 +90,8 @@ export const events = {
     listen<Session[]>("sessions-changed", (e) => fn(e.payload)),
   onOpenFolder: (fn: (folder: string) => void): Promise<UnlistenFn> =>
     listen<string>("open-folder", (e) => fn(e.payload)),
+  onSettings: (fn: (settings: Settings) => void): Promise<UnlistenFn> =>
+    listen<Settings>("settings-changed", (e) => fn(e.payload)),
   onProjects: (fn: (projects: ProjectRecord[]) => void): Promise<UnlistenFn> =>
     listen<ProjectRecord[]>("projects-changed", (e) => fn(e.payload)),
   onWindows: (fn: (windows: WindowRecord[]) => void): Promise<UnlistenFn> =>

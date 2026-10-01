@@ -71,7 +71,7 @@ fn worktrees(root: &Path) -> Vec<Worktree> {
             } else if let Some(b) = line.strip_prefix("branch ") {
                 branch = Some(b.trim_start_matches("refs/heads/").to_string());
             } else if line == "detached" {
-                branch = Some("(detached)".into());
+                branch = Some(crate::i18n::tr("git.detached", &[]));
             }
         }
         if let Some(path) = path {

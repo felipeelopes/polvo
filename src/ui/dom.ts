@@ -1,4 +1,5 @@
 // Utilitários de DOM e formatação.
+import { t, tn } from "../i18n";
 
 export function h<K extends keyof HTMLElementTagNameMap>(tag: K, cls = "", html = ""): HTMLElementTagNameMap[K] {
   const el = document.createElement(tag);
@@ -14,19 +15,19 @@ export const basename = (p: string): string => p.replace(/[\\/]+$/, "").split(/[
 
 export function ago(ts: number): string {
   const m = Math.floor((Date.now() - ts) / 60_000);
-  if (m < 1) return "agora";
-  if (m < 60) return `há ${m} min`;
+  if (m < 1) return t("time.now");
+  if (m < 60) return tn("time.ago.minutes", m);
   const h = Math.floor(m / 60);
-  return h < 24 ? `há ${h} h` : `há ${Math.floor(h / 24)} d`;
+  return h < 24 ? tn("time.ago.hours", h) : tn("time.ago.days", Math.floor(h / 24));
 }
 
 export function until(ts: number): string {
   const ms = ts - Date.now();
-  if (ms <= 0) return "agora";
+  if (ms <= 0) return t("time.now");
   const d = Math.floor(ms / 86_400_000);
   const h = Math.floor((ms % 86_400_000) / 3_600_000);
   const m = Math.floor((ms % 3_600_000) / 60_000);
-  return d ? `${d}d ${h}h` : h ? `${h}h ${m}min` : `${m}min`;
+  return d ? t("time.until.daysHours", { d, h }) : h ? t("time.until.hoursMinutes", { h, m }) : t("time.until.minutes", { m });
 }
 
 export function inside(e: { clientX: number; clientY: number }, r: DOMRect): boolean {
@@ -34,10 +35,10 @@ export function inside(e: { clientX: number; clientY: number }, r: DOMRect): boo
 }
 
 export function debounce<A extends unknown[]>(fn: (...a: A) => void, ms: number): (...a: A) => void {
-  let t: number | undefined;
+  let timer: number | undefined;
   return (...a: A) => {
-    clearTimeout(t);
-    t = window.setTimeout(() => fn(...a), ms);
+    clearTimeout(timer);
+    timer = window.setTimeout(() => fn(...a), ms);
   };
 }
 

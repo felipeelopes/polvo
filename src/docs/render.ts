@@ -9,13 +9,21 @@ import markedFootnote from "marked-footnote";
 import { gfmHeadingId } from "marked-gfm-heading-id";
 import { markedHighlight } from "marked-highlight";
 import markedKatex from "marked-katex-extension";
+import { t } from "../i18n";
 import { esc } from "../ui/dom";
 
-const ALERT_TITLES: Record<string, string> = { note: "Nota", tip: "Dica", important: "Importante", warning: "Atenção", caution: "Cuidado" };
+/** Título traduzido de um alerta do GitHub, pela classe `markdown-alert-<tipo>`. */
+const ALERT_TYPES = new Set(["note", "tip", "important", "warning", "caution"]);
+const alertTitle = (type: string): string | null => (ALERT_TYPES.has(type) ? t(`docs.render.alerts.${type}`) : null);
 
 const LANG_ALIAS: Record<string, string> = { sh: "bash", shell: "bash", ps1: "powershell", ps: "powershell", yml: "yaml", js: "javascript", ts: "typescript", rs: "rust", py: "python", cs: "csharp", "c#": "csharp" };
 
-const marked = new Marked(
+// Criado na primeira renderização (não na importação): o título das notas de
+// rodapé depende do idioma, definido depois de carregar os módulos.
+let instance: Marked | null = null;
+const getMarked = (): Marked => (instance ??= createMarked());
+
+const createMarked = (): Marked => new Marked(
   markedHighlight({
     emptyLangClass: "hljs",
     langPrefix: "hljs language-",
@@ -31,7 +39,7 @@ const marked = new Marked(
   }),
   markedKatex({ throwOnError: false, output: "htmlAndMathml" }),
   markedAlert(),
-  markedFootnote({ description: "Notas" }),
+  markedFootnote({ description: t("docs.render.footnotes") }),
   gfmHeadingId(),
   {
     gfm: true,
@@ -39,9 +47,9 @@ const marked = new Marked(
       code(token: Tokens.Code) {
         const lang = (token.lang ?? "").match(/\S*/)?.[0] ?? "";
         if (lang.toLowerCase() === "mermaid") // Codificado: o DOMPurify remove atributos com `-->` (as setas do mermaid).
-          return `<div class="mmd" data-src="${encodeURIComponent(token.text)}"></div>`;
+          return `<div class="mmd" data-src="${encodeURIComponent(token.text)}" data-loading="${esc(t("docs.mermaid.loading"))}"></div>`;
         const body = token.escaped ? token.text : esc(token.text);
-        return `<div class="code"><div class="code-h"><span>${esc(lang || "texto")}</span><button data-copy title="Copiar">Copiar</button></div><pre><code class="hljs${lang ? ` language-${esc(lang)}` : ""}">${body.replace(/\n$/, "")}</code></pre></div>`;
+        return `<div class="code"><div class="code-h"><span>${esc(lang || t("docs.render.plainText"))}</span><button data-copy title="${esc(t("docs.render.copy"))}">${esc(t("docs.render.copy"))}</button></div><pre><code class="hljs${lang ? ` language-${esc(lang)}` : ""}">${body.replace(/\n$/, "")}</code></pre></div>`;
       },
     },
   },
@@ -55,20 +63,20 @@ function splitFrontMatter(src: string): { meta: string | null; body: string } {
 
 export function renderMarkdown(src: string): string {
   const { meta, body } = splitFrontMatter(src);
-  const html = marked.parse(body, { async: false });
-  const front = meta ? `<details class="fm"><summary>Metadados</summary><pre>${esc(meta)}</pre></details>` : "";
+  const html = getMarked().parse(body, { async: false });
+  const front = meta ? `<details class="fm"><summary>${esc(t("docs.render.frontMatter"))}</summary><pre>${esc(meta)}</pre></details>` : "";
   return DOMPurify.sanitize(front + html, {
     ADD_TAGS: ["semantics", "annotation", "mrow", "mi", "mo", "mn", "msup", "msub", "mfrac", "msqrt", "mroot", "mtext", "mspace", "mtable", "mtr", "mtd", "munder", "mover", "munderover", "mstyle", "mpadded", "mphantom", "menclose"],
     ADD_ATTR: ["encoding", "mathvariant", "displaystyle", "scriptlevel", "data-copy", "target"],
   });
 }
 
-/** Ajustes depois de inserir o HTML: títulos de alertas em português e caixas de tarefa clicáveis. */
+/** Ajustes depois de inserir o HTML: títulos de alertas no idioma da interface e caixas de tarefa clicáveis. */
 export function enhance(root: HTMLElement): void {
-  for (const t of root.querySelectorAll<HTMLElement>(".markdown-alert-title")) {
-    const type = [...(t.parentElement?.classList ?? [])].find((c) => c.startsWith("markdown-alert-"))?.slice(15);
-    const label = type && ALERT_TITLES[type];
-    const text = [...t.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
+  for (const title of root.querySelectorAll<HTMLElement>(".markdown-alert-title")) {
+    const type = [...(title.parentElement?.classList ?? [])].find((c) => c.startsWith("markdown-alert-"))?.slice(15);
+    const label = type && alertTitle(type);
+    const text = [...title.childNodes].find((n) => n.nodeType === Node.TEXT_NODE && n.textContent?.trim());
     if (label && text) text.textContent = label;
   }
   root.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((c, i) => {

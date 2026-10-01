@@ -2,6 +2,7 @@
 import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { store } from "../core/store";
+import { t } from "../i18n";
 import { esc, h } from "./dom";
 import { logo } from "./logo";
 
@@ -49,7 +50,7 @@ export async function checkForUpdates(manual: boolean): Promise<boolean> {
 
 /** Notas da release (Markdown simples) em texto legível: listas, negrito e código. */
 function notesHtml(body?: string): string {
-  const text = body?.trim() || "Melhorias e correções.";
+  const text = body?.trim() || t("updater.defaultNotes");
   return esc(text)
     .replace(/^\s*[-*] /gm, "• ")
     .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
@@ -58,8 +59,8 @@ function notesHtml(body?: string): string {
 
 function show(update: Update): void {
   banner = h("div", "update");
-  banner.innerHTML = `<div class="uhead">${logo(34, "wave")}<b>Polvo ${esc(update.version)} disponível</b></div><p>${notesHtml(update.body)}</p>
-    <div><button class="ghost" data-later>Depois</button><button class="primary" data-install>Atualizar e reiniciar</button></div>`;
+  banner.innerHTML = `<div class="uhead">${logo(34, "wave")}<b>${esc(t("updater.available", { version: update.version }))}</b></div><p>${notesHtml(update.body)}</p>
+    <div><button class="ghost" data-later>${t("updater.later")}</button><button class="primary" data-install>${t("updater.install")}</button></div>`;
   document.body.append(banner);
   banner.querySelector<HTMLButtonElement>("[data-later]")!.onclick = () => {
     dismissed = update.version;
@@ -68,7 +69,7 @@ function show(update: Update): void {
   };
   banner.querySelector<HTMLButtonElement>("[data-install]")!.onclick = async () => {
     const el = banner!;
-    el.innerHTML = `<b>Baixando Polvo ${esc(update.version)}…</b><span class="bar"><i style="width:0%;background:var(--accent)"></i></span><p>As sessões serão retomadas depois de reiniciar.</p>`;
+    el.innerHTML = `<b>${esc(t("updater.downloading", { version: update.version }))}</b><span class="bar"><i style="width:0%;background:var(--accent)"></i></span><p>${t("updater.resumeNote")}</p>`;
     const fill = el.querySelector<HTMLElement>(".bar i")!;
     let total = 0;
     let done = 0;
@@ -82,7 +83,7 @@ function show(update: Update): void {
       });
       await relaunch();
     } catch (err) {
-      el.innerHTML = `<b>Não foi possível atualizar</b><p>${esc(String(err))}</p><div><button class="ghost">Fechar</button></div>`;
+      el.innerHTML = `<b>${t("updater.failed")}</b><p>${esc(String(err))}</p><div><button class="ghost">${t("updater.close")}</button></div>`;
       el.querySelector("button")!.onclick = () => {
         el.remove();
         banner = null;

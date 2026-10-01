@@ -1,6 +1,7 @@
 // Zoom da interface inteira, como no VS Code: Ctrl + / Ctrl − / Ctrl 0.
 import { getCurrentWebview } from "@tauri-apps/api/webview";
 import { toast } from "./feedback";
+import { t } from "../i18n";
 
 const KEY = "polvo.zoom";
 const MIN = 0.5;
@@ -26,7 +27,7 @@ async function apply(next: number, announce: boolean): Promise<void> {
   } catch {
     /* sem permissão de zoom: ignora */
   }
-  if (announce) toast(`Zoom ${Math.round(level * 100)}%`);
+  if (announce) toast(t("app.zoom", { pct: Math.round(level * 100) }));
 }
 
 /** Aplica o zoom salvo ao abrir a janela. */
