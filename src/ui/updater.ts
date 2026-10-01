@@ -30,9 +30,18 @@ export async function checkForUpdates(manual: boolean): Promise<boolean> {
   return true;
 }
 
+/** Notas da release (Markdown simples) em texto legível: listas, negrito e código. */
+function notesHtml(body?: string): string {
+  const text = body?.trim() || "Melhorias e correções.";
+  return esc(text)
+    .replace(/^\s*[-*] /gm, "• ")
+    .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>")
+    .replace(/`([^`]+)`/g, "<code>$1</code>");
+}
+
 function show(update: Update): void {
   banner = h("div", "update");
-  banner.innerHTML = `<div class="uhead">${logo(34, "wave")}<b>Polvo ${esc(update.version)} disponível</b></div><p>${esc(update.body?.trim() || "Melhorias e correções.")}</p>
+  banner.innerHTML = `<div class="uhead">${logo(34, "wave")}<b>Polvo ${esc(update.version)} disponível</b></div><p>${notesHtml(update.body)}</p>
     <div><button class="ghost" data-later>Depois</button><button class="primary" data-install>Atualizar e reiniciar</button></div>`;
   document.body.append(banner);
   banner.querySelector<HTMLButtonElement>("[data-later]")!.onclick = () => {
