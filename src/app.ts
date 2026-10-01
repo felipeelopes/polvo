@@ -17,12 +17,14 @@ import type { PaneAction, PaneHandlers } from "./ui/pane";
 import { Rail } from "./ui/rail";
 import { TilesView } from "./ui/tiles";
 import { Titlebar } from "./ui/titlebar";
+import { isZoomKey, zoomKey } from "./ui/zoom";
 import { refreshUsage, refreshUsagePopovers } from "./ui/usage";
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 /** Atalhos do app: o terminal os ignora para que cheguem aqui. */
 export function isAppShortcut(e: KeyboardEvent): boolean {
+  if (isZoomKey(e)) return true;
   if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "KeyZ", "KeyM"].includes(e.code)) return true;
   return e.ctrlKey && e.altKey && e.key in ARROWS;
 }
@@ -389,6 +391,7 @@ export class App {
     if (!isAppShortcut(e)) return;
     e.preventDefault();
     e.stopPropagation();
+    if (zoomKey(e)) return;
     if (e.ctrlKey && e.altKey) {
       const [dx, dy] = ARROWS[e.key];
       if (store.view === "tiles") this.tiles.focusNeighbor(dx, dy, e.shiftKey);

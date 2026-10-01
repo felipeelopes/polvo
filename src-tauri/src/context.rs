@@ -56,10 +56,13 @@ fn claude(session_id: &str) -> Option<f64> {
     )
     .ok()
     .and_then(|b| serde_json::from_slice(&b).ok());
+    // Logo após abrir ou retomar, a statusline informa 0 até a próxima resposta
+    // do modelo; nesse caso o arquivo da conversa tem o valor real.
     if let Some(p) = bridge
         .as_ref()
         .and_then(|v| v.get("contextPercent"))
         .and_then(Value::as_f64)
+        .filter(|p| *p > 0.0)
     {
         return Some(p);
     }

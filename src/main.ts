@@ -11,6 +11,7 @@ import { store } from "./core/store";
 import { openNewSession } from "./ui/new-session";
 import { openOnboarding } from "./ui/onboarding";
 import { startUpdateChecks } from "./ui/updater";
+import { initZoom } from "./ui/zoom";
 import { refreshUsage } from "./ui/usage";
 
 async function boot(): Promise<void> {
@@ -30,6 +31,7 @@ async function boot(): Promise<void> {
   store.view = snapshot.view;
   store.recentDirs = snapshot.recentDirs;
   document.body.classList.toggle("no-mica", !display.mica);
+  initZoom();
 
   // Em desenvolvimento, `__polvo.store` fica acessível no DevTools para depuração.
   const root = document.getElementById("app")!;

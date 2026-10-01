@@ -22,6 +22,7 @@ export function openHelp(anchor: HTMLElement): void {
           <kbd>Ctrl Alt Shift ←↑→↓</kbd><span>Trocar o painel de lugar</span>
           <kbd>Ctrl Shift M</kbd><span>Maximizar / restaurar o painel</span>
           <kbd>Ctrl Shift Z</kbd><span>Desfazer layout</span>
+          <kbd>Ctrl + / Ctrl − / Ctrl 0</kbd><span>Zoom da interface</span>
         </div>`;
     },
     "help",

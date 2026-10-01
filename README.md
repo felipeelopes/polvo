@@ -77,6 +77,7 @@ Requer Windows 10 ou 11 (o efeito Mica aparece no Windows 11).
 | `Ctrl+Alt+Shift+←↑→↓` | Trocar o painel de lugar |
 | `Ctrl+Shift+M` | Maximizar / restaurar o painel |
 | `Ctrl+Shift+Z` | Desfazer layout |
+| `Ctrl +` / `Ctrl −` / `Ctrl 0` | Zoom da interface (como no VS Code) |
 | `Ctrl+C` com seleção · `Ctrl+V` · botão direito | Copiar · colar · copiar/colar |
 
 ## Como funciona
