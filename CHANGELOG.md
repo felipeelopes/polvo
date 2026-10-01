@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.1.2
+
+- Percentual de contexto do Claude Code correto também em sessões retomadas (antes ficava em 0%).
+- Zoom da interface com `Ctrl +`, `Ctrl −` e `Ctrl 0`, como no VS Code.
+- Notas de atualização formatadas (sem marcação Markdown crua).
+- Arquivos do projeto com finais de linha LF e `.gitignore` mais completo.
+
 ## 0.1.1
 
 - **Abrir no Polvo**: Shift + clique direito numa pasta do Explorer abre a escolha de agente já com a pasta.
