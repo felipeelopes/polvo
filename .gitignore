@@ -7,10 +7,21 @@ src-tauri/gen/
 # Editores e sistema
 .vscode/*
 !.vscode/extensions.json
+.vs/
 .idea/
+*.suo
+*.user
 *.log
+*.tmp
 .DS_Store
 Thumbs.db
+desktop.ini
+
+# Ferramentas
+coverage/
+*.tsbuildinfo
+*.local
+.cache/
 
 # Segredos (a chave de assinatura das atualizações NUNCA vai para o repositório)
 *.key
