@@ -70,6 +70,13 @@ export const ipc = {
   gitInfo: (paths: string[]) => invoke<Record<string, RepoInfo | null>>("git_info", { paths }),
   /** Contexto, nome e cor definidos no CLI, por sessão (Claude e Codex). */
   sessionMeta: () => invoke<Record<string, { context: number | null; customTitle: string | null; aiTitle: string | null; color: string | null }>>("session_meta"),
+  /** Documentos (visualizador de Markdown). */
+  fileRead: (path: string) => invoke<{ path: string; content: string; mtime: number }>("file_read", { path }),
+  fileWrite: (path: string, content: string) => invoke<number>("file_write", { path, content }),
+  fileMtime: (path: string) => invoke<number | null>("file_mtime", { path }),
+  filesExist: (paths: string[]) => invoke<boolean[]>("files_exist", { paths }),
+  fileBytes: async (path: string) => toBytes(await invoke<ArrayBuffer | number[]>("file_bytes", { path })),
+  fileReveal: (path: string) => invoke<void>("file_reveal", { path }),
 };
 
 function toBytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {

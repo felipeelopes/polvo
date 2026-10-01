@@ -8,6 +8,8 @@ import { Terminal, type ITheme } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { ipc } from "../core/ipc";
 import type { ToolKind } from "../core/types";
+import { MD_EXT, resolvePath } from "../docs/paths";
+import { installCtrlClick, mdLinkProvider, type FileLinkHost } from "./file-links";
 
 const THEME: ITheme = {
   background: "#00000000",
@@ -69,6 +71,7 @@ export class SessionTerminal {
     isAppShortcut: (e: KeyboardEvent) => boolean,
     onTitle?: (title: string) => void,
     private onCommand?: (cmd: "rename" | "color", arg: string) => void,
+    files?: FileLinkHost,
   ) {
     this.host.className = "term-host";
     this.term = new Terminal({
@@ -80,12 +83,26 @@ export class SessionTerminal {
       cursorBlink: true,
       scrollback: 10_000,
       theme: THEME,
+      // Hiperlinks OSC 8 (alguns CLIs marcam arquivos e URLs assim).
+      linkHandler: {
+        allowNonHttpProtocols: true,
+        activate: (e, uri) => {
+          if (/^https?:/i.test(uri)) ipc.openUrl(uri).catch(() => {});
+          else if (files && /^file:/i.test(uri) && MD_EXT.test(uri.split(/[?#]/)[0]) && (e.ctrlKey || e.metaKey)) {
+            files.open(resolvePath(files.cwd() ?? "C:\\", uri));
+          }
+        },
+      },
     });
     this.term.loadAddon(this.fitAddon);
     const unicode = new Unicode11Addon();
     this.term.loadAddon(unicode);
     this.term.unicode.activeVersion = "11";
     this.term.loadAddon(new WebLinksAddon((_e, url) => ipc.openUrl(url).catch(() => {})));
+    if (files) {
+      this.term.registerLinkProvider(mdLinkProvider(this.term, files));
+      installCtrlClick(this.term, this.host, files);
+    }
 
     // onData também recebe cliques do mouse e relatórios de foco enviados ao CLI.
     this.term.onData((data) => {

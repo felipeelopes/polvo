@@ -21,6 +21,16 @@ import { Titlebar } from "./ui/titlebar";
 import { isZoomKey, zoomKey } from "./ui/zoom";
 import { outdatedSessions, refreshUsage, refreshUsagePopovers, versionActions } from "./ui/usage";
 import { TOOLS } from "./ui/icons";
+import type { DocsPanel } from "./docs/panel";
+
+/** O painel de documentos estava aberto nesta janela (reabre ao iniciar). */
+function docsWereOpen(): boolean {
+  try {
+    return !!JSON.parse(localStorage.getItem(`polvo.docs.${store.label}`) ?? "{}").open;
+  } catch {
+    return false;
+  }
+}
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
@@ -32,12 +42,15 @@ export function isAppShortcut(e: KeyboardEvent): boolean {
 }
 
 export class App {
-  readonly terms = new Terminals(isAppShortcut);
+  readonly terms = new Terminals(isAppShortcut, (path) => this.openDoc(path));
   private titlebar: Titlebar;
   private rail: Sidebar;
   private tiles: TilesView;
   private board: BoardView;
   private placements = new Map<string, NewSessionTarget>();
+  /** Visualizador de Markdown, carregado no primeiro uso. */
+  private docs: Promise<DocsPanel> | null = null;
+  private docsMount: (panel: DocsPanel) => void = () => {};
   /** Sessão recém-criada a revelar (desliga o filtro se for de outro projeto). */
   private reveal: string | null = null;
   private projectHost: ProjectHost = {
@@ -84,6 +97,9 @@ export class App {
     content.append(this.tiles.el, this.board.el);
     const main = h("div", "main");
     main.append(this.rail.el, content);
+    this.docsMount = (panel) => main.append(panel.el);
+    this.docsContent = content;
+    if (docsWereOpen()) void this.docsPanel();
     root.append(this.titlebar.el, main);
 
     document.addEventListener("click", (e) => {
@@ -94,6 +110,23 @@ export class App {
     document.addEventListener("keydown", (e) => this.onKey(e), true);
     window.addEventListener("focus", () => void refreshUsage());
     store.on((topic) => this.onStore(topic));
+  }
+
+  private docsContent: HTMLElement | null = null;
+
+  private docsPanel(): Promise<DocsPanel> {
+    return (this.docs ??= import("./docs/panel").then(({ DocsPanel }) => {
+      const panel = new DocsPanel(this.docsContent!);
+      this.docsMount(panel);
+      return panel;
+    }));
+  }
+
+  /** Abre um arquivo Markdown no painel de documentos (Ctrl + clique no terminal). */
+  openDoc(path: string): void {
+    this.docsPanel()
+      .then((p) => p.open(path))
+      .catch((e) => toast(String(e)));
   }
 
   async start(): Promise<void> {

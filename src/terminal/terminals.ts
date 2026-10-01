@@ -12,7 +12,11 @@ export class Terminals {
   /** Contexto lido da tela, para CLIs sem fonte melhor (ex.: OpenCode). */
   readonly screenContext = new Map<string, number>();
 
-  constructor(private isAppShortcut: (e: KeyboardEvent) => boolean) {
+  constructor(
+    private isAppShortcut: (e: KeyboardEvent) => boolean,
+    /** Ctrl + clique num arquivo .md do terminal. */
+    private openDoc: (path: string) => void,
+  ) {
     window.setInterval(() => this.tick(), 900);
   }
 
@@ -35,7 +39,10 @@ export class Terminals {
       let t = this.map.get(s.id);
       if (!t) {
         const id = s.id;
-        t = new SessionTerminal(id, s.tool, this.isAppShortcut, (raw) => this.onTitle(id, raw), (cmd, arg) => this.onCommand(id, cmd, arg));
+        t = new SessionTerminal(id, s.tool, this.isAppShortcut, (raw) => this.onTitle(id, raw), (cmd, arg) => this.onCommand(id, cmd, arg), {
+          cwd: () => store.session(id)?.cwd,
+          open: (path) => this.openDoc(path),
+        });
         this.map.set(s.id, t);
       }
       // Um novo início (retomar/reiniciar) muda `since` com status "starting".

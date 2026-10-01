@@ -5,6 +5,7 @@ mod context;
 mod discovery;
 mod error;
 mod explorer;
+mod files;
 mod git;
 mod paths;
 mod projects;
@@ -106,6 +107,12 @@ pub fn run() {
             projects::project_clone,
             projects::project_remove,
             versions::tools_versions,
+            files::file_read,
+            files::file_write,
+            files::file_mtime,
+            files::files_exist,
+            files::file_bytes,
+            files::file_reveal,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
