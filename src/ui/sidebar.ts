@@ -14,8 +14,6 @@ export interface SidebarHost {
   sessionDown(e: PointerEvent, id: string): void;
   /** Nova sessão direto numa pasta (sem perguntar). */
   newIn(cwd: string, tool: ToolKind): void;
-  /** Menu de projeto (abrir, novo, clonar). */
-  projectMenu(anchor: HTMLElement): void;
   /** Liga ("só este projeto") ou desliga o filtro de projeto. */
   focusProject(key: string | null): void;
   /** Tira um projeto salvo (sem sessões) da barra. */
@@ -114,7 +112,7 @@ export class Sidebar {
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
-    foot.innerHTML = `<button class="sb-new" data-projmenu title="Abrir projeto, novo projeto, clonar repositório…">+ <span>Projeto</span></button><button class="sb-toggle" data-toggle title="Recolher / expandir a barra"></button>`;
+    foot.innerHTML = `<button class="sb-toggle" data-toggle title="Recolher / expandir a barra"></button>`;
     this.el.append(this.body, foot);
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("click", (e) => this.onClick(e));
@@ -138,7 +136,7 @@ export class Sidebar {
   }
 
   private renderGroups(mine: Session[]): string {
-    if (!mine.length && !store.projects.length) return '<div class="sb-empty">Nenhum projeto ainda.<br>Use “+ Projeto” abaixo para abrir uma pasta, criar um projeto ou clonar um repositório.</div>';
+    if (!mine.length && !store.projects.length) return '<div class="sb-empty">Nenhum projeto ainda.<br>Use “+ Projeto” no alto para abrir uma pasta, criar um projeto ou clonar um repositório.</div>';
     const tools = (cwd: string) =>
       (["claude", "codex", "opencode", "shell"] as ToolKind[])
         .filter((t) => store.toolEnabled(t))
@@ -192,8 +190,6 @@ export class Sidebar {
       this.host.newIn(add.dataset.new!, add.dataset.tool as ToolKind);
       return;
     }
-    const menu = t.closest<HTMLElement>("[data-projmenu]");
-    if (menu) return this.host.projectMenu(menu);
     const focus = t.closest<HTMLElement>("[data-focus]")?.dataset.focus;
     if (focus !== undefined) {
       e.stopPropagation();

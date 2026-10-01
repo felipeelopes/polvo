@@ -120,3 +120,6 @@
 .pchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .pchip:hover { background: color-mix(in srgb, var(--accent) 36%, transparent); }
 @media (max-width: 1120px) { .pchip span { max-width: 90px; } }
+
+/* Rodapé da barra lateral: só o botão de recolher, à direita. */
+.sb-foot { justify-content: flex-end; }

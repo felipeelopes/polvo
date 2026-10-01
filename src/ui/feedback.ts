@@ -40,7 +40,11 @@ export function popover(key: string, anchor: HTMLElement, render: (el: HTMLDivEl
   popKey = key;
   popClose = onClose ?? null;
   const r = anchor.getBoundingClientRect();
-  popEl.style.top = `${r.bottom + 8}px`;
+  // Abre para cima quando não cabe abaixo; nunca sai da janela.
+  const hgt = popEl.offsetHeight;
+  const below = r.bottom + 8;
+  const top = below + hgt <= innerHeight - 12 ? below : r.top - 8 - hgt;
+  popEl.style.top = `${Math.max(12, Math.min(innerHeight - hgt - 12, top))}px`;
   popEl.style.left = `${Math.max(12, Math.min(innerWidth - popEl.offsetWidth - 12, r.right - popEl.offsetWidth))}px`;
 }
 

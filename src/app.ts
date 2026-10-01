@@ -73,7 +73,6 @@ export class App {
         else this.board.select(id);
       },
       newIn: (cwd, tool) => void this.newIn(cwd, tool),
-      projectMenu: (a) => openProjectMenu(a, this.projectHost),
       focusProject: (key) => void store.setProject(key),
       removeProject: (path) => void ipc.projectRemove(path),
       resized: () => this.tiles.layout(),
