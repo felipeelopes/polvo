@@ -2,8 +2,14 @@
 
 ## 0.1.1
 
-- Primeira atualização automática: valida o fluxo de update pelo GitHub.
-- Ajustes de documentação.
+- **Abrir no Polvo**: Shift + clique direito numa pasta do Explorer abre a escolha de agente já com a pasta.
+- **Terminal na pasta da sessão**: botão em cada painel e `Ctrl+Shift+T`.
+- **Retomada com animação**: o polvo nada enquanto cada sessão volta; tudo é retomado ao abrir o app.
+- Status mais confiável: cliques, foco e redimensionamentos não aparecem mais como "trabalhando"; telas que pedem Enter aparecem como "aguardando você"; sessões não ficam presas em "Retomando".
+- Correção do retângulo translúcido entre os painéis e de soltar sessões no trilho.
+- Barra de título e painéis se adaptam a janelas estreitas.
+- Janelas extras não são esquecidas ao fechar o app.
+- `POLVO_DATA_DIR` para usar outra pasta de dados.
 
 ## 0.1.0
 

@@ -18,6 +18,8 @@ Um braço para cada agente. 🐙</p>
 
 ---
 
+![Polvo com 3 sessões do Claude Code, Codex e PowerShell lado a lado](docs/media/paineis.png)
+
 ## Por que o Polvo?
 
 Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polvo junta tudo num só lugar:
@@ -41,6 +43,20 @@ Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polv
 | 🧠 **Contexto por sessão** | Cada painel mostra quanto da janela de contexto a conversa já usou. |
 | 🎛️ **Fornecedores** | Desative Claude, Codex ou OpenCode mesmo que estejam instalados. |
 | 🚀 **Inicia com o Windows** e **atualiza sozinho** a partir das releases do GitHub. |
+
+## Veja em ação
+
+**Quadro por status**: quem está trabalhando, quem está ocioso e quem está aguardando você, com a sessão aberta na gaveta.
+
+![Quadro por status](docs/media/quadro.png)
+
+**Retomada automática**: ao abrir, cada sessão volta na mesma conversa (o polvo puxa elas de volta 🐙).
+
+![Sessões sendo retomadas](docs/media/retomando.png)
+
+**Sobre**: colaboradores do projeto vindos do histórico do git.
+
+![Tela Sobre](docs/media/sobre.png)
 
 ## Instalação
 

@@ -1,7 +1,7 @@
 {
   "name": "polvo",
   "private": true,
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Polvo — seus agentes de IA lado a lado: Claude Code, Codex, OpenCode e shells num organizador nativo para Windows.",
   "license": "MIT",
   "type": "module",
@@ -31,7 +31,9 @@
     "@xterm/xterm": "^5.5.0"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": [
+      "esbuild"
+    ]
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
