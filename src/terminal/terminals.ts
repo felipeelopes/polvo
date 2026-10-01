@@ -1,12 +1,13 @@
 // Mantém um terminal para cada sessão desta janela e informa o status ao backend.
 import { ipc } from "../core/ipc";
 import { isRunning, store } from "../core/store";
-import { contextFromScreen, detectStatus, previewLines } from "./detector";
+import { contextFromScreen, detectStatus, previewLines, StatusDebouncer } from "./detector";
 import { SessionTerminal } from "./session-terminal";
 
 export class Terminals {
   private map = new Map<string, SessionTerminal>();
   private reported = new Map<string, string>();
+  private debouncer = new StatusDebouncer(2);
   /** Contexto lido da tela, para CLIs sem fonte melhor (ex.: OpenCode). */
   readonly screenContext = new Map<string, number>();
 
@@ -26,6 +27,7 @@ export class Terminals {
         t.dispose();
         this.map.delete(id);
         this.reported.delete(id);
+        this.debouncer.forget(id);
       }
     }
     for (const s of mine.values()) {
@@ -49,7 +51,7 @@ export class Terminals {
       const screen = t.screen();
       const ctx = contextFromScreen(screen);
       if (ctx !== null) this.screenContext.set(s.id, ctx);
-      const status = detectStatus(s.tool, screen, now - t.lastOutput, now - t.lastInput);
+      const status = this.debouncer.next(s.id, detectStatus(s.tool, screen, now - t.lastSpontaneous));
       const preview = previewLines(screen);
       const key = `${status}\n${preview.join("\n")}`;
       if (this.reported.get(s.id) === key) continue;

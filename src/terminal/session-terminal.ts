@@ -39,13 +39,18 @@ parking.className = "parking";
 document.body.appendChild(parking);
 
 const MAX_WEBGL = 12;
+/** Por quanto tempo a saída depois de um estímulo é considerada redesenho. */
+const REDRAW_WINDOW_MS = 1200;
 let webglCount = 0;
 
 export class SessionTerminal {
   readonly host = document.createElement("div");
   readonly term: Terminal;
   lastOutput = 0;
-  lastInput = 0;
+  /** Última saída que não foi provocada por um estímulo (digitar, clicar, redimensionar…). */
+  lastSpontaneous = 0;
+  /** Último estímulo: os CLIs redesenham a tela em seguida, e isso não é "trabalho". */
+  private lastStimulus = 0;
   connected = false;
   /** `runtime.since` do início ao qual este terminal está conectado. */
   connectedTo = -1;
@@ -76,10 +81,12 @@ export class SessionTerminal {
     this.term.unicode.activeVersion = "11";
     this.term.loadAddon(new WebLinksAddon((_e, url) => ipc.openUrl(url).catch(() => {})));
 
+    // onData também recebe cliques do mouse e relatórios de foco enviados ao CLI.
     this.term.onData((data) => {
-      this.lastInput = performance.now();
+      this.stimulus();
       ipc.ptyWrite(this.id, data).catch(() => {});
     });
+    this.host.addEventListener("pointerdown", () => this.stimulus(), true);
     this.term.attachCustomKeyEventHandler((e) => this.onKey(e, isAppShortcut));
     this.host.addEventListener("contextmenu", (e) => {
       e.preventDefault();
@@ -94,7 +101,10 @@ export class SessionTerminal {
 
   /** Coloca o terminal dentro de um painel visível. */
   mount(container: HTMLElement): void {
-    if (this.host.parentElement !== container) container.appendChild(this.host);
+    if (this.host.parentElement !== container) {
+      this.stimulus();
+      container.appendChild(this.host);
+    }
     this.enableWebgl();
     this.scheduleFit(0);
   }
@@ -104,13 +114,20 @@ export class SessionTerminal {
   }
 
   focus(): void {
+    this.stimulus();
     this.term.focus();
+  }
+
+  /** Marca que o que vier a seguir do terminal é reação a algo que fizemos. */
+  private stimulus(): void {
+    this.lastStimulus = performance.now();
   }
 
   /** Conecta à saída do processo, reproduzindo o histórico antes dos dados ao vivo. */
   async connect(since: number): Promise<void> {
     if (this.connectedTo === since) return;
     this.connectedTo = since;
+    this.stimulus();
     this.pending = [];
     try {
       const history = await ipc.ptyAttach(this.id, (bytes) => this.onBytes(bytes));
@@ -144,7 +161,9 @@ export class SessionTerminal {
   }
 
   private onBytes(bytes: Uint8Array): void {
-    this.lastOutput = performance.now();
+    const now = performance.now();
+    this.lastOutput = now;
+    if (now - this.lastStimulus > REDRAW_WINDOW_MS) this.lastSpontaneous = now;
     if (this.pending) this.pending.push(bytes);
     else this.term.write(bytes);
   }
@@ -164,6 +183,7 @@ export class SessionTerminal {
     if (this.term.cols !== this.cols || this.term.rows !== this.rows) {
       this.cols = this.term.cols;
       this.rows = this.term.rows;
+      this.stimulus();
       if (this.connected) ipc.ptyResize(this.id, this.cols, this.rows).catch(() => {});
     }
   }

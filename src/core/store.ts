@@ -19,7 +19,7 @@ class Store {
   zoom: string | null = null;
   selected: string | null = null;
   recentDirs: string[] = [];
-  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [] };
+  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true };
   /** Percentual de contexto usado por sessão. */
   context: Record<string, number> = {};
   windows: WindowRecord[] = [];

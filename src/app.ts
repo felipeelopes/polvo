@@ -73,6 +73,12 @@ export class App {
   async start(): Promise<void> {
     await events.onSessions((list) => store.setSessions(list));
     await events.onWindows((list) => store.setWindows(list));
+    // "Abrir no Polvo" pelo Explorer (Shift + clique direito numa pasta).
+    if (store.isMain) {
+      await events.onOpenFolder((folder) => this.openFolder(folder));
+      const pending = await ipc.openFolderTake().catch(() => null);
+      if (pending) this.openFolder(pending);
+    }
     await events.onRuntime((id, rt) => store.setRuntime(id, rt));
     this.terms.sync();
     this.rail.render();
@@ -159,6 +165,13 @@ export class App {
   newSession(target?: NewSessionTarget): void {
     closePopover();
     openNewSession((id, t) => this.onCreated(id, t), target);
+  }
+
+  /** Pergunta com qual agente abrir a pasta vinda do Explorer. */
+  openFolder(folder: string): void {
+    closePopover();
+    document.querySelectorAll(".modal").forEach((m) => m.remove());
+    openNewSession((id, t) => this.onCreated(id, t), undefined, { cwd: folder });
   }
 
   // ------------------------------------------------------------ estado

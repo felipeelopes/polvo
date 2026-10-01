@@ -22,7 +22,11 @@
         "center": true,
         "decorations": false,
         "transparent": true,
-        "windowEffects": { "effects": ["mica"] }
+        "windowEffects": {
+          "effects": [
+            "mica"
+          ]
+        }
       }
     ],
     "security": {
@@ -31,7 +35,10 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["nsis", "msi"],
+    "targets": [
+      "nsis",
+      "msi"
+    ],
     "createUpdaterArtifacts": true,
     "publisher": "Polvo contributors",
     "homepage": "https://github.com/felipeelopes/polvo",
@@ -45,14 +52,21 @@
       "icons/icon.ico"
     ],
     "windows": {
-      "nsis": { "installMode": "currentUser" }
+      "nsis": {
+        "installMode": "currentUser",
+        "installerHooks": "windows/hooks.nsh"
+      }
     }
   },
   "plugins": {
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDc4NDFGNkQ3MTY2MUE3ODIKUldTQ3AyRVcxL1pCZUhtb2dhbllPa25POFl4bWlobXpZTVR3K0Q1b3E2NTBUWjY5RVA2MG95L3UK",
-      "endpoints": ["https://github.com/felipeelopes/polvo/releases/latest/download/latest.json"],
-      "windows": { "installMode": "passive" }
+      "endpoints": [
+        "https://github.com/felipeelopes/polvo/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
     }
   }
 }

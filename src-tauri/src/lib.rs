@@ -4,6 +4,7 @@ pub mod bridge;
 mod context;
 mod discovery;
 mod error;
+mod explorer;
 mod paths;
 mod pty;
 mod registry;
@@ -25,6 +26,11 @@ pub fn run() {
         // atalho) cria uma nova janela, que pode ir para qualquer monitor.
         .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
             if args.iter().any(|a| a == "--autostart") {
+                return;
+            }
+            // "Abrir no Polvo" no Explorer: pergunta qual ferramenta abrir na pasta.
+            if let Some(folder) = explorer::folder_from_args(&args) {
+                explorer::deliver(app, folder);
                 return;
             }
             let app = app.clone();
@@ -63,6 +69,9 @@ pub fn run() {
         .manage(SettingsState::load())
         .manage(Registry::load())
         .manage(PtyManager::default())
+        .manage(explorer::PendingOpen(std::sync::Mutex::new(
+            explorer::folder_from_args(&std::env::args().collect::<Vec<_>>()),
+        )))
         .invoke_handler(tauri::generate_handler![
             settings::settings_get,
             settings::settings_set,
@@ -86,6 +95,7 @@ pub fn run() {
             windows::monitors_list,
             windows::window_to_monitor,
             windows::open_url,
+            explorer::open_folder_take,
         ])
         .setup(|app| {
             let handle = app.handle().clone();
@@ -94,6 +104,9 @@ pub fn run() {
             if settings.onboarded {
                 if let Err(e) = settings::sync_autostart(&handle, settings.autostart) {
                     log::warn!("{e}");
+                }
+                if let Err(e) = explorer::sync_menu(settings.explorer_menu) {
+                    log::warn!("menu do Explorer: {e}");
                 }
             }
             app.state::<Registry>()

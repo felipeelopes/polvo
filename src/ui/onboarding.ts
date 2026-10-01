@@ -42,6 +42,7 @@ export function openOnboarding(onFinish: () => void): void {
       body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>Tudo pronto!</h2><div class="sub" style="margin:0">Dica: abra quantas janelas quiser (botão ${monitorHint} na barra) e coloque cada uma no monitor que preferir.</div></div></div>
         <div class="rows">
           <div class="row" data-toggle="claudeUsageBridge"><div><b>Mostrar limites do Claude Code</b><small>Lê os limites de 5h e semanal pela statusline. A sua statusline atual continua igual.</small></div><span class="switch${draft.claudeUsageBridge ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="explorerMenu"><div><b>"Abrir no Polvo" no Explorer</b><small>Shift + clique direito numa pasta para abrir um agente nela.</small></div><span class="switch${draft.explorerMenu ? " on" : ""}"></span></div>
           <div class="row" data-toggle="checkUpdates"><div><b>Atualizar automaticamente</b><small>Procura novas versões no GitHub e avisa quando houver.</small></div><span class="switch${draft.checkUpdates ? " on" : ""}"></span></div>
         </div>`;
     }
@@ -65,7 +66,7 @@ export function openOnboarding(onFinish: () => void): void {
       render();
       return;
     }
-    const tg = t.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as "claudeUsageBridge" | "checkUpdates" | undefined;
+    const tg = t.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as "claudeUsageBridge" | "checkUpdates" | "explorerMenu" | undefined;
     if (tg) {
       draft[tg] = !draft[tg];
       render();
@@ -128,6 +129,7 @@ export function openSettings(): void {
           <button class="ghost" data-newwin>+ Nova janela</button></div>
         ${row("autoResume", "Retomar sessões ao abrir", "Reabre cada sessão exatamente onde parou.")}
         ${row("claudeUsageBridge", "Limites do Claude Code", "Lidos pela statusline (planos Pro/Max). Vale para sessões novas ou retomadas.")}
+        ${row("explorerMenu", "\"Abrir no Polvo\" no Explorer", "Shift + clique direito numa pasta para abrir um agente nela.")}
         ${row("checkUpdates", "Atualizações automáticas", "Procura novas versões no GitHub.")}
       </div>
       <div class="mfoot" style="margin-top:16px"><button class="ghost" data-about>Sobre o Polvo ${__APP_VERSION__}</button><span class="hk"></span><button class="primary" data-close>Pronto</button></div>`;

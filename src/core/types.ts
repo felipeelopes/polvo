@@ -48,6 +48,8 @@ export interface Settings {
   checkUpdates: boolean;
   /** Fornecedores escondidos pelo usuário, mesmo que instalados. */
   disabledTools: ToolKind[];
+  /** "Abrir no Polvo" no menu do Explorer (Shift + clique direito). */
+  explorerMenu: boolean;
 }
 
 export interface UsageWindow {

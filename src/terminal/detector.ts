@@ -13,13 +13,57 @@ const WAITING: Record<ToolKind, RegExp[]> = {
 };
 const GENERIC_WAITING = [/\[y\/n\]/i, /\(y\/n\)/i, /Press any key/i];
 
-export function detectStatus(tool: ToolKind, screen: string[], msSinceOutput: number, msSinceInput: number): Status {
+export interface Detection {
+  status: Status;
+  /** O próprio CLI deixou claro (texto na tela); não precisa confirmar. */
+  certain: boolean;
+}
+
+/**
+ * `msSinceSpontaneous`: tempo desde a última saída que não foi reação a um
+ * estímulo nosso (digitar, clicar, redimensionar, mover o terminal). Redesenhos
+ * de tela não contam como trabalho.
+ */
+export function detectStatus(tool: ToolKind, screen: string[], msSinceSpontaneous: number): Detection {
   const tail = screen.slice(-24).join("\n");
-  if ([...WAITING[tool], ...GENERIC_WAITING].some((r) => r.test(tail))) return "waiting";
-  if (WORKING.test(tail)) return "working";
-  // Saída recente que não é só o eco do que o usuário digitou.
-  if (msSinceOutput < 1500 && msSinceInput > 700) return "working";
-  return "idle";
+  if ([...WAITING[tool], ...GENERIC_WAITING].some((r) => r.test(tail))) return { status: "waiting", certain: true };
+  if (WORKING.test(tail)) return { status: "working", certain: true };
+  if (msSinceSpontaneous < 1500) return { status: "working", certain: false };
+  return { status: "idle", certain: false };
+}
+
+/**
+ * Evita piscar: uma mudança sem certeza só vale depois de aparecer em
+ * `needed` leituras seguidas.
+ */
+export class StatusDebouncer {
+  private current = new Map<string, Status>();
+  private pending = new Map<string, { status: Status; count: number }>();
+
+  constructor(private needed = 2) {}
+
+  next(id: string, d: Detection): Status {
+    const cur = this.current.get(id);
+    if (cur === undefined || d.certain || d.status === cur) {
+      this.pending.delete(id);
+      this.current.set(id, d.status);
+      return d.status;
+    }
+    const p = this.pending.get(id);
+    const count = p && p.status === d.status ? p.count + 1 : 1;
+    if (count >= this.needed) {
+      this.pending.delete(id);
+      this.current.set(id, d.status);
+      return d.status;
+    }
+    this.pending.set(id, { status: d.status, count });
+    return cur;
+  }
+
+  forget(id: string): void {
+    this.current.delete(id);
+    this.pending.delete(id);
+  }
 }
 
 /** Percentual de contexto usado, quando o CLI o mostra na tela. */

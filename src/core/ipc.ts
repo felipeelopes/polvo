@@ -52,6 +52,8 @@ export const ipc = {
   ptyResize: (id: string, cols: number, rows: number) => invoke<void>("pty_resize", { id, cols, rows }),
 
   usage: () => invoke<UsageSnapshot[]>("usage_get"),
+  /** Pasta pedida pelo "Abrir no Polvo" ao iniciar o app (uma vez só). */
+  openFolderTake: () => invoke<string | null>("open_folder_take"),
   /** Percentual de contexto usado por sessão (Claude e Codex). */
   context: () => invoke<Record<string, number>>("context_get"),
 };
@@ -65,6 +67,8 @@ function toBytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {
 export const events = {
   onSessions: (fn: (sessions: Session[]) => void): Promise<UnlistenFn> =>
     listen<Session[]>("sessions-changed", (e) => fn(e.payload)),
+  onOpenFolder: (fn: (folder: string) => void): Promise<UnlistenFn> =>
+    listen<string>("open-folder", (e) => fn(e.payload)),
   onWindows: (fn: (windows: WindowRecord[]) => void): Promise<UnlistenFn> =>
     listen<WindowRecord[]>("windows-changed", (e) => fn(e.payload)),
   onRuntime: (fn: (id: string, runtime: Runtime) => void): Promise<UnlistenFn> =>

@@ -24,6 +24,8 @@ pub struct Settings {
     pub check_updates: bool,
     /// Fornecedores escondidos pelo usuário, mesmo que instalados.
     pub disabled_tools: Vec<ToolKind>,
+    /// "Abrir no Polvo" no menu do Explorer (Shift + clique direito).
+    pub explorer_menu: bool,
 }
 
 impl Default for Settings {
@@ -35,6 +37,7 @@ impl Default for Settings {
             claude_usage_bridge: true,
             check_updates: true,
             disabled_tools: Vec::new(),
+            explorer_menu: true,
         }
     }
 }
@@ -80,6 +83,7 @@ pub fn settings_set(
 ) -> AppResult<Settings> {
     let saved = state.update(|s| *s = settings)?;
     sync_autostart(&app, saved.autostart)?;
+    crate::explorer::sync_menu(saved.explorer_menu)?;
     Ok(saved)
 }
 

@@ -13,20 +13,29 @@ export interface NewSessionTarget {
 
 let lastTool: ToolKind = "claude";
 
-export function openNewSession(onCreated: (id: string, target?: NewSessionTarget) => void, target?: NewSessionTarget): void {
+export interface NewSessionOptions {
+  /** Pasta já escolhida (ex.: "Abrir no Polvo" pelo Explorer). */
+  cwd?: string;
+}
+
+export function openNewSession(
+  onCreated: (id: string, target?: NewSessionTarget) => void,
+  target?: NewSessionTarget,
+  opts: NewSessionOptions = {},
+): void {
   const modal = h("div", "modal");
   const box = h("div", "mbox");
   modal.append(box);
   const near = target ? store.session(target.id) : undefined;
   const choices = (Object.keys(TOOLS) as ToolKind[]).filter((t) => !store.settings.disabledTools.includes(t));
   let tool: ToolKind = store.toolEnabled(lastTool) ? lastTool : (choices.find((t) => store.tools[t]) ?? "shell");
-  let cwd = near?.cwd ?? store.recentDirs[0] ?? "";
+  let cwd = opts.cwd ?? near?.cwd ?? store.recentDirs[0] ?? "";
   let mode: StartMode = "new";
 
   const render = () => {
     box.innerHTML = `
-      <h2>Nova sessão</h2>
-      <div class="sub">${near ? `Abre ${target!.side === "right" ? "à direita" : "abaixo"} de “${esc(near.title)}”.` : "Entra no maior espaço livre. Depois é só arrastar."}</div>
+      <h2>${opts.cwd ? `Abrir “${esc(basename(opts.cwd))}” no Polvo` : "Nova sessão"}</h2>
+      <div class="sub">${opts.cwd ? "Escolha com qual agente abrir esta pasta." : near ? `Abre ${target!.side === "right" ? "à direita" : "abaixo"} de “${esc(near.title)}”.` : "Entra no maior espaço livre. Depois é só arrastar."}</div>
       <div class="tools" style="grid-template-columns:repeat(${choices.length},1fr)">${choices
         .map(
           (k) =>
