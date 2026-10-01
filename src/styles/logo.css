@@ -39,3 +39,16 @@
 @media (prefers-reduced-motion: reduce) {
   .polvo *, .bubbles i { animation: none !important; }
 }
+
+/* Nadando: usado enquanto uma sessão inicia ou é retomada. */
+.polvo.swim .body { animation: polvo-swim 1.1s ease-in-out infinite; }
+.polvo.swim .arm { animation: polvo-stroke 1.1s ease-in-out infinite; }
+.polvo.swim .a0, .polvo.swim .a4 { animation-delay: -0.15s; }
+.polvo.swim .a1, .polvo.swim .a3 { animation-delay: -0.08s; }
+.polvo.swim .eyes { animation: polvo-blink 3s infinite; }
+@keyframes polvo-swim { 0%, 100% { transform: translateY(4%) scaleY(0.97); } 50% { transform: translateY(-6%) scaleY(1.03); } }
+@keyframes polvo-stroke { 0%, 100% { transform: scaleY(1) rotate(0deg); } 50% { transform: scaleY(0.78) rotate(0deg); } }
+.pane-note .polvo { margin: 0 auto 6px; display: block; }
+.pane-note.loading { background: rgba(20, 22, 34, 0.86); }
+.pane-note .dots3::after { content: ""; animation: dots3 1.2s steps(4) infinite; }
+@keyframes dots3 { 0% { content: ""; } 25% { content: "."; } 50% { content: ".."; } 75% { content: "..."; } }

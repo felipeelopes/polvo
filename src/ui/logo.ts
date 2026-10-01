@@ -3,9 +3,10 @@
 // Variações:
 //   - "idle":  flutua, pisca e balança os braços (onboarding, vazio, sobre)
 //   - "wave":  acena com um braço (boas-vindas, "tudo pronto")
+//   - "swim":  nada para cima, braços em ritmo rápido (retomando uma sessão)
 //   - "still": sem animação (barra de título)
 
-export type LogoMood = "idle" | "wave" | "still";
+export type LogoMood = "idle" | "wave" | "swim" | "still";
 
 const TENTACLES = [
   { x: 31, h: 34 },

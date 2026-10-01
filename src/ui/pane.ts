@@ -3,6 +3,7 @@ import { store } from "../core/store";
 import type { Session, Status } from "../core/types";
 import { basename, esc, h } from "./dom";
 import { ICON, TOOLS, toolIcon } from "./icons";
+import { logo } from "./logo";
 
 export type PaneAction = "split" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dclose" | "start" | "rename";
 
@@ -123,11 +124,16 @@ export class Pane {
       n.innerHTML = `<b>Sessão pausada</b><p>${esc(TOOLS[s.tool].name)} em ${esc(basename(s.cwd))}${s.sessionId ? " · pronta para retomar" : ""}</p><div><button class="primary" data-a="start">Retomar</button><button class="ghost" data-a="close">Encerrar</button></div>`;
     } else if (st === "error") {
       n.innerHTML = `<b>Não foi possível iniciar</b><p>${esc(s.runtime.error ?? "Erro desconhecido")}</p><div><button class="primary" data-a="start">Tentar de novo</button><button class="ghost" data-a="close">Encerrar</button></div>`;
+    } else if (st === "starting") {
+      // O polvo "puxa" a sessão de volta enquanto o CLI não responde.
+      const resuming = !!s.sessionId;
+      n.classList.add("loading");
+      n.innerHTML = `${logo(64, "swim")}<b>${resuming ? "Retomando a sessão" : "Iniciando a sessão"}<span class="dots3"></span></b><p>${esc(TOOLS[s.tool].name)} em ${esc(basename(s.cwd))}</p>`;
     } else if (st === "exited") {
       n.classList.add("bottom");
       n.innerHTML = `<b>Processo encerrado${s.runtime.exitCode ? ` (código ${s.runtime.exitCode})` : ""}</b><div><button class="primary" data-a="start">${s.sessionId ? "Retomar" : "Reiniciar"}</button><button class="ghost" data-a="close">Fechar</button></div>`;
     }
-    n.hidden = !["paused", "error", "exited"].includes(st);
+    n.hidden = !["paused", "error", "exited", "starting"].includes(st);
   }
 
   setSizeLabel(text: string): void {

@@ -309,9 +309,15 @@ export class App {
         this.board.render();
         this.board.renderDrawer();
         break;
-      case "start":
+      case "start": {
+        const s = store.session(id);
+        if (s) {
+          s.runtime = { ...s.runtime, status: "starting", error: null, exitCode: null };
+          store.emit("runtime");
+        }
         void ipc.sessionStart(id);
         break;
+      }
       case "rename":
         if (extra) {
           store.patchLocal(id, { title: extra });
