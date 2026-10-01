@@ -12,6 +12,7 @@ import type {
   Snapshot,
   StartMode,
   ToolKind,
+  ToolVersion,
   UsageSnapshot,
   View,
   WindowRecord,
@@ -53,6 +54,8 @@ export const ipc = {
   ptyResize: (id: string, cols: number, rows: number) => invoke<void>("pty_resize", { id, cols, rows }),
 
   usage: () => invoke<UsageSnapshot[]>("usage_get"),
+  /** Versões instalada/publicada de cada CLI. */
+  toolsVersions: () => invoke<Partial<Record<ToolKind, ToolVersion>>>("tools_versions"),
   /** Pasta pedida pelo "Abrir no Polvo" ao iniciar o app (uma vez só). */
   openFolderTake: () => invoke<string | null>("open_folder_take"),
   /** Repositório, branch e worktrees de cada pasta (null se não for git). */

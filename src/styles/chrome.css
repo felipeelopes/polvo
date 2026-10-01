@@ -103,3 +103,7 @@
 .si.colored:not(.on) { background: color-mix(in srgb, var(--acc) 7%, transparent); }
 .si.on::before { width: 3px; height: 16px; }
 .ri.on { background: color-mix(in srgb, var(--acc) 22%, rgba(255, 255, 255, 0.08)); }
+
+/* Anel com bolinha: há atualização do CLI ou sessões na versão antiga. */
+.ur.has-update { position: relative; }
+.ur.has-update::after { content: ""; position: absolute; left: 24px; top: 4px; width: 8px; height: 8px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 2px #1c1e2b; }

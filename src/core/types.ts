@@ -9,6 +9,15 @@ export interface Runtime {
   exitCode: number | null;
   error: string | null;
   preview: string[];
+  /** Versão do CLI com que o processo foi iniciado. */
+  version: string | null;
+}
+
+/** Versões de um CLI: instalada, mais recente publicada e como atualizar. */
+export interface ToolVersion {
+  installed: string | null;
+  latest: string | null;
+  updateCommand: string | null;
 }
 
 export interface Session {

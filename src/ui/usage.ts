@@ -8,6 +8,40 @@ import { TOOLS, toolIcon } from "./icons";
 
 const PROVIDERS: ToolKind[] = ["claude", "codex", "opencode"];
 
+/** Compara versões "x.y.z": positivo se a > b. */
+export function compareVersions(a: string, b: string): number {
+  const pa = a.split(".").map(Number);
+  const pb = b.split(".").map(Number);
+  for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+    const d = (pa[i] ?? 0) - (pb[i] ?? 0);
+    if (d) return d;
+  }
+  return 0;
+}
+
+const RUNNING = new Set(["starting", "working", "waiting", "idle"]);
+
+/** Sessões rodando uma versão diferente da instalada (o CLI foi atualizado). */
+export function outdatedSessions(tool: ToolKind) {
+  const installed = store.versions[tool]?.installed;
+  if (!installed) return [];
+  return store.sessions.filter((s) => s.tool === tool && RUNNING.has(s.runtime.status) && s.runtime.version && s.runtime.version !== installed);
+}
+
+const newerAvailable = (tool: ToolKind): string | null => {
+  const v = store.versions[tool];
+  return v?.installed && v.latest && compareVersions(v.latest, v.installed) > 0 ? v.latest : null;
+};
+
+/** Há algo a fazer (atualizar o CLI ou reiniciar sessões)? */
+export const versionAction = (tool: ToolKind) => outdatedSessions(tool).length > 0 || !!newerAvailable(tool);
+
+/** Ações registradas pelo App (reiniciar sessões, rodar o atualizador). */
+export const versionActions = {
+  restart: (_tool: ToolKind) => {},
+  update: (_tool: ToolKind) => {},
+};
+
 const SOURCE: Record<string, string> = {
   claude: "Lido pela statusline do Claude Code (planos Pro/Max).",
   codex: "Lido dos arquivos de sessão do Codex.",
@@ -66,14 +100,14 @@ export function renderRings(container: HTMLElement): void {
       if (short && long) {
         const s5 = Math.round(short.usedPercent!);
         const sl = Math.round(long.usedPercent!);
-        return `<button class="ur" data-pop data-p="${p}" title="Anel de fora: ${long.label} · anel de dentro: ${short.label}">${doubleRing(sl, s5, p)}<div><b>${t.short}</b><span>5h ${s5}% · ${long.short} ${sl}%</span></div></button>`;
+        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}" title="Anel de fora: ${long.label} · anel de dentro: ${short.label}">${doubleRing(sl, s5, p)}<div><b>${t.short}</b><span>5h ${s5}% · ${long.short} ${sl}%</span></div></button>`;
       }
       if (w) {
         const pct = Math.round(w.usedPercent!);
-        return `<button class="ur" data-pop data-p="${p}">${ring(pct, levelColor(p, pct))}<div><b>${t.short}</b><span>${pct}% · ${w.short}</span></div></button>`;
+        return `<button class="ur${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(pct, levelColor(p, pct))}<div><b>${t.short}</b><span>${pct}% · ${w.short}</span></div></button>`;
       }
       const value = u?.windows[0]?.value;
-      return `<button class="ur${value ? "" : " none"}" data-pop data-p="${p}">${ring(0, t.color)}<div><b>${t.short}</b><span>${value ? `${value} ${u!.windows[0].short}` : "sem dados"}</span></div></button>`;
+      return `<button class="ur${value ? "" : " none"}${versionAction(p) ? " has-update" : ""}" data-pop data-p="${p}">${ring(0, t.color)}<div><b>${t.short}</b><span>${value ? `${value} ${u!.windows[0].short}` : "sem dados"}</span></div></button>`;
     })
     .join("");
 }
@@ -102,5 +136,24 @@ function paint(el: HTMLElement, provider: ToolKind): void {
     : `<p class="prs">Ainda sem dados. ${provider === "claude" ? "Os limites aparecem depois da primeira resposta numa sessão do Claude Code aberta pelo Polvo (planos Pro/Max)." : "Abra e use uma sessão para começar a medir."}</p>`;
   el.innerHTML = `<div class="poph" style="--acc:${t.color}"><span class="ic">${toolIcon(provider, 16)}</span><div><b>${t.name}</b><span>${u?.plan ?? t.vendor}</span></div></div>
     ${rows}
+    ${versionSection(provider)}
     <div class="pf">${sessions.length} ${sessions.length === 1 ? "sessão" : "sessões"} · ${u ? `atualizado ${ago(u.observedAt)}` : "—"}<br>${SOURCE[provider]}</div>`;
+  el.onclick = (e) => {
+    const a = (e.target as Element).closest<HTMLElement>("[data-va]")?.dataset.va;
+    if (a === "restart") versionActions.restart(provider);
+    if (a === "update") versionActions.update(provider);
+  };
+}
+
+function versionSection(tool: ToolKind): string {
+  const v = store.versions[tool];
+  if (!v?.installed) return "";
+  const old = outdatedSessions(tool);
+  const newer = newerAvailable(tool);
+  const oldVersions = [...new Set(old.map((s) => s.runtime.version))].join(", ");
+  return `<div class="pv">
+    <div class="pl"><span>Versão instalada</span><b>v${v.installed}</b></div>
+    ${newer ? `<div class="pv-row"><span>Nova versão <b>v${newer}</b> disponível</span><button class="primary sm" data-va="update">Atualizar</button></div>` : '<div class="prs">Você está na versão mais recente.</div>'}
+    ${old.length ? `<div class="pv-row"><span>${old.length} ${old.length === 1 ? "sessão rodando" : "sessões rodando"} v${oldVersions}</span><button class="primary sm" data-va="restart">Reiniciar na v${v.installed}</button></div>` : ""}
+  </div>`;
 }

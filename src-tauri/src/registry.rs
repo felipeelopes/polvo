@@ -66,6 +66,8 @@ pub struct Runtime {
     pub exit_code: Option<i32>,
     pub error: Option<String>,
     pub preview: Vec<String>,
+    /// Versão do CLI com que o processo foi iniciado.
+    pub version: Option<String>,
     #[serde(skip)]
     generation: u64,
 }
@@ -78,6 +80,7 @@ impl Runtime {
             exit_code: None,
             error: None,
             preview: vec![],
+            version: None,
             generation: 0,
         }
     }
@@ -279,6 +282,20 @@ impl Registry {
             );
         }
 
+        // A versão do CLI é lida em segundo plano (não trava a interface).
+        {
+            let app = app.clone();
+            let id = id.to_string();
+            let tool = rec.tool;
+            let _ = thread::Builder::new()
+                .name(format!("version-{id}"))
+                .spawn(move || {
+                    let version = crate::versions::installed(tool);
+                    app.state::<Registry>()
+                        .set_version(&app, &id, generation, version);
+                });
+        }
+
         if plan.discover {
             self.spawn_discovery(
                 app.clone(),
@@ -328,6 +345,17 @@ impl Registry {
             });
     }
 
+    fn set_version(&self, app: &AppHandle, id: &str, generation: u64, version: Option<String>) {
+        {
+            let mut inner = self.inner.lock();
+            match inner.runtime.get_mut(id) {
+                Some(rt) if rt.generation == generation => rt.version = version,
+                _ => return,
+            }
+        }
+        self.emit_runtime(app, id);
+    }
+
     fn generation(&self, id: &str) -> Option<u64> {
         self.inner.lock().runtime.get(id).map(|r| r.generation)
     }
@@ -351,6 +379,7 @@ impl Registry {
                     *rt = Runtime {
                         exit_code: Some(code),
                         generation,
+                        version: rt.version.clone(),
                         ..Runtime::new("exited")
                     };
                 }

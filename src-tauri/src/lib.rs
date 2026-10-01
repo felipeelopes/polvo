@@ -12,6 +12,7 @@ mod registry;
 mod settings;
 mod tools;
 mod usage;
+mod versions;
 mod windows;
 
 use tauri::{Manager, RunEvent, WindowEvent};
@@ -98,6 +99,7 @@ pub fn run() {
             windows::open_url,
             explorer::open_folder_take,
             git::git_info,
+            versions::tools_versions,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

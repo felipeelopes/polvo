@@ -18,7 +18,8 @@ import { Sidebar } from "./ui/sidebar";
 import { TilesView } from "./ui/tiles";
 import { Titlebar } from "./ui/titlebar";
 import { isZoomKey, zoomKey } from "./ui/zoom";
-import { refreshUsage, refreshUsagePopovers } from "./ui/usage";
+import { outdatedSessions, refreshUsage, refreshUsagePopovers, versionActions } from "./ui/usage";
+import { TOOLS } from "./ui/icons";
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
@@ -97,6 +98,51 @@ export class App {
     window.setInterval(() => void this.refreshContext(), 4000);
     void this.refreshGit();
     window.setInterval(() => void this.refreshGit(), 30_000);
+    versionActions.restart = (tool) => this.restartOutdated(tool);
+    versionActions.update = (tool) => void this.runToolUpdate(tool);
+    void this.refreshVersions();
+    window.setInterval(() => void this.refreshVersions(), 10 * 60_000);
+    window.addEventListener("focus", () => void this.refreshVersions());
+  }
+
+  /** Versões instaladas/publicadas dos CLIs (para o popup de limites). */
+  private async refreshVersions(): Promise<void> {
+    try {
+      store.versions = await ipc.toolsVersions();
+      store.emit("usage");
+    } catch {
+      /* sem npm ou sem rede: ignora */
+    }
+  }
+
+  /** Reinicia (retomando a conversa) as sessões que rodam uma versão antiga do CLI. */
+  private restartOutdated(tool: ToolKind): void {
+    const old = outdatedSessions(tool);
+    closePopover();
+    for (const s of old) {
+      s.runtime = { ...s.runtime, status: "starting" };
+      void ipc.sessionStart(s.id);
+    }
+    store.emit("runtime");
+    toast(`${old.length} ${old.length === 1 ? "sessão reiniciada" : "sessões reiniciadas"} com ${TOOLS[tool].name} v${store.versions[tool]?.installed}`);
+  }
+
+  /** Roda o atualizador do CLI num PowerShell ao lado. */
+  private async runToolUpdate(tool: ToolKind): Promise<void> {
+    const cmd = store.versions[tool]?.updateCommand;
+    if (!cmd) return;
+    closePopover();
+    const cwd = store.session(store.active)?.cwd ?? store.mine[0]?.cwd ?? store.recentDirs[0];
+    if (!cwd) return toast("Abra um projeto primeiro.");
+    try {
+      const id = await ipc.sessionCreate({ tool: "shell", cwd, title: `Atualizar ${TOOLS[tool].name}`, mode: "new", window: store.label });
+      this.onCreated(id);
+      // Espera o PowerShell abrir e digita o comando de atualização.
+      window.setTimeout(() => void ipc.ptyWrite(id, `${cmd}\r`), 2500);
+      toast(`Atualizando ${TOOLS[tool].name}… quando terminar, use “Reiniciar” no popup de limites.`);
+    } catch (e) {
+      toast(String(e));
+    }
   }
 
   /** Repositório e worktrees de cada pasta, para agrupar a barra lateral. */

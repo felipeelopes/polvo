@@ -3,7 +3,7 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ipc } from "./ipc";
 import { clone } from "./layout";
-import type { DisplayInfo, LayoutNode, RepoInfo, Runtime, Session, Settings, ToolKind, UsageSnapshot, View, WindowRecord } from "./types";
+import type { DisplayInfo, LayoutNode, RepoInfo, Runtime, Session, Settings, ToolKind, ToolVersion, UsageSnapshot, View, WindowRecord } from "./types";
 
 export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage" | "windows" | "context" | "git";
 
@@ -20,6 +20,8 @@ class Store {
   selected: string | null = null;
   recentDirs: string[] = [];
   settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true };
+  /** Versões dos CLIs (instalada, publicada, comando de atualização). */
+  versions: Partial<Record<ToolKind, ToolVersion>> = {};
   /** Informações de git por pasta de sessão (para agrupar a barra lateral). */
   git: Record<string, RepoInfo | null> = {};
   /** Percentual de contexto usado por sessão. */
