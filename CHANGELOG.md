@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.4
+
+- **Projetos**: botão “+ Projeto” para abrir uma pasta, criar um projeto novo (com `git init`) ou clonar um repositório. Projetos salvos aparecem na barra lateral mesmo sem sessões.
+- **Ver só este projeto**: filtra Painéis e Quadro por projeto; cada projeto guarda a sua disposição de painéis.
+- **Quadro mais flexível**: divisórias entre as colunas e o chat, colunas recolhíveis e chat maximizável (`Ctrl+Shift+M`).
+- **Visualizador de Markdown** ao lado das sessões: abas, mermaid, fórmulas, código destacado, edição e modo dividido, com atualização ao vivo quando o agente muda o arquivo. `Ctrl` + clique num caminho `.md` do terminal abre o documento.
+- **`/rename` e `/color` sincronizados** com o Polvo; a borda e a linha da sessão seguem a cor escolhida.
+- **Versões dos CLIs** no popup de limites: atualize o Claude Code, Codex ou OpenCode e reinicie as sessões na versão nova com um clique.
+- **Proteção ao fechar**: o Polvo pergunta antes de fechar com chats em andamento.
+- Depois de `/resume` ou `/clear` no Claude, o Polvo retoma a conversa que está na tela (antes voltava a uma conversa nova).
+- Menus abrem para cima quando não cabem abaixo (não ficam mais atrás da barra de tarefas).
+
 ## 0.1.3
 
 - **Barra lateral por projeto**: sessões agrupadas por repositório, com os worktrees de cada um (como no Claude Code) e o percentual de contexto de cada chat. Recolhe para o trilho de ícones.

@@ -36,13 +36,17 @@ Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polv
 | 🧩 **Painéis** | Arraste pelo cabeçalho e solte na borda de outro painel para dividir, no centro para trocar, na borda da área para uma coluna/linha inteira. |
 | 📐 **Resize inteligente** | Ímã em ⅓, ½ e ⅔, alinhamento com outras divisórias, divisórias alinhadas que se movem juntas, tamanho mínimo garantido e colunas × linhas do terminal ao vivo. |
 | ⚡ **Facilitadores** | Grade, principal + pilha, colunas, linhas, igualar, desfazer, maximizar, atalhos de teclado. |
-| 🗂️ **Quadro** | Kanban automático: *Aguardando você*, *Trabalhando*, *Ocioso*, com prévia ao vivo e gaveta para abrir a sessão. |
+| 🗂️ **Quadro** | Kanban automático: *Aguardando você*, *Trabalhando*, *Ocioso*, com prévia ao vivo e gaveta para abrir a sessão. Colunas redimensionáveis e recolhíveis; o chat pode ser maximizado. |
+| 📁 **Projetos** | Abra uma pasta, crie um projeto (com `git init`) ou clone um repositório. “Ver só este projeto” filtra Painéis e Quadro, cada projeto com sua disposição. |
+| 📝 **Visualizador de Markdown** | Abas de documentos ao lado das sessões, com mermaid, fórmulas, edição e atualização ao vivo. `Ctrl` + clique num `.md` do terminal abre o arquivo. |
 | 🗂️ **Barra lateral por projeto** | Sessões agrupadas por repositório, com os worktrees de cada um. O nome do chat acompanha o título que o CLI define no terminal. |
-| ⚡ **Nova sessão sem perguntas** | Com um chat em foco (ou pelo “+” de um projeto/worktree), a sessão nova abre direto ali. Shift+clique abre o diálogo completo. |
+| ⚡ **Nova sessão sem perguntas** | Com um chat em foco (`Ctrl+Shift+N`) ou pelo “+” de um projeto/worktree, a sessão nova abre direto ali. |
+| 🎨 **`/rename` e `/color`** | O nome e a cor definidos no CLI aparecem no Polvo, na borda do painel e na barra lateral. |
 | 🖥️ **Várias janelas** | Abra quantas janelas quiser e leve cada uma para o monitor certo. Abrir o Polvo de novo cria outra janela. |
-| 🔁 **Retomada automática** | Ao abrir, todas as janelas voltam no mesmo monitor e cada sessão continua a mesma conversa. |
+| 🔁 **Retomada automática** | Ao abrir, todas as janelas voltam no mesmo monitor e cada sessão continua a mesma conversa (mesmo depois de um `/resume`). |
 | 📊 **Limites de uso** | Claude com dois anéis (semanal por fora, 5h por dentro), Codex (arquivos de sessão), OpenCode (`opencode stats`). |
 | 🧠 **Contexto por sessão** | Cada painel mostra quanto da janela de contexto a conversa já usou. |
+| ⬆️ **Versões dos CLIs** | O popup de limites avisa quando há versão nova do Claude Code, Codex ou OpenCode e reinicia as sessões na versão atualizada. |
 | 🎛️ **Fornecedores** | Desative Claude, Codex ou OpenCode mesmo que estejam instalados. |
 | 🚀 **Inicia com o Windows** e **atualiza sozinho** a partir das releases do GitHub. |
 
