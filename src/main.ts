@@ -31,6 +31,9 @@ async function boot(): Promise<void> {
   store.recentDirs = snapshot.recentDirs;
   document.body.classList.toggle("no-mica", !display.mica);
 
+  // Em desenvolvimento, `__polvo.store` fica acessível no DevTools para depuração.
+  if (import.meta.env.DEV) Object.assign(window, { __polvo: { store } });
+
   const root = document.getElementById("app")!;
   const app = new App(root);
   await app.start();

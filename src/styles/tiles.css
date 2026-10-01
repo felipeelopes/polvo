@@ -32,16 +32,20 @@
 .pane-note.bottom b { margin: 0; font-size: 12.5px; white-space: nowrap; }
 .psz { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); z-index: 6; padding: 6px 12px; border-radius: 9px; background: rgba(20, 22, 34, 0.92); border: 1px solid var(--line2); font-size: 12px; font-variant-numeric: tabular-nums; pointer-events: none; color: var(--muted); display: none; }
 .tiles.live .psz { display: block; }
-@container (max-width: 420px) { .ph .pt span { display: none; } .ph .st span { display: none; } .ph .st { padding: 4px 6px; } }
-@container (max-width: 320px) { .pacts button[data-a="split"], .pacts button[data-a="zoom"], .pacts button[data-a="move"] { display: none; } }
+/* Cabeçalho em painéis estreitos: o título tem prioridade; o resto some aos poucos. */
+.ph .pt b { flex-shrink: 0; max-width: 100%; }
+.ph .pt span { flex-shrink: 1; min-width: 0; }
+@container (max-width: 640px) { .ph .pt span { display: none; } }
+@container (max-width: 560px) { .ph .st span { display: none; } .ph .st { padding: 4px 6px; } .pacts button[data-a="split"], .pacts button[data-a="move"] { display: none; } }
+@container (max-width: 460px) { .pacts button[data-a="terminal"], .pacts button[data-a="zoom"] { display: none; } .ph .ctx svg { display: none; } }
 
 .dv { position: absolute; z-index: 5; }
-.dv.row { cursor: col-resize; }
-.dv.col { cursor: row-resize; }
+.dv.dv-row { cursor: col-resize; }
+.dv.dv-col { cursor: row-resize; }
 .dv::before { content: ""; position: absolute; inset: -4px; }
 .dv::after { content: ""; position: absolute; border-radius: 2px; background: var(--accent); opacity: 0; transition: opacity 0.15s; }
-.dv.row::after { left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); }
-.dv.col::after { top: 50%; left: 0; right: 0; height: 2px; transform: translateY(-50%); }
+.dv.dv-row::after { left: 50%; top: 0; bottom: 0; width: 2px; transform: translateX(-50%); }
+.dv.dv-col::after { top: 50%; left: 0; right: 0; height: 2px; transform: translateY(-50%); }
 .dv:hover::after { opacity: 0.55; }
 .dv.act::after { opacity: 1; }
 .dv.linked::after { opacity: 0.75; background: #c4b5fd; }
@@ -75,4 +79,3 @@
 
 /* contexto usado pela conversa, no cabeçalho do painel */
 .ctx { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; padding: 3px 7px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); flex: none; }
-@container (max-width: 360px) { .ph .ctx svg { display: none; } }

@@ -29,3 +29,7 @@
 .drawer .ph { cursor: default; }
 .dempty { flex: 1; display: grid; place-items: center; color: var(--faint); text-align: center; font-size: 12.5px; padding: 20px; }
 .dempty .primary { margin-top: 14px; }
+
+/* Quadro em janelas estreitas: colunas encolhem e a gaveta divide o espaço. */
+@media (max-width: 1280px) { .drawer { width: 46%; } .kch em { display: none; } }
+@media (max-width: 1050px) { .kcols { grid-template-columns: repeat(3, minmax(150px, 1fr)); overflow-x: auto; } .drawer { width: 50%; } }

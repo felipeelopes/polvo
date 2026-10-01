@@ -6,10 +6,15 @@ use std::path::{Path, PathBuf};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 /// `%APPDATA%\Polvo` — configurações, workspace e dados de uso.
+/// `POLVO_DATA_DIR` usa outra pasta (testes, demonstrações, perfis separados).
 pub fn data_dir() -> PathBuf {
-    let dir = dirs::data_dir()
-        .unwrap_or_else(std::env::temp_dir)
-        .join("Polvo");
+    let dir = std::env::var_os("POLVO_DATA_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            dirs::data_dir()
+                .unwrap_or_else(std::env::temp_dir)
+                .join("Polvo")
+        });
     let _ = fs::create_dir_all(&dir);
     dir
 }

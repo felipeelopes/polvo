@@ -4,7 +4,7 @@ import type { Session, Status } from "../core/types";
 import { basename, esc, h } from "./dom";
 import { ICON, TOOLS, toolIcon } from "./icons";
 
-export type PaneAction = "split" | "move" | "min" | "zoom" | "close" | "open" | "dclose" | "start" | "rename";
+export type PaneAction = "split" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dclose" | "start" | "rename";
 
 export interface PaneHandlers {
   action(action: PaneAction, id: string, extra?: string, anchor?: HTMLElement): void;
@@ -40,12 +40,14 @@ export class Pane {
     this.el.style.setProperty("--acc", t.color);
     const acts =
       mode === "tile"
-        ? `<button data-a="split" title="Nova sessão ao lado">${ICON.split}</button>
+        ? `<button data-a="terminal" title="Abrir terminal na pasta desta sessão (Ctrl+Shift+T)">${ICON.terminal}</button>
+           <button data-a="split" title="Nova sessão ao lado">${ICON.split}</button>
            <button data-a="move" data-pop title="Mover para outra janela">${ICON.move}</button>
            <button data-a="min" title="Recolher para o trilho">${ICON.min}</button>
            <button data-a="zoom" title="Maximizar (Ctrl+Shift+M)">${ICON.max}</button>
            <button data-a="close" title="Encerrar sessão">${ICON.close}</button>`
-        : `<button data-a="open" title="Abrir nos painéis">${ICON.open}</button>
+        : `<button data-a="terminal" title="Abrir terminal na pasta desta sessão">${ICON.terminal}</button>
+           <button data-a="open" title="Abrir nos painéis">${ICON.open}</button>
            <button data-a="dclose" title="Fechar gaveta">${ICON.close}</button>`;
     this.el.innerHTML = `
       <div class="ph">${toolIcon(s.tool, 15)}<div class="pt"><b title="Duplo clique para renomear"></b><span></span></div><span class="ctx" hidden></span><span class="st"></span><div class="pacts">${acts}</div></div>

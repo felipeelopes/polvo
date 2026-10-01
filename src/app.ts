@@ -23,7 +23,7 @@ const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRigh
 
 /** Atalhos do app: o terminal os ignora para que cheguem aqui. */
 export function isAppShortcut(e: KeyboardEvent): boolean {
-  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "Digit1", "Digit2", "KeyZ", "KeyM"].includes(e.code)) return true;
+  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "KeyZ", "KeyM"].includes(e.code)) return true;
   return e.ctrlKey && e.altKey && e.key in ARROWS;
 }
 
@@ -271,6 +271,9 @@ export class App {
         this.newSession({ id, side });
         break;
       }
+      case "terminal":
+        void this.openTerminalHere(id);
+        break;
       case "move":
         this.openMoveMenu(id, anchor);
         break;
@@ -302,6 +305,21 @@ export class App {
           void ipc.sessionUpdate(id, { title: extra });
         }
         break;
+    }
+  }
+
+  /** Abre um PowerShell na pasta da sessão, colado ao lado dela. */
+  private async openTerminalHere(id: string): Promise<void> {
+    const s = store.session(id);
+    if (!s) return;
+    const r = this.tiles.geo.leaves.get(id);
+    const side: Side = r && r.w >= r.h ? "right" : "bottom";
+    try {
+      const newId = await ipc.sessionCreate({ tool: "shell", cwd: s.cwd, title: `Terminal · ${s.title}`, mode: "new", window: store.label });
+      if (store.view === "tiles") this.onCreated(newId, { id, side });
+      else this.onCreated(newId);
+    } catch (e) {
+      toast(String(e));
     }
   }
 
@@ -360,6 +378,9 @@ export class App {
     switch (e.code) {
       case "KeyN":
         this.newSession();
+        break;
+      case "KeyT":
+        if (store.active) void this.openTerminalHere(store.active);
         break;
       case "Digit1":
         this.setView("tiles");

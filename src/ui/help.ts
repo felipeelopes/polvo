@@ -16,6 +16,7 @@ export function openHelp(anchor: HTMLElement): void {
         <li><span>⎘</span><span>No terminal: selecione e use Ctrl+C para copiar; Ctrl+V cola; o botão direito copia ou cola.</span></li></ul>
         <div class="keys">
           <kbd>Ctrl Shift N</kbd><span>Nova sessão</span>
+          <kbd>Ctrl Shift T</kbd><span>Terminal na pasta da sessão ativa</span>
           <kbd>Ctrl Shift 1 / 2</kbd><span>Painéis / Quadro</span>
           <kbd>Ctrl Alt ←↑→↓</kbd><span>Mover o foco entre painéis</span>
           <kbd>Ctrl Alt Shift ←↑→↓</kbd><span>Trocar o painel de lugar</span>

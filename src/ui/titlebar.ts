@@ -28,10 +28,10 @@ export class Titlebar {
   constructor(host: TitlebarHost) {
     const win = getCurrentWindow();
     this.el.innerHTML = `
-      <button class="brand" data-x="about" title="Sobre o Polvo">${logo(24, "still")}Polvo <small class="wname"></small></button>
+      <button class="brand" data-x="about" title="Sobre o Polvo">${logo(24, "still")}<span class="bn">Polvo</span> <small class="wname"></small></button>
       <div class="seg views">
-        <button data-v="tiles" title="Painéis (Ctrl+Shift+1)">${ICON.tiles}Painéis</button>
-        <button data-v="board" title="Quadro por status (Ctrl+Shift+2)">${ICON.board}Quadro</button>
+        <button data-v="tiles" title="Painéis (Ctrl+Shift+1)">${ICON.tiles}<span class="lbl-v">Painéis</span></button>
+        <button data-v="board" title="Quadro por status (Ctrl+Shift+2)">${ICON.board}<span class="lbl-v">Quadro</span></button>
       </div>
       <div class="tg layout-tools">
         <button data-p="grid" title="Organizar em grade">${ICON.grid}</button>
@@ -47,7 +47,7 @@ export class Titlebar {
       <button class="ibtn" data-pop data-x="monitor" title="Levar esta janela para outro monitor">${ICON.monitor}</button>
       <button class="ibtn" data-pop data-x="help" title="Dicas e atalhos">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="Ajustes">${ICON.gear}</button>
-      <button class="primary" data-new title="Ctrl+Shift+N">+ Nova sessão</button>
+      <button class="primary new-btn" data-new title="Nova sessão (Ctrl+Shift+N)">+<span class="lbl-n"> Nova sessão</span></button>
       <div class="wc">
         <button data-w="min" title="Minimizar">${ICON.winMin}</button>
         <button data-w="max" title="Maximizar">${ICON.winMax}</button>

@@ -55,6 +55,7 @@ Requer Windows 10 ou 11 (o efeito Mica aparece no Windows 11).
 | Atalho | Ação |
 |---|---|
 | `Ctrl+Shift+N` | Nova sessão |
+| `Ctrl+Shift+T` | Terminal (PowerShell) na pasta da sessão ativa |
 | `Ctrl+Shift+1` / `Ctrl+Shift+2` | Painéis / Quadro |
 | `Ctrl+Alt+←↑→↓` | Mover o foco entre painéis |
 | `Ctrl+Alt+Shift+←↑→↓` | Trocar o painel de lugar |

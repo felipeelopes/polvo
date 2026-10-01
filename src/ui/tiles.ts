@@ -165,7 +165,7 @@ export class TilesView {
       el.hidden = !!store.zoom;
       const act = this.resize && d.node === this.resize.node && d.index === this.resize.index;
       const linked = this.resize?.linked.some((l) => l.node === d.node && l.index === d.index);
-      el.className = `dv ${d.dir}${act ? " act" : ""}${linked ? " linked" : ""}`;
+      el.className = `dv dv-${d.dir}${act ? " act" : ""}${linked ? " linked" : ""}`;
       Object.assign(el.style, { left: `${d.rect.x}px`, top: `${d.rect.y}px`, width: `${d.rect.w}px`, height: `${d.rect.h}px` });
     });
     this.dividerEls.splice(this.geo.dividers.length).forEach((el) => el.remove());
@@ -393,7 +393,8 @@ export class TilesView {
 
   private showDrop(t: DropTarget | null): void {
     const s = store.session(this.drag!.id);
-    this.host.rail().classList.toggle("drop", t?.kind === "rail" && !s?.minimized);
+    // Classe própria: "drop" é a camada de pré-visualização e mudaria o layout do trilho.
+    this.host.rail().classList.toggle("rail-drop", t?.kind === "rail" && !s?.minimized);
     this.compass.hidden = t?.kind !== "pane";
     if (!t || t.kind === "rail") {
       this.drop.classList.remove("on");
@@ -442,7 +443,7 @@ export class TilesView {
     this.ghost.hidden = true;
     this.compass.hidden = true;
     this.drop.classList.remove("on");
-    this.host.rail().classList.remove("drop");
+    this.host.rail().classList.remove("rail-drop");
     document.body.classList.remove("grabbing");
     this.hint();
     this.panes.get(d.id)?.el.classList.remove("lifting");
