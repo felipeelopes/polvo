@@ -1,6 +1,6 @@
 # Changelog
 
-## Não publicado
+## 0.1.5
 
 - **10 idiomas**: English, Português, Español, Français, Deutsch, Italiano, 日本語, 简体中文, 한국어 e Русский. Segue o idioma do Windows ou o escolhido em Ajustes (também no onboarding).
 - README em cada idioma, com seção de Markdown e Mermaid e diagramas Mermaid renderizados pelo GitHub.

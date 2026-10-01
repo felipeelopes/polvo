@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Polvo · Git — plano e protótipo</title>
+<style>
+:root{
+  --text:#e9eaf0;--muted:#9aa0b4;--faint:#6b7086;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.16);
+  --pane:rgba(12,13,20,.78);--glass:rgba(24,26,40,.94);--accent:#8aa2ff;--warn:#e5a33a;--ok:#3fb27f;--bad:#e5534b;
+  --add:#3fb27f;--del:#f07178;--mod:#e5a33a;--claude:#D97757;--codex:#10A37F;--purple:#c792ea;
+  --mono:"Cascadia Mono","Cascadia Code",Consolas,monospace;--sans:"Segoe UI Variable Text","Segoe UI",system-ui,sans-serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html,body{margin:0}
+body{font:14px/1.55 var(--sans);color:var(--text);background:radial-gradient(1200px 800px at 8% -10%,#1d2b6b 0,transparent 60%),radial-gradient(1000px 800px at 100% 110%,#3b1d5e 0,transparent 55%),#0e1020;min-height:100vh}
+button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+code,.mono{font-family:var(--mono)}
+a{color:var(--accent)}
+
+/* ------------------------------------------------ documento */
+.page{max-width:1280px;margin:0 auto;padding:40px 28px 120px}
+.hero{display:flex;align-items:flex-end;gap:24px;margin-bottom:28px}
+.hero h1{margin:0;font-size:34px;letter-spacing:-.5px;line-height:1.1}
+.hero p{margin:8px 0 0;color:var(--muted);max-width:720px}
+.kick{font-size:11.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--accent);margin-bottom:8px}
+nav.toc{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 36px}
+nav.toc a{padding:6px 12px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid var(--line);color:var(--muted);text-decoration:none;font-size:12.5px}
+nav.toc a:hover{color:#fff;border-color:var(--line2)}
+section{margin:56px 0}
+h2{font-size:22px;margin:0 0 6px;letter-spacing:-.2px}
+h2 + .sub{color:var(--muted);margin:0 0 20px;max-width:820px}
+h3{font-size:15px;margin:0 0 8px}
+.card{background:rgba(18,20,32,.72);border:1px solid var(--line);border-radius:16px;padding:20px;backdrop-filter:blur(20px)}
+.grid3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.grid2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+@media (max-width:980px){.grid3,.grid2{grid-template-columns:1fr}}
+.pill{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;padding:2px 9px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--muted)}
+.pill.rec{background:rgba(138,162,255,.16);color:var(--accent);font-weight:600}
+.pill.f1{background:rgba(63,178,127,.15);color:#6fd4a3}.pill.f2{background:rgba(138,162,255,.15);color:#a5b9ff}
+.pill.f3{background:rgba(199,146,234,.15);color:#ddb6f5}.pill.f4{background:rgba(229,163,58,.15);color:#f2c46d}.pill.f5{background:rgba(255,255,255,.08);color:var(--muted)}
+ul.clean{margin:8px 0 0;padding-left:18px;color:#c9ccd8}
+ul.clean li{margin:3px 0}
+.pros{color:#9fe0bf}.cons{color:#f3a7ac}
+.concept .mini{height:190px;border-radius:12px;border:1px solid var(--line);background:rgba(8,9,16,.5);margin:12px 0 14px;position:relative;overflow:hidden}
+.concept.on{border-color:rgba(138,162,255,.55);box-shadow:0 0 0 1px rgba(138,162,255,.35),0 20px 50px -20px rgba(138,162,255,.4)}
+.mini i{position:absolute;border-radius:6px;background:rgba(255,255,255,.07);border:1px solid var(--line)}
+.mini i.term{background:rgba(12,13,20,.9)}
+.mini i.git{background:rgba(138,162,255,.14);border-color:rgba(138,162,255,.45)}
+.mini i.tb{background:rgba(255,255,255,.04);border:0}
+.mini b{position:absolute;font-size:10px;color:var(--accent);font-weight:600}
+
+/* ------------------------------------------------ app simulada */
+.app{height:760px;border-radius:14px;border:1px solid var(--line2);overflow:hidden;display:flex;flex-direction:column;background:rgba(18,20,30,.55);box-shadow:0 40px 100px rgba(0,0,0,.55);font-size:13px;line-height:1.4;user-select:none}
+.tb{height:46px;flex:none;display:flex;align-items:center;gap:10px;padding:0 0 0 12px}
+.brand{display:flex;align-items:center;gap:8px;font-weight:650}
+.oct{width:20px;height:20px;border-radius:7px;background:conic-gradient(from 200deg,#d97757 0 33%,#10a37f 0 66%,#4f8cff 0)}
+.seg{display:flex;gap:2px;padding:3px;border-radius:10px;background:rgba(255,255,255,.05)}
+.seg button{padding:4px 11px;border-radius:7px;color:var(--muted);font-size:12px;display:flex;align-items:center;gap:6px}
+.seg button.on{background:rgba(255,255,255,.13);color:#fff}
+.sp{flex:1}
+.bchip{display:flex;align-items:center;gap:7px;height:30px;padding:0 10px;border-radius:9px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px}
+.bchip:hover{border-color:var(--line2)}
+.bchip .br{font-family:var(--mono);font-size:11.5px}
+.sync{display:flex;align-items:center;gap:7px;height:30px;padding:0 11px;border-radius:9px;background:rgba(138,162,255,.14);color:#c8d3ff;font-size:12px;border:1px solid rgba(138,162,255,.3)}
+.sync:hover{background:rgba(138,162,255,.22)}
+.wc{display:flex}.wc span{width:42px;height:46px;display:grid;place-items:center;color:#a9adbf}
+.primary{height:30px;padding:0 13px;border-radius:8px;background:var(--accent);color:#0b1020;font-weight:600;font-size:12px}
+.main{flex:1;display:flex;min-height:0;padding:0 10px 10px 0;gap:0}
+.side{width:236px;flex:none;padding:2px 6px 6px 8px;overflow:hidden}
+.pg-h{display:flex;align-items:center;gap:6px;padding:6px;border-radius:8px;color:var(--muted);font-size:12px}
+.pg-h b{color:var(--text)}
+.gb{margin-left:auto;display:flex;gap:4px;font-size:10.5px;font-variant-numeric:tabular-nums}
+.gb span{padding:1px 6px;border-radius:99px;background:rgba(255,255,255,.07);color:var(--muted)}
+.gb .c{background:rgba(229,163,58,.16);color:#f2c46d}
+.gb .a{background:rgba(138,162,255,.16);color:#c8d3ff}
+.wt{margin-left:10px;border-left:1px solid var(--line);padding-left:4px}
+.wt-h{display:flex;align-items:center;gap:6px;padding:4px 6px;color:var(--muted);font-size:12px;border-radius:7px}
+.wt-h:hover{background:rgba(255,255,255,.05);cursor:pointer}
+.wt-h .br{font-family:var(--mono);font-size:11px}
+.si{display:flex;align-items:center;gap:8px;padding:5px 8px 5px 14px;border-radius:8px;font-size:12.5px}
+.si.on{background:rgba(217,119,87,.16)}
+.dot{width:7px;height:7px;border-radius:50%;background:#5d6274;flex:none}
+.dot.w{background:var(--claude)}.dot.y{background:var(--warn)}
+.content{flex:1;min-width:0;position:relative;display:flex;gap:10px}
+.pane{flex:1;min-width:0;display:flex;flex-direction:column;background:var(--pane);border:1px solid rgba(217,119,87,.35);border-radius:10px;overflow:hidden}
+.ph{height:38px;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,rgba(217,119,87,.1),transparent 60%);font-size:12.5px}
+.ph b{font-weight:600}
+.ph .bc{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);padding:2px 8px;border-radius:99px;background:rgba(255,255,255,.05);font-family:var(--mono)}
+.ph .bc em{font-style:normal;color:#f2c46d}
+.term{flex:1;padding:12px 14px;font:12px/1.6 var(--mono);color:#c9ccd8;overflow:hidden;white-space:pre}
+.term .c{color:var(--claude)}.term .g{color:#6fd4a3}.term .m{color:var(--faint)}.term u{color:#a5b9ff}
+/* dock do git */
+.dock{width:58%;flex:none;display:flex;flex-direction:column;background:var(--pane);border:1px solid var(--line);border-radius:12px;overflow:hidden;transition:width .25s}
+.app.full .dock{width:100%}
+.app.full .pane{display:none}
+.dh{height:42px;flex:none;display:flex;align-items:center;gap:6px;padding:0 6px 0 8px;border-bottom:1px solid rgba(255,255,255,.06);background:linear-gradient(90deg,rgba(138,162,255,.08),transparent 60%)}
+.dtab{display:flex;align-items:center;gap:6px;height:28px;padding:0 10px;border-radius:8px;color:var(--muted);font-size:12px}
+.dtab.on{background:rgba(255,255,255,.11);color:#fff}
+.dtab .n{font-size:10.5px;padding:0 6px;border-radius:99px;background:rgba(229,163,58,.2);color:#f2c46d}
+.ibtn{width:28px;height:28px;border-radius:7px;display:grid;place-items:center;color:var(--muted)}
+.ibtn:hover{background:rgba(255,255,255,.08);color:#fff}
+.gbar{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.repo{display:flex;align-items:center;gap:8px;padding:5px 10px;border-radius:9px;background:rgba(255,255,255,.05);font-size:12px;min-width:0}
+.repo small{color:var(--faint);display:block;font-size:10.5px;line-height:1.1}
+.repo b{font-weight:600;font-size:12px;display:block;line-height:1.2}
+.gbody{flex:1;min-height:0;display:flex}
+.col{width:300px;flex:none;border-right:1px solid var(--line);display:flex;flex-direction:column;min-height:0}
+.subtabs{display:flex;gap:2px;padding:6px;border-bottom:1px solid var(--line)}
+.subtabs button{flex:1;padding:5px 0;border-radius:7px;font-size:12px;color:var(--muted)}
+.subtabs button.on{background:rgba(255,255,255,.1);color:#fff}
+.flist{flex:1;overflow:auto;padding:4px 0}
+.fhead{display:flex;align-items:center;gap:8px;padding:6px 12px;font-size:11.5px;color:var(--faint)}
+.f{display:flex;align-items:center;gap:8px;padding:5px 12px;font-size:12.5px;cursor:pointer}
+.f:hover{background:rgba(255,255,255,.04)}
+.f.on{background:rgba(138,162,255,.14)}
+.f .p{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;direction:rtl;text-align:left}
+.f .p em{color:var(--faint);font-style:normal}
+.cb{width:14px;height:14px;border-radius:4px;border:1.5px solid var(--line2);flex:none;display:grid;place-items:center}
+.cb.on{background:var(--accent);border-color:var(--accent)}
+.cb.on::after{content:"";width:7px;height:4px;border:2px solid #0b1020;border-top:0;border-right:0;transform:rotate(-45deg) translate(1px,-1px)}
+.cb.part{background:var(--accent);border-color:var(--accent)}
+.cb.part::after{content:"";width:7px;height:2px;background:#0b1020}
+.st{width:16px;height:16px;border-radius:4px;font:700 9.5px/16px var(--sans);text-align:center;flex:none}
+.st.M{background:rgba(229,163,58,.2);color:#f2c46d}.st.A{background:rgba(63,178,127,.2);color:#6fd4a3}.st.D{background:rgba(240,113,120,.2);color:#ff8a8f}.st.R{background:rgba(138,162,255,.2);color:#c8d3ff}.st.C{background:rgba(229,83,75,.3);color:#ffb0ab}
+.who{font-size:10px;padding:1px 6px;border-radius:99px;background:rgba(217,119,87,.18);color:#f0a98f;flex:none}
+.commit{border-top:1px solid var(--line);padding:10px;display:flex;flex-direction:column;gap:7px}
+.inp{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--text);font-size:12.5px}
+.inp.ta{height:56px;color:var(--muted)}
+.crow{display:flex;gap:6px;align-items:center}
+.ai{display:flex;align-items:center;gap:6px;height:28px;padding:0 9px;border-radius:7px;background:rgba(217,119,87,.14);color:#f0a98f;font-size:11.5px;white-space:nowrap}
+.cbtn{flex:1;height:32px;border-radius:8px;background:var(--accent);color:#0b1020;font-weight:600;font-size:12.5px}
+.caret{width:32px;height:32px;border-radius:8px;background:rgba(138,162,255,.25);color:#fff}
+.opt{font-size:11.5px;color:var(--muted);display:flex;gap:12px}
+.opt label{display:flex;align-items:center;gap:5px}
+.diff{flex:1;min-width:0;display:flex;flex-direction:column}
+.dhd{display:flex;align-items:center;gap:8px;padding:7px 12px;border-bottom:1px solid var(--line);font-size:12px}
+.dhd .fp{font-family:var(--mono);font-size:11.5px;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.mseg{display:flex;padding:2px;border-radius:7px;background:rgba(255,255,255,.05)}
+.mseg button{padding:2px 8px;border-radius:5px;font-size:11px;color:var(--muted)}
+.mseg button.on{background:rgba(255,255,255,.12);color:#fff}
+.code{flex:1;overflow:auto;font:12px/1.65 var(--mono)}
+.hunk{color:#7c8ab8;background:rgba(138,162,255,.07);padding:2px 0;display:flex;align-items:center}
+.hunk .hb{margin-left:auto;margin-right:8px;font:11px var(--sans);padding:1px 8px;border-radius:6px;background:rgba(255,255,255,.07);color:var(--muted)}
+.ln{display:flex}
+.ln .g{width:84px;flex:none;display:flex;color:#4f546a;user-select:none}
+.ln .g span{width:36px;text-align:right;padding-right:6px}
+.ln .g i{width:12px;font-style:normal;display:grid;place-items:center}
+.ln .t{white-space:pre;padding-left:6px;flex:1}
+.ln.a{background:rgba(63,178,127,.11)}.ln.a .t{color:#bdeed6}.ln.a .g i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--add)}
+.ln.d{background:rgba(240,113,120,.1)}.ln.d .t{color:#f6c3c6}.ln.d .g i::before{content:"";width:8px;height:8px;border-radius:2px;background:var(--del)}
+.ln.a.off,.ln.d.off{opacity:.45}.ln.off .g i::before{background:none;border:1.5px solid currentColor}
+.kw{color:#c792ea}.str{color:#6fd4a3}.fn{color:#7c9cff}.cm{color:#6b7086;font-style:italic}.nb{color:#f2c46d}
+.split2{display:grid;grid-template-columns:1fr 1fr}
+.hist .h{display:flex;gap:10px;padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04);cursor:pointer}
+.hist .h:hover{background:rgba(255,255,255,.04)}.hist .h.on{background:rgba(138,162,255,.14)}
+.av{width:22px;height:22px;border-radius:50%;flex:none;display:grid;place-items:center;font-size:10px;font-weight:700;color:#0b1020}
+.hist .h b{display:block;font-weight:500;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hist .h small{color:var(--faint);font-size:11px}
+.tag{font-size:10px;padding:0 6px;border-radius:99px;background:rgba(199,146,234,.18);color:#ddb6f5;margin-left:4px}
+.unp{font-size:10px;padding:0 6px;border-radius:99px;background:rgba(138,162,255,.18);color:#c8d3ff;margin-left:4px}
+.graph{width:16px;flex:none;position:relative}
+.graph::before{content:"";position:absolute;left:7px;top:-8px;bottom:-8px;width:2px;background:rgba(138,162,255,.4)}
+.graph::after{content:"";position:absolute;left:3px;top:6px;width:10px;height:10px;border-radius:50%;background:#0e1020;border:2px solid var(--accent)}
+.cdet{padding:14px 16px;border-bottom:1px solid var(--line)}
+.cdet h4{margin:0 0 4px;font-size:14px}
+.cdet .meta{font-size:11.5px;color:var(--muted);display:flex;gap:12px;flex-wrap:wrap}
+.acts{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.acts button{padding:4px 10px;border-radius:7px;background:rgba(255,255,255,.07);font-size:11.5px}
+.acts button:hover{background:rgba(255,255,255,.13)}
+.brlist .b{display:flex;align-items:center;gap:9px;padding:7px 12px;font-size:12.5px}
+.brlist .b:hover{background:rgba(255,255,255,.04)}
+.brlist .b.on{background:rgba(138,162,255,.12)}
+.brlist .b .bn{font-family:var(--mono);font-size:12px;flex:1}
+.brlist .b small{color:var(--faint);font-size:11px}
+.ab{font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.pr{padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.pr b{font-weight:500;font-size:12.5px}
+.pr .meta{font-size:11px;color:var(--faint);margin-top:3px;display:flex;gap:8px;align-items:center}
+.ci{display:inline-flex;align-items:center;gap:4px}
+.ci i{width:7px;height:7px;border-radius:50%;background:var(--ok)}
+.ci.bad i{background:var(--bad)}.ci.run i{background:var(--warn)}
+/* popovers no protótipo */
+.pop{position:absolute;z-index:20;width:340px;padding:10px;border-radius:14px;background:var(--glass);backdrop-filter:blur(30px);border:1px solid var(--line2);box-shadow:0 24px 60px rgba(0,0,0,.5)}
+.pop .search{width:100%;padding:7px 10px;border-radius:8px;border:1px solid var(--line);background:rgba(0,0,0,.25);color:var(--muted);font-size:12px;margin-bottom:6px}
+.pop .mh{font-size:10.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--faint);padding:6px 8px 4px}
+.pop .it{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;font-size:12.5px}
+.pop .it:hover{background:rgba(255,255,255,.07)}
+.pop .it .bn{font-family:var(--mono);font-size:12px;flex:1}
+.pop hr{border:0;border-top:1px solid var(--line);margin:6px 0}
+.pop .it small{color:var(--faint);font-size:11px}
+.banner{display:flex;align-items:center;gap:10px;padding:8px 12px;font-size:12px;background:rgba(229,83,75,.13);border-bottom:1px solid rgba(229,83,75,.3)}
+.banner span{flex:1}
+.banner button{padding:4px 10px;border-radius:7px;background:rgba(255,255,255,.08);font-size:11.5px}
+.banner button.go{background:rgba(217,119,87,.25);color:#ffd0bf}
+.hint{position:absolute;right:14px;bottom:14px;font-size:11px;color:var(--faint)}
+/* tabelas */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--muted);font-weight:600;font-size:12px}
+td:first-child{color:#e9eaf0;font-weight:500;white-space:nowrap}
+td small{color:var(--faint)}
+.tgroup td{padding-top:20px;color:var(--accent);font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;border-bottom:1px solid rgba(138,162,255,.3)}
+.flow{display:flex;gap:10px;align-items:stretch;flex-wrap:wrap}
+.flow .s{flex:1;min-width:150px;padding:12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--line);font-size:12.5px;color:#c9ccd8}
+.flow .s b{display:block;color:#fff;margin-bottom:3px;font-size:12px}
+.flow .ar{align-self:center;color:var(--faint)}
+pre.arch{font:12px/1.55 var(--mono);color:#c9ccd8;background:rgba(0,0,0,.3);border:1px solid var(--line);border-radius:12px;padding:16px;overflow:auto;margin:0}
+.kbd{font:11px var(--mono);padding:1px 6px;border-radius:5px;border:1px solid var(--line2);color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="page">
+
+<div class="hero"><div>
+  <div class="kick">Plano · Protótipo local</div>
+  <h1>Git no Polvo</h1>
+  <p>Um gerenciador de git com tudo o que o GitHub Desktop faz, só que integrado aos projetos, worktrees e agentes do Polvo: você vê o diff do que o Claude está fazendo enquanto ele trabalha e faz commit sem sair da janela.</p>
+</div></div>
+
+<nav class="toc">
+  <a href="#onde">1 · Onde colocar</a><a href="#proto">2 · Protótipo interativo</a><a href="#entradas">3 · Pontos de entrada</a>
+  <a href="#fluxos">4 · Fluxos principais</a><a href="#agentes">5 · Integração com agentes</a><a href="#func">6 · Funcionalidades</a>
+  <a href="#arq">7 · Arquitetura</a><a href="#fases">8 · Fases</a>
+</nav>
+
+<!-- ============================================================ 1 -->
+<section id="onde">
+<h2>1 · Onde colocar</h2>
+<p class="sub">Três jeitos de encaixar o git no Polvo. A recomendação é a <b>C</b>: um painel lateral ao lado das sessões, que expande para tela cheia quando você precisa de espaço. Ela reaproveita o mecanismo do painel de documentos, que já existe.</p>
+<div class="grid3">
+  <div class="card concept">
+    <span class="pill">A</span> <h3 style="display:inline">Terceira visão: “Git”</h3>
+    <div class="mini">
+      <i class="tb" style="left:0;right:0;top:0;height:16px"></i>
+      <b style="left:66px;top:2px">Painéis · Quadro · Git</b>
+      <i style="left:6px;top:22px;bottom:6px;width:38px"></i>
+      <i class="git" style="left:50px;top:22px;bottom:6px;width:90px"></i>
+      <i class="git" style="left:146px;top:22px;bottom:6px;right:6px"></i>
+    </div>
+    <p style="margin:0;color:var(--muted);font-size:13px">Um botão “Git” ao lado de Painéis e Quadro (<span class="kbd">Ctrl+Shift+3</span>) troca a área central pela interface do GitHub Desktop.</p>
+    <ul class="clean"><li class="pros">Muito espaço, parece um app de git de verdade</li><li class="pros">Simples de entender</li><li class="cons">Esconde os agentes: não dá para ver o diff enquanto o Claude trabalha</li></ul>
+  </div>
+  <div class="card concept">
+    <span class="pill">B</span> <h3 style="display:inline">Gaveta dentro da sessão</h3>
+    <div class="mini">
+      <i class="tb" style="left:0;right:0;top:0;height:16px"></i>
+      <i style="left:6px;top:22px;bottom:6px;width:38px"></i>
+      <i class="term" style="left:50px;top:22px;bottom:6px;width:120px"></i>
+      <i class="git" style="left:50px;top:110px;bottom:6px;width:120px"></i>
+      <i class="term" style="left:176px;top:22px;bottom:6px;right:6px"></i>
+      <b style="left:58px;top:114px">diff desta sessão</b>
+    </div>
+    <p style="margin:0;color:var(--muted);font-size:13px">Cada painel de sessão ganha uma gaveta “Alterações” embaixo do terminal, com o diff da pasta daquela sessão.</p>
+    <ul class="clean"><li class="pros">O contexto é óbvio: é o git <i>daquele</i> chat</li><li class="cons">Pouco espaço; com muitos painéis fica apertado</li><li class="cons">Histórico, branches e PRs não cabem</li></ul>
+  </div>
+  <div class="card concept on">
+    <span class="pill rec">C · recomendado</span> <h3 style="display:inline">Painel lateral + tela cheia</h3>
+    <div class="mini">
+      <i class="tb" style="left:0;right:0;top:0;height:16px"></i>
+      <b style="right:8px;top:2px">⎇ main ↑2 · ⟳</b>
+      <i style="left:6px;top:22px;bottom:6px;width:38px"></i>
+      <i class="term" style="left:50px;top:22px;bottom:6px;width:96px"></i>
+      <i class="git" style="left:152px;top:22px;bottom:6px;right:6px"></i>
+      <b style="left:160px;top:28px">Docs · Git</b>
+    </div>
+    <p style="margin:0;color:var(--muted);font-size:13px">O painel da direita (o mesmo do visualizador de Markdown) ganha uma aba <b>Git</b>. Ele segue o projeto ou worktree em foco e expande para tela cheia.</p>
+    <ul class="clean"><li class="pros">Agente e diff lado a lado, ao vivo</li><li class="pros">Em tela cheia, vira o “GitHub Desktop” completo</li><li class="pros">Reaproveita o painel, as abas e o redimensionamento que já existem</li><li class="cons">Exige transformar o painel de documentos num painel genérico com abas</li></ul>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section id="proto">
+<h2>2 · Protótipo interativo (opção C)</h2>
+<p class="sub">Clique nas abas (Alterações, Histórico, Branches, PRs), no seletor de branch, no botão de sincronizar e em “Expandir”. Nas alterações dá para clicar nos arquivos e nas linhas do diff para incluir ou tirar do commit.</p>
+
+<div class="app" id="app">
+  <div class="tb">
+    <div class="brand"><span class="oct"></span>Polvo</div>
+    <div class="seg"><button class="on">▦ Painéis</button><button>☰ Quadro</button></div>
+    <div class="sp"></div>
+    <button class="bchip" data-pop="branch" title="Branch do projeto em foco"><span style="color:var(--accent)">⎇</span><span class="br">feat/git-panel</span><span style="color:var(--faint)">▾</span></button>
+    <button class="sync" data-pop="sync" title="Buscar · Puxar · Enviar">⟳ <span>Enviar</span> <b style="font-variant-numeric:tabular-nums">↑2</b></button>
+    <button class="primary">+ Projeto</button>
+    <div class="wc"><span>—</span><span>☐</span><span>✕</span></div>
+  </div>
+  <div class="main">
+    <div class="side">
+      <div class="pg-h">▾ 📁 <b>polvo</b><span class="gb"><span class="c" title="arquivos alterados">●5</span><span class="a" title="commits para enviar">↑2</span></span></div>
+      <div class="wt">
+        <div class="wt-h" data-pop="wt">⎇ <span class="br">feat/git-panel</span><span class="gb"><span class="c">●5</span></span></div>
+        <div class="si on"><span style="color:var(--claude)">✳</span><span style="flex:1">Painel de git</span><span class="dot w"></span></div>
+        <div class="si"><span style="color:var(--codex)">◎</span><span style="flex:1">Testes do diff</span><span class="dot y"></span></div>
+      </div>
+      <div class="wt">
+        <div class="wt-h">⎇ <span class="br">main</span><span class="gb"><span>✓</span></span></div>
+        <div class="si"><span style="color:#A78BFA">›_</span><span style="flex:1">PowerShell</span><span class="dot"></span></div>
+      </div>
+      <div class="pg-h" style="margin-top:8px">▸ 📁 <b>api-pagamentos</b><span class="gb"><span>↓3</span></span></div>
+      <div class="pg-h">▸ 📁 <b>site</b><span class="gb"></span></div>
+    </div>
+    <div class="content">
+      <div class="pane">
+        <div class="ph"><span style="color:var(--claude)">✳</span><b>Painel de git</b><span class="bc">⎇ feat/git-panel <em>●5</em></span><span style="flex:1"></span><span style="font-size:11px;color:var(--claude)">◌ trabalhando</span></div>
+<div class="term"><span class="c">⏺</span> Vou criar o módulo de status do git.
+
+<span class="c">⏺</span> Write(<u>src-tauri/src/gitops.rs</u>)
+  ⎿ <span class="g">Wrote 182 lines</span>
+
+<span class="c">⏺</span> Update(<u>src/git/changes.ts</u>)
+  ⎿ <span class="g">Updated with 24 additions</span>
+
+<span class="c">⏺</span> Atualizei <u>docs/ARCHITECTURE.md</u> com a seção de git.
+
+<span class="m">✻ Pensando… (esc para interromper)</span></div>
+      </div>
+      <div class="dock">
+        <div class="dh">
+          <button class="dtab">📄 ARCHITECTURE.md</button>
+          <button class="dtab on">⎇ Git <span class="n">5</span></button>
+          <span style="flex:1"></span>
+          <button class="ibtn" title="Atualizar (F5)">⟳</button>
+          <button class="ibtn" id="expand" title="Expandir">⤢</button>
+          <button class="ibtn" title="Fechar">✕</button>
+        </div>
+        <div class="gbar">
+          <div class="repo" data-pop="repo"><span>📁</span><div><small>Repositório</small><b>polvo</b></div><span style="color:var(--faint)">▾</span></div>
+          <div class="repo" data-pop="branch"><span style="color:var(--accent)">⎇</span><div><small>Branch</small><b class="mono" style="font-size:11.5px">feat/git-panel</b></div><span style="color:var(--faint)">▾</span></div>
+          <div class="repo" data-pop="sync" style="cursor:pointer"><span>⟳</span><div><small>Última busca há 2 min</small><b>Enviar ↑2</b></div></div>
+          <span style="flex:1"></span>
+          <div class="seg" id="gtabs">
+            <button data-t="changes" class="on">Alterações</button><button data-t="history">Histórico</button><button data-t="branches">Branches</button><button data-t="prs">PRs</button>
+          </div>
+        </div>
+        <div class="gbody" id="gbody"></div>
+      </div>
+      <div class="pop" id="pop" hidden></div>
+    </div>
+  </div>
+</div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section id="entradas">
+<h2>3 · Pontos de entrada</h2>
+<p class="sub">O git aparece só onde ajuda e nunca atrapalha os agentes. Todos esses pontos levam ao mesmo painel, já filtrado no projeto ou worktree certo.</p>
+<div class="grid2">
+  <div class="card"><h3>Barra de título</h3><ul class="clean">
+    <li><b>Chip de branch</b> do projeto em foco: troca de branch, cria branch, busca com filtro, “Nova branch + sessão em worktree”.</li>
+    <li><b>Botão de sincronizar</b> com estado: Buscar, Puxar <code>↓3</code>, Enviar <code>↑2</code>, Publicar branch. Mostra o progresso no próprio botão.</li>
+    <li>Só aparece quando a pasta em foco é um repositório git.</li></ul></div>
+  <div class="card"><h3>Barra lateral (projetos e worktrees)</h3><ul class="clean">
+    <li>Selos discretos: <code>●5</code> alterados, <code>↑2</code> para enviar, <code>↓3</code> para puxar, <code>⚠</code> em conflito.</li>
+    <li>Clicar no selo abre o painel Git naquele worktree.</li>
+    <li>Menu do worktree: Nova worktree…, Remover worktree, Abrir no Explorer.</li></ul></div>
+  <div class="card"><h3>Cabeçalho de cada sessão</h3><ul class="clean">
+    <li>Mostra branch e alterações da pasta da sessão (<code>⎇ feat/x ●5</code>); clicar abre o diff daquela pasta.</li>
+    <li>Ao terminar o trabalho (status “aguardando”), aparece uma dica: <i>“5 arquivos alterados · Revisar e fazer commit”</i>.</li></ul></div>
+  <div class="card"><h3>Teclado e terminal</h3><ul class="clean">
+    <li><span class="kbd">Ctrl+Shift+G</span> abre o painel Git · <span class="kbd">Ctrl+Enter</span> faz o commit · <span class="kbd">Ctrl+Shift+P</span> envia (push).</li>
+    <li>Ctrl + clique em qualquer arquivo no terminal (não só <code>.md</code>) abre o diff dele.</li>
+    <li>O Quadro mostra <code>●5 ↑2</code> nos cartões.</li></ul></div>
+</div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section id="fluxos">
+<h2>4 · Fluxos principais</h2>
+<div class="card" style="margin-bottom:14px"><h3>Revisar e fazer commit do que o agente fez</h3>
+<div class="flow"><div class="s"><b>1 · Agente termina</b>O painel mostra a dica “5 arquivos alterados”.</div><div class="ar">→</div>
+<div class="s"><b>2 · Revisar</b>Painel Git: lista à esquerda, diff à direita. Marque ou desmarque arquivos, trechos ou linhas.</div><div class="ar">→</div>
+<div class="s"><b>3 · Mensagem</b>Escreva, ou use <b>✳ Gerar com Claude</b> a partir do diff selecionado.</div><div class="ar">→</div>
+<div class="s"><b>4 · Commit</b><span class="kbd">Ctrl+Enter</span>. A opção “Corrigir último commit” (amend) fica no menu ▾.</div><div class="ar">→</div>
+<div class="s"><b>5 · Enviar</b>O botão vira “Enviar ↑1”. Sem upstream, vira “Publicar branch”.</div></div></div>
+<div class="grid2">
+<div class="card"><h3>Trocar de branch com alterações</h3><ul class="clean"><li>Diálogo como no GitHub Desktop: <b>Deixar as alterações em <code>main</code></b> (guarda num stash ligado à branch) ou <b>Levar as alterações para <code>feat/x</code></b>.</li><li>Se houver agente trabalhando naquela pasta, avisa antes: <i>“O Claude está editando aqui. Trocar de branch agora pode confundir o chat.”</i> Sugere <b>abrir a branch numa worktree</b>.</li></ul></div>
+<div class="card"><h3>Conflitos (merge, rebase, cherry-pick, pull)</h3><ul class="clean"><li>Faixa vermelha no painel: <i>“Merge com conflitos em 3 arquivos”</i>, com Abortar e Continuar.</li><li>Cada arquivo tem as opções: Usar a minha · Usar a deles · Abrir no editor · <b>✳ Pedir ao Claude para resolver</b>.</li><li>Continuar só fica disponível quando não sobra nenhum marcador <code>&lt;&lt;&lt;&lt;&lt;&lt;&lt;</code>.</li></ul></div>
+<div class="card"><h3>Pull request</h3><ul class="clean"><li>“Criar PR” a partir da branch: título e descrição (com ✳ Gerar), base, rascunho e revisores, usando <code>gh</code>.</li><li>A aba PRs mostra os PRs do repositório, o status do CI e os comentários de revisão. Fazer checkout de um PR abre <b>uma worktree + sessão</b>, se você quiser.</li></ul></div>
+<div class="card"><h3>Histórico</h3><ul class="clean"><li>Lista com grafo simples, tags e o marcador “não enviado”. Busca por mensagem, autor ou SHA.</li><li>Ações no commit: Reverter, Criar branch daqui, Criar tag, Cherry-pick para…, Resetar até aqui, Copiar SHA, Ver no GitHub.</li><li>Arrastar e soltar: arrastar um commit para uma branch faz cherry-pick; arrastar entre commits não enviados reordena ou junta (squash).</li><li>“Desfazer último commit” enquanto ele ainda não foi enviado.</li></ul></div>
+</div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section id="agentes">
+<h2>5 · Integração com agentes (o diferencial)</h2>
+<p class="sub">É aqui que o Polvo passa a fazer o que o GitHub Desktop não faz. Cada ação de IA abre ou usa uma sessão visível, nunca algo escondido.</p>
+<div class="grid3">
+  <div class="card"><h3>✳ Gerar mensagem</h3><p style="margin:0;color:#c9ccd8;font-size:13px">Usa <code>claude -p</code> (ou o agente preferido) sobre o diff selecionado e preenche o resumo e a descrição. Respeita o padrão de commits do repositório, lendo os últimos 20.</p></div>
+  <div class="card"><h3>✳ Revisar diff</h3><p style="margin:0;color:#c9ccd8;font-size:13px">Abre uma sessão nova ao lado com o prompt “revise estas alterações”, pronta para conversar sobre os achados.</p></div>
+  <div class="card"><h3>✳ Resolver conflito</h3><p style="margin:0;color:#c9ccd8;font-size:13px">Envia ao agente os arquivos em conflito e o contexto do merge; você revisa o resultado no diff antes de continuar.</p></div>
+  <div class="card"><h3>Branch → worktree → sessão</h3><p style="margin:0;color:#c9ccd8;font-size:13px">“Nova branch numa worktree” cria <code>../polvo-feat-x</code>, adiciona à barra lateral e inicia um agente ali. É o jeito certo de rodar vários agentes no mesmo repositório.</p></div>
+  <div class="card"><h3>Quem mudou o quê</h3><p style="margin:0;color:#c9ccd8;font-size:13px">Arquivos alterados enquanto uma sessão estava “trabalhando” levam a etiqueta do agente (<span class="who">Claude</span>). É uma inferência por horário, para saber de quem é cada mudança.</p></div>
+  <div class="card"><h3>Ponto de restauração</h3><p style="margin:0;color:#c9ccd8;font-size:13px">Antes de enviar uma tarefa grande ao agente: “Criar ponto de restauração” faz um stash ou commit temporário, para desfazer tudo depois com um clique.</p></div>
+</div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section id="func">
+<h2>6 · Funcionalidades: GitHub Desktop → Polvo</h2>
+<div class="card" style="padding:6px 14px 14px">
+<table>
+<tr><th style="width:28%">Funcionalidade</th><th>Onde fica no Polvo</th><th style="width:70px">Fase</th></tr>
+<tr class="tgroup"><td colspan="3">Repositórios</td></tr>
+<tr><td>Adicionar, criar e clonar</td><td>Já existe em “+ Projeto”. Falta a lista de repositórios do GitHub para clonar (via <code>gh repo list</code>).</td><td><span class="pill f4">F4</span></td></tr>
+<tr><td>Trocar de repositório</td><td>Seletor “Repositório” no painel; segue o projeto em foco por padrão.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Abrir no Explorer, editor ou terminal</td><td>Menu ⋯ do painel. “Terminal” abre uma sessão PowerShell, como já acontece hoje.</td><td><span class="pill f1">F1</span></td></tr>
+<tr class="tgroup"><td colspan="3">Alterações e commit</td></tr>
+<tr><td>Lista de alterações com checkbox</td><td>Aba Alterações, com o status M/A/D/R/U e arquivos novos.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Diff unificado e lado a lado</td><td>Destaque de sintaxe (highlight.js, já instalado), ocultar espaços em branco, expandir contexto.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Commit (resumo + descrição)</td><td>Rodapé da lista; <span class="kbd">Ctrl+Enter</span>.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Selecionar trechos e linhas</td><td>Clique na calha do diff; arrastar seleciona várias linhas (aplicado com <code>git apply --cached</code>).</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Descartar alterações (arquivo ou linhas)</td><td>Menu de contexto; vai para a lixeira, com confirmação.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Ignorar arquivo ou extensão</td><td>Menu de contexto → <code>.gitignore</code>.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Corrigir commit (amend) e coautores</td><td>Menu ▾ do botão de commit; coautores via <code>Co-authored-by</code>.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Aviso ao commitar em branch protegida</td><td>Faixa “Você está em main”, com a opção de criar uma branch.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Diff de imagens</td><td>Lado a lado, deslizar, sobrepor e diferença.</td><td><span class="pill f5">F5</span></td></tr>
+<tr class="tgroup"><td colspan="3">Branches e sincronização</td></tr>
+<tr><td>Trocar, criar, renomear e apagar</td><td>Chip de branch (barra de título) e aba Branches.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Buscar, puxar, enviar e publicar</td><td>Botão de sincronizar com estado e progresso.</td><td><span class="pill f1">F1</span></td></tr>
+<tr><td>Enviar com força (with lease)</td><td>Só após rebase ou amend, com confirmação.</td><td><span class="pill f3">F3</span></td></tr>
+<tr><td>Stash ao trocar de branch</td><td>Diálogo “deixar” ou “levar”; o stash fica no topo da lista de alterações.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Merge, squash merge e rebase</td><td>Aba Branches → “Mesclar em feat/x…”, com a prévia dos commits.</td><td><span class="pill f3">F3</span></td></tr>
+<tr><td>Comparar branches</td><td>Aba Branches → “Comparar com…” (commits à frente e atrás, e o diff).</td><td><span class="pill f3">F3</span></td></tr>
+<tr><td>Atualizar a partir da branch padrão</td><td>Atalho na aba Branches: “Trazer main para cá”.</td><td><span class="pill f3">F3</span></td></tr>
+<tr class="tgroup"><td colspan="3">Histórico</td></tr>
+<tr><td>Lista de commits e detalhes</td><td>Aba Histórico com grafo simples, busca e diff do commit.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Reverter, resetar, checkout e tag</td><td>Menu de contexto do commit.</td><td><span class="pill f3">F3</span></td></tr>
+<tr><td>Cherry-pick, reordenar e squash</td><td>Arrastar e soltar, com confirmação e “Desfazer”.</td><td><span class="pill f3">F3</span></td></tr>
+<tr><td>Desfazer último commit</td><td>Faixa logo após o commit (se ainda não foi enviado).</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Conflitos de merge</td><td>Faixa + lista, com minha, deles, editor ou Claude.</td><td><span class="pill f3">F3</span></td></tr>
+<tr class="tgroup"><td colspan="3">GitHub</td></tr>
+<tr><td>Criar PR e prévia</td><td>Botão “Criar PR” ao enviar uma branch nova (<code>gh pr create</code>).</td><td><span class="pill f4">F4</span></td></tr>
+<tr><td>Lista de PRs, checkout e CI</td><td>Aba PRs com o status dos checks; o checkout pode abrir uma worktree + sessão.</td><td><span class="pill f4">F4</span></td></tr>
+<tr><td>Ver no GitHub</td><td>Em commits, branches e PRs.</td><td><span class="pill f4">F4</span></td></tr>
+<tr class="tgroup"><td colspan="3">Só no Polvo</td></tr>
+<tr><td>Worktrees</td><td>Criar e remover; cada worktree vira um grupo na barra lateral.</td><td><span class="pill f2">F2</span></td></tr>
+<tr><td>Ações com IA</td><td>Gerar mensagem, revisar, resolver conflito, ponto de restauração.</td><td><span class="pill f4">F4</span></td></tr>
+<tr><td>Selos de status</td><td>Barra lateral, cabeçalho das sessões e Quadro.</td><td><span class="pill f1">F1</span></td></tr>
+</table>
+</div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section id="arq">
+<h2>7 · Arquitetura</h2>
+<div class="grid2">
+<div class="card"><h3>Backend: git pela linha de comando</h3><ul class="clean">
+  <li>Novo módulo <code>src-tauri/src/gitops.rs</code> que roda o <b>git CLI</b>, como o <code>git.rs</code> já faz. Assim ele usa a configuração, os hooks, o Credential Manager, a assinatura e o LFS do usuário, sem crescer o binário com libgit2.</li>
+  <li>Saída em formato de máquina: <code>status --porcelain=v2 -z --branch</code>, <code>log -z --format=…</code>, <code>diff --no-color --patch</code>.</li>
+  <li>Operações longas (fetch, pull, push, clone) com <code>--progress</code>, mandando o progresso por um <code>Channel</code>, igual ao <code>pty_attach</code>.</li>
+  <li>Uma fila de operações por repositório, para não haver duas escritas ao mesmo tempo. Leituras rodam em <code>spawn_blocking</code>.</li>
+  <li>GitHub via <code>gh</code> (já autenticado): PRs, checks e repositórios.</li>
+  <li>Avisos de mudança: polling leve do <code>status</code> (2 s no repositório visível, 30 s nos outros), mais uma atualização imediata ao focar a janela ou quando uma sessão muda de status.</li>
+</ul></div>
+<div class="card"><h3>Frontend</h3><ul class="clean">
+  <li><code>src/dock/</code>: o painel de documentos vira um <b>painel genérico com abas</b>, que hospeda Docs e Git. A largura, a tela cheia e a persistência são as que já existem.</li>
+  <li><code>src/git/</code>: <code>panel.ts</code>, <code>changes.ts</code>, <code>diff.ts</code> (reaproveita o highlight.js), <code>history.ts</code>, <code>branches.ts</code>, <code>prs.ts</code>, <code>conflicts.ts</code>, <code>sync.ts</code>.</li>
+  <li>O estado de git em <code>store.git</code> cresce para incluir status, ahead/behind e conflitos; os selos da barra lateral e da titlebar leem dali.</li>
+  <li>Carregado sob demanda, como o editor e o mermaid.</li>
+  <li>Testes em <code>tests/</code> para os parsers (porcelain v2, log, diff/hunks) e para montar patches parciais.</li>
+</ul></div>
+</div>
+<div class="card" style="margin-top:16px"><h3>Comandos Tauri (rascunho)</h3>
+<pre class="arch">git_status(repo)                          → branch, upstream, ahead/behind, arquivos, conflito, operação em curso
+git_diff(repo, path, staged, ctx, ws)     → hunks (arquivo de trabalho, índice ou commit)
+git_stage / git_unstage(repo, paths)      git_stage_patch(repo, patch)   ← trechos e linhas
+git_discard(repo, paths | patch)          git_ignore(repo, pattern)
+git_commit(repo, summary, body, amend, coauthors)
+git_log(repo, ref, skip, limit, search)   git_show(repo, sha)
+git_branches(repo)                        git_checkout / git_branch_create / rename / delete
+git_fetch / git_pull / git_push(repo, opts, Channel&lt;Progress&gt;)
+git_merge / git_rebase / git_cherry_pick / git_revert / git_reset / git_tag
+git_stash_list / push / apply / drop      git_op_continue / git_op_abort
+git_worktree_add / git_worktree_remove    gh_prs / gh_pr_create / gh_checks</pre></div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section id="fases">
+<h2>8 · Fases</h2>
+<div class="grid2">
+<div class="card"><span class="pill f1">F1 · Base</span><ul class="clean"><li>Painel com abas (Docs + Git), selos na barra lateral e chip de branch</li><li>Alterações por arquivo, diff unificado e lado a lado, commit</li><li>Trocar e criar branch; buscar, puxar, enviar e publicar com progresso</li></ul></div>
+<div class="card"><span class="pill f2">F2 · Dia a dia</span><ul class="clean"><li>Trechos e linhas, descartar, ignorar, amend, desfazer commit</li><li>Histórico com detalhes; stash ao trocar de branch</li><li>Worktrees (criar e remover) e aviso de branch protegida</li></ul></div>
+<div class="card"><span class="pill f3">F3 · Avançado</span><ul class="clean"><li>Merge, rebase e cherry-pick, com a interface de conflitos</li><li>Reverter, resetar e tag; arrastar commits; comparar branches</li><li>Push com força (lease)</li></ul></div>
+<div class="card"><span class="pill f4">F4 · GitHub + IA</span><ul class="clean"><li>PRs, CI e clonar da lista do GitHub (<code>gh</code>)</li><li>Gerar mensagem, revisar diff, resolver conflito com agente, pontos de restauração</li></ul><span class="pill f5" style="margin-top:12px">F5 · Polimento</span><ul class="clean"><li>Diff de imagens, diffs grandes virtualizados, acessibilidade e atalhos completos</li></ul></div>
+</div>
+</section>
+</div>
+
+<script>
+const $ = (s, el = document) => el.querySelector(s);
+const body = $("#gbody");
+const files = [
+  { p: "src-tauri/src/gitops.rs", s: "A", on: true, who: true },
+  { p: "src/git/changes.ts", s: "M", on: "part", who: true },
+  { p: "src/core/store.ts", s: "M", on: true },
+  { p: "docs/ARCHITECTURE.md", s: "M", on: true, who: true },
+  { p: "src/ui/old-status.ts", s: "D", on: false },
+];
+let sel = 1;
+const diffLines = [
+  ["h", "@@ -12,9 +12,16 @@ export class ChangesView {"],
+  ["", 12, 12, "  private list = h(\"div\", \"flist\");"],
+  ["", 13, 13, "  private selected: string | null = null;"],
+  ["d", 14, "", "  <span class=kw>private</span> refresh() { <span class=kw>void</span> <span class=fn>load</span>(); }"],
+  ["a", "", 14, "  <span class=cm>/** Recarrega o status sem perder a seleção. */</span>"],
+  ["a", "", 15, "  <span class=kw>async</span> <span class=fn>refresh</span>(): <span class=fn>Promise</span>&lt;<span class=kw>void</span>&gt; {"],
+  ["a", "", 16, "    <span class=kw>const</span> st = <span class=kw>await</span> ipc.<span class=fn>gitStatus</span>(<span class=kw>this</span>.repo);"],
+  ["a", "", 17, "    <span class=kw>this</span>.<span class=fn>render</span>(st.files);"],
+  ["a", "", 18, "  }"],
+  ["", 15, 19, ""],
+  ["h", "@@ -40,6 +47,8 @@ export class ChangesView {"],
+  ["", 40, 47, "  <span class=fn>commit</span>(summary: <span class=kw>string</span>) {"],
+  ["a", "", 48, "    <span class=kw>if</span> (!summary.<span class=fn>trim</span>()) <span class=kw>return</span> <span class=fn>toast</span>(<span class=str>\"Escreva um resumo\"</span>);"],
+  ["a", "", 49, "    <span class=kw>const</span> amend = <span class=kw>this</span>.amend;"],
+  ["", 41, 50, "    <span class=kw>return</span> ipc.<span class=fn>gitCommit</span>(<span class=kw>this</span>.repo, summary, amend);"],
+];
+const off = new Set([7]);
+
+function cb(v) { return `<span class="cb ${v === true ? "on" : v === "part" ? "part" : ""}"></span>`; }
+function renderChanges() {
+  const f = files[sel];
+  const n = files.filter((x) => x.on).length;
+  body.innerHTML = `
+  <div class="col">
+    <div class="fhead">${cb(n === files.length ? true : n ? "part" : false)}<span>${files.length} arquivos alterados</span><span style="margin-left:auto" title="Filtrar">⌕</span></div>
+    <div class="flist">${files.map((x, i) => `<div class="f${i === sel ? " on" : ""}" data-i="${i}">${cb(x.on)}<span class="p">${x.p.replace(/([^/]+)$/, "<b style='font-weight:500;color:#e9eaf0'>$1</b>").replace(/^(.*\/)/, "<em>$1</em>")}</span>${x.who ? '<span class="who" title="Alterado enquanto a sessão “Painel de git” trabalhava">Claude</span>' : ""}<span class="st ${x.s}">${x.s}</span></div>`).join("")}
+      <div class="fhead" style="margin-top:6px">▸ Stash · “alterações de main” · há 1 h</div>
+    </div>
+    <div class="commit">
+      <input class="inp" value="feat: painel de git com alterações e diff">
+      <div class="inp ta">Descrição (opcional)</div>
+      <div class="crow"><button class="ai" title="Gerar resumo e descrição a partir do diff selecionado">✳ Gerar com Claude</button><span style="flex:1"></span><span style="font-size:11px;color:var(--faint)">👤+ coautor</span></div>
+      <div class="crow"><button class="cbtn">Commit de ${n} arquivo${n === 1 ? "" : "s"} em <span class="mono" style="font-size:11.5px">feat/git-panel</span></button><button class="caret" title="Corrigir último commit, commit sem verificar…">▾</button></div>
+    </div>
+  </div>
+  <div class="diff">
+    <div class="dhd"><span class="st ${f.s}">${f.s}</span><span class="fp">${f.p}</span><span style="color:#6fd4a3;font-size:11px">+7</span><span style="color:#ff8a8f;font-size:11px">−1</span>
+      <div class="mseg"><button class="on">Unificado</button><button>Lado a lado</button></div><button class="ibtn" title="Ocultar espaços em branco">␣</button><button class="ibtn" title="Mais: descartar, ignorar, abrir no editor, mostrar no Explorer">⋯</button></div>
+    <div class="code">${diffLines.map((l, i) => l[0] === "h" ? `<div class="hunk"><span style="padding-left:90px">${l[1]}</span><button class="hb">Descartar trecho</button></div>` : `<div class="ln ${l[0]}${off.has(i) ? " off" : ""}" data-l="${i}"><span class="g"><span>${l[1]}</span><span>${l[2]}</span><i></i></span><span class="t">${l[3]}</span></div>`).join("")}
+    </div>
+  </div>`;
+}
+function renderHistory() {
+  const cs = [
+    ["Felipe", "#8aa2ff", "feat: visualizador de Markdown ao lado das sessões", "há 2 h", "c07f117", true],
+    ["Felipe", "#8aa2ff", "fix: menus abrem para cima quando não cabem", "há 3 h", "323156c", true],
+    ["Claude", "#D97757", "feat: projetos, filtro por projeto, divisórias no Quadro", "ontem", "189d1ec", false, "v0.1.4"],
+    ["Felipe", "#8aa2ff", "feat: controle de versão dos CLIs", "ontem", "70b8c2e"],
+    ["Felipe", "#8aa2ff", "release: v0.1.3", "2 dias", "40f9eb0", false, "v0.1.3"],
+    ["Codex", "#10A37F", "feat: barra lateral por projeto e worktree", "3 dias", "11c60cc"],
+  ];
+  body.innerHTML = `<div class="col"><div class="fhead"><input class="inp" style="margin:0" placeholder="Buscar commits (mensagem, autor, SHA)"></div>
+    <div class="flist hist">${cs.map((c, i) => `<div class="h${i === 0 ? " on" : ""}"><span class="graph"></span><div style="min-width:0;flex:1"><b>${c[2]}</b><small><span class="av" style="display:inline-grid;width:14px;height:14px;font-size:8px;background:${c[1]};vertical-align:-2px">${c[0][0]}</span> ${c[0]} · ${c[3]}${c[5] ? '<span class="unp">↑ não enviado</span>' : ""}${c[6] ? `<span class="tag">${c[6]}</span>` : ""}</small></div></div>`).join("")}</div>
+    <div class="commit"><div class="opt">Arraste um commit até uma branch para fazer cherry-pick · arraste entre commits não enviados para reordenar</div></div></div>
+    <div class="diff"><div class="cdet"><h4>feat: visualizador de Markdown ao lado das sessões</h4><div class="meta"><span>Felipe Lopes</span><span class="mono">c07f117</span><span>16 arquivos · +3244 −6</span></div>
+      <div class="acts"><button>Reverter</button><button>Criar branch daqui</button><button>Criar tag…</button><button>Cherry-pick para…</button><button>Resetar até aqui…</button><button>Copiar SHA</button><button>Ver no GitHub ↗</button></div></div>
+      <div class="gbody"><div class="col" style="width:230px">${["src-tauri/src/files.rs A", "src/docs/panel.ts A", "src/docs/mermaid.ts A", "src/app.ts M", "src/core/ipc.ts M"].map((x, i) => { const [p, s] = x.split(" "); return `<div class="f${i === 1 ? " on" : ""}"><span class="p">${p}</span><span class="st ${s}">${s}</span></div>`; }).join("")}</div>
+      <div class="code" style="padding-top:6px">${[["a", "// Painel de documentos: abas de arquivos Markdown ao lado das sessões,"], ["a", "// com leitura (mermaid, fórmulas, código), edição e modo dividido."], ["a", "<span class=kw>import</span> <span class=str>\"../styles/docs.css\"</span>;"], ["a", "<span class=kw>import</span> { ipc } <span class=kw>from</span> <span class=str>\"../core/ipc\"</span>;"]].map((l, i) => `<div class="ln a"><span class="g"><span></span><span>${i + 1}</span><i></i></span><span class="t">${l[1]}</span></div>`).join("")}</div></div></div>`;
+}
+function renderBranches() {
+  const bs = [["feat/git-panel", "atual · worktree principal", "↑2 ↓0", true], ["main", "padrão · worktree polvo-main", "↑0 ↓0"], ["fix/ctrl-click", "há 1 h", "↑0 ↓4"], ["exp/i18n", "remota · origin", "—"]];
+  body.innerHTML = `<div class="col"><div class="fhead"><input class="inp" style="margin:0" placeholder="Filtrar branches"></div>
+    <div class="flist brlist"><div class="fhead">Atuais</div>${bs.map((b) => `<div class="b${b[3] ? " on" : ""}"><span style="color:var(--accent)">⎇</span><span class="bn">${b[0]}<br><small style="font-family:var(--sans)">${b[1]}</small></span><span class="ab">${b[2]}</span></div>`).join("")}</div>
+    <div class="commit"><button class="cbtn" style="flex:none">+ Nova branch</button><button class="ai" style="justify-content:center;height:32px">⎇ Nova branch numa worktree + sessão</button></div></div>
+    <div class="diff"><div class="cdet"><h4 class="mono" style="font-size:13px">feat/git-panel</h4><div class="meta"><span>origin/feat/git-panel</span><span>2 commits à frente de main</span></div>
+    <div class="acts"><button>Mesclar main aqui</button><button>Rebase em main</button><button>Comparar com…</button><button>Renomear</button><button>Criar PR ↗</button><button style="color:#ff8a8f">Apagar…</button></div></div>
+    <div style="padding:16px;color:var(--muted);font-size:12.5px">A prévia do merge aparece aqui: commits que entram, arquivos com possível conflito e “Mesclar 2 commits em <span class="mono">main</span>”.</div></div>`;
+}
+function renderPRs() {
+  const prs = [["#42 feat: painel de git", "feat/git-panel → main", "ok", "2 aprovações"], ["#41 fix: Ctrl+clique abre no primeiro clique", "fix/ctrl-click → main", "run", "CI rodando"], ["#38 exp: suporte a idiomas", "exp/i18n → main", "bad", "1 check falhou"]];
+  body.innerHTML = `<div class="col"><div class="subtabs"><button class="on">Abertos</button><button>Meus</button><button>Revisar</button></div>
+    <div class="flist">${prs.map((p, i) => `<div class="pr" style="${i === 0 ? "background:rgba(138,162,255,.12)" : ""}"><b>${p[0]}</b><div class="meta"><span class="ci ${p[2] === "ok" ? "" : p[2]}"><i></i>${p[3]}</span><span class="mono">${p[1]}</span></div></div>`).join("")}</div>
+    <div class="commit"><button class="cbtn" style="flex:none">Criar PR desta branch</button></div></div>
+    <div class="diff"><div class="cdet"><h4>#42 feat: painel de git</h4><div class="meta"><span>feat/git-panel → main</span><span class="ci"><i></i> 4/4 checks</span><span>2 aprovações</span></div>
+    <div class="acts"><button>Checkout</button><button>Checkout numa worktree + sessão</button><button>✳ Revisar com Claude</button><button>Ver no GitHub ↗</button></div></div>
+    <div style="padding:16px;color:var(--muted);font-size:12.5px">Diff completo do PR, comentários de revisão em linha e estado dos checks.</div></div>`;
+}
+const views = { changes: renderChanges, history: renderHistory, branches: renderBranches, prs: renderPRs };
+renderChanges();
+$("#gtabs").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-t]"); if (!b) return;
+  document.querySelectorAll("#gtabs button").forEach((x) => x.classList.toggle("on", x === b));
+  views[b.dataset.t]();
+});
+body.addEventListener("click", (e) => {
+  const f = e.target.closest(".f[data-i]");
+  if (f) {
+    const i = +f.dataset.i;
+    if (e.target.closest(".cb")) files[i].on = files[i].on === true ? false : true; else sel = i;
+    return renderChanges();
+  }
+  const ln = e.target.closest(".ln[data-l]");
+  if (ln && (ln.classList.contains("a") || ln.classList.contains("d"))) {
+    const i = +ln.dataset.l; off.has(i) ? off.delete(i) : off.add(i);
+    files[sel].on = "part"; renderChanges();
+  }
+  if (e.target.closest(".fhead > .cb")) { const all = files.every((x) => x.on === true); files.forEach((x) => (x.on = !all)); renderChanges(); }
+});
+$("#expand").addEventListener("click", () => { $("#app").classList.toggle("full"); $("#expand").textContent = $("#app").classList.contains("full") ? "⤡" : "⤢"; });
+
+const pop = $("#pop");
+const pops = {
+  branch: `<input class="search" placeholder="Filtrar ou criar branch…"><div class="mh">Atual</div><div class="it"><span style="color:var(--accent)">⎇</span><span class="bn">feat/git-panel</span><small>↑2</small></div><div class="mh">Recentes</div><div class="it"><span>⎇</span><span class="bn">main</span><small>padrão</small></div><div class="it"><span>⎇</span><span class="bn">fix/ctrl-click</span><small>↓4</small></div><hr><div class="it">＋ Nova branch…</div><div class="it">⎇ Nova branch numa worktree + sessão…</div><div class="it">⇄ Mesclar em feat/git-panel…</div>`,
+  sync: `<div class="mh">feat/git-panel ↔ origin</div><div class="it">↑ <span style="flex:1">Enviar 2 commits</span><small>Ctrl+Shift+P</small></div><div class="it">↓ <span style="flex:1">Puxar</span><small>em dia</small></div><div class="it">⟳ <span style="flex:1">Buscar de origin</span><small>há 2 min</small></div><hr><div class="it">⇡ <span style="flex:1">Criar PR depois de enviar</span></div>
+    <div style="margin:8px 8px 4px;height:4px;border-radius:3px;background:rgba(255,255,255,.08);overflow:hidden"><i style="display:block;width:62%;height:100%;background:var(--accent)"></i></div><small style="display:block;padding:0 8px 4px;color:var(--faint);font-size:11px">Enviando objetos: 62% (31/50)</small>`,
+  repo: `<input class="search" placeholder="Filtrar projetos…"><div class="mh">Projetos do Polvo</div><div class="it">📁 <span style="flex:1">polvo</span><small>●5 ↑2</small></div><div class="it">📁 <span style="flex:1">api-pagamentos</span><small>↓3</small></div><div class="it">📁 <span style="flex:1">site</span><small>✓</small></div><hr><div class="it">⇣ Clonar do GitHub…</div>`,
+  wt: `<div class="mh">Worktree feat/git-panel</div><div class="it">⎇ Abrir painel Git aqui</div><div class="it">📂 Mostrar no Explorer</div><div class="it">＋ Nova worktree…</div><hr><div class="it" style="color:#ff8a8f">Remover worktree…</div>`,
+};
+document.addEventListener("click", (e) => {
+  const t = e.target.closest("[data-pop]");
+  if (!t) { if (!e.target.closest("#pop")) pop.hidden = true; return; }
+  const key = t.dataset.pop;
+  if (!pop.hidden && pop.dataset.k === key) { pop.hidden = true; return; }
+  pop.innerHTML = pops[key]; pop.dataset.k = key; pop.hidden = false;
+  const host = $(".content").getBoundingClientRect(); const r = t.getBoundingClientRect();
+  pop.style.top = Math.max(4, r.bottom - host.top + 6) + "px";
+  pop.style.left = Math.max(4, Math.min(host.width - 344, r.left - host.left)) + "px";
+});
+</script>
+</body>
+</html>
