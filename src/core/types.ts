@@ -61,7 +61,7 @@ export interface Settings {
   checkUpdates: boolean;
   /** Fornecedores escondidos pelo usuário, mesmo que instalados. */
   disabledTools: ToolKind[];
-  /** "Abrir no Polvo" no menu do Explorer (Shift + clique direito). */
+  /** "Abrir no Polvo" no menu do Explorer (clique direito numa pasta). */
   explorerMenu: boolean;
   /** Iniciar o Claude Code em modo bypass de permissões. */
   claudeBypassPermissions: boolean;

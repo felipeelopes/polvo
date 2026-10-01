@@ -136,7 +136,7 @@ export class App {
       store.projects = list;
       store.emit("projects");
     });
-    // "Abrir no Polvo" pelo Explorer (Shift + clique direito numa pasta).
+    // "Abrir no Polvo" pelo Explorer (clique direito numa pasta).
     if (store.isMain) {
       await events.onOpenFolder((folder) => this.openFolder(folder));
       const pending = await ipc.openFolderTake().catch(() => null);

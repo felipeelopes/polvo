@@ -37,6 +37,8 @@ interface ProjectGroup {
   worktrees: WorktreeGroup[];
   /** Projeto salvo (Abrir/Novo/Clonar), mesmo sem sessões. */
   saved: boolean;
+  /** É um repositório git (mostra branches e worktrees). */
+  git: boolean;
 }
 
 const readJson = <T>(key: string, fallback: T): T => {
@@ -69,6 +71,7 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
           sessions: [],
         })),
         saved: false,
+        git: !!info,
       };
       groups.set(key, g);
     }
@@ -86,6 +89,7 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
     const g = groups.get(key);
     if (g) {
       g.saved = true;
+      g.git ||= !!info;
       continue;
     }
     groups.set(key, {
@@ -95,14 +99,17 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
       branch: info?.branch ?? null,
       worktrees: (info?.worktrees ?? [{ path: p.path, branch: null, main: true }]).map((w) => ({ path: w.path, label: w.branch ?? basename(w.path), main: w.main, sessions: [] })),
       saved: true,
+      git: !!info,
     });
   }
   return [...groups.values()];
 }
 
 /** Ferramenta usada mais recentemente no grupo (para o "+" rápido). */
-const lastTool = (sessions: Session[]): ToolKind =>
-  [...sessions].sort((a, b) => b.createdAt - a.createdAt)[0]?.tool ?? "claude";
+const lastTool = (sessions: Session[]): ToolKind => {
+  const last = [...sessions].sort((a, b) => b.createdAt - a.createdAt).find((s) => store.toolEnabled(s.tool))?.tool;
+  return last ?? (["claude", "codex", "opencode", "shell"] as ToolKind[]).find((t) => store.toolEnabled(t)) ?? "shell";
+};
 
 export class Sidebar {
   readonly el = h("nav", "rail sidebar");
@@ -137,32 +144,35 @@ export class Sidebar {
 
   private renderGroups(mine: Session[]): string {
     if (!mine.length && !store.projects.length) return '<div class="sb-empty">Nenhum projeto ainda.<br>Use “+ Projeto” no alto para abrir uma pasta, criar um projeto ou clonar um repositório.</div>';
+    const agents = (["claude", "codex", "opencode"] as ToolKind[]).filter((t) => store.toolEnabled(t));
+    // Com um só agente configurado, o "+" já basta (sem ícones repetidos).
     const tools = (cwd: string) =>
-      (["claude", "codex", "opencode", "shell"] as ToolKind[])
-        .filter((t) => store.toolEnabled(t))
+      (agents.length <= 1 ? [] : ([...agents, "shell"] as ToolKind[]))
         .map((t) => `<button class="sb-tool" data-new="${esc(cwd)}" data-tool="${t}" title="Novo ${TOOLS[t].short} aqui">${toolIcon(t, 13)}</button>`)
         .join("");
     return groupSessions(mine)
           .map((g) => {
             const closed = this.closed.has(g.key);
             const all = g.worktrees.flatMap((w) => w.sessions);
-            const multi = g.worktrees.length > 1;
+            const tree = g.git;
             const focused = store.project === g.key;
             const out = !!store.project && !focused;
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? "Mostrar todos os projetos" : "Ver só este projeto (Painéis e Quadro)"}">${ICON.focus}</button>`;
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="Tirar da barra (não apaga a pasta)">${ICON.close}</button>` : "";
             const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${!multi && g.branch ? `<em>${esc(g.branch)}</em>` : ""}${focused ? '<span class="pg-flag">só este</span>' : ""}<span class="cnt">${all.length}</span>
-                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="Nova sessão neste projeto (${TOOLS[lastTool(all)].short})">+</button></span></div>`;
+                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? '<span class="pg-flag">só este</span>' : ""}<span class="cnt">${all.length}</span>
+                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="Nova sessão ${TOOLS[lastTool(all)].short} neste projeto">+</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
-            const body = g.worktrees
-              .filter((w) => w.sessions.length || multi)
+            // Repositório: branch principal primeiro, depois os worktrees, todos sempre visíveis.
+            const body = [...g.worktrees]
+              .sort((a, b) => Number(b.main) - Number(a.main))
               .map((w) => {
                 const rows = w.sessions.map((s) => this.row(s)).join("");
-                if (!multi) return rows;
+                if (!tree) return rows;
+                const tool = lastTool(w.sessions.length ? w.sessions : all);
                 return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : '<em>worktree</em>'}
-                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${lastTool(w.sessions.length ? w.sessions : all)}" title="Nova sessão neste worktree">+</button></span></div>${rows}</div>`;
+                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="Nova sessão ${TOOLS[tool].short} em ${esc(w.label)}">+</button></span></div>${rows || '<div class="wt-none">sem sessões</div>'}</div>`;
               })
               .join("");
             return `<div class="${cls}">${head}${body || (all.length ? "" : '<div class="pg-none">Sem sessões · use o “+”</div>')}</div>`;

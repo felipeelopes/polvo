@@ -43,7 +43,7 @@ export function openOnboarding(onFinish: () => void): void {
         <div class="rows">
           <div class="row" data-toggle="claudeUsageBridge"><div><b>Mostrar limites do Claude Code</b><small>Lê os limites de 5h e semanal pela statusline. A sua statusline atual continua igual.</small></div><span class="switch${draft.claudeUsageBridge ? " on" : ""}"></span></div>
           <div class="row" data-toggle="claudeBypassPermissions"><div><b>Claude Code sem pedir permissão</b><small>Inicia com --permission-mode bypassPermissions (o Claude executa sem confirmar cada ação).</small></div><span class="switch${draft.claudeBypassPermissions ? " on" : ""}"></span></div>
-          <div class="row" data-toggle="explorerMenu"><div><b>"Abrir no Polvo" no Explorer</b><small>Shift + clique direito numa pasta para abrir um agente nela.</small></div><span class="switch${draft.explorerMenu ? " on" : ""}"></span></div>
+          <div class="row" data-toggle="explorerMenu"><div><b>"Abrir no Polvo" no Explorer</b><small>Clique direito numa pasta para abrir um agente nela (no Windows 11, em “Mostrar mais opções”).</small></div><span class="switch${draft.explorerMenu ? " on" : ""}"></span></div>
           <div class="row" data-toggle="checkUpdates"><div><b>Atualizar automaticamente</b><small>Procura novas versões no GitHub e avisa quando houver.</small></div><span class="switch${draft.checkUpdates ? " on" : ""}"></span></div>
         </div>`;
     }
@@ -131,7 +131,7 @@ export function openSettings(): void {
         ${row("autoResume", "Retomar sessões ao abrir", "Reabre cada sessão exatamente onde parou.")}
         ${row("claudeBypassPermissions", "Claude Code sem pedir permissão", "Inicia com --permission-mode bypassPermissions. Vale para sessões novas ou retomadas.")}
         ${row("claudeUsageBridge", "Limites do Claude Code", "Lidos pela statusline (planos Pro/Max). Vale para sessões novas ou retomadas.")}
-        ${row("explorerMenu", "\"Abrir no Polvo\" no Explorer", "Shift + clique direito numa pasta para abrir um agente nela.")}
+        ${row("explorerMenu", "\"Abrir no Polvo\" no Explorer", "Clique direito numa pasta para abrir um agente nela (no Windows 11, em “Mostrar mais opções”).")}
         ${row("checkUpdates", "Atualizações automáticas", "Procura novas versões no GitHub.")}
       </div>
       <div class="mfoot" style="margin-top:16px"><button class="ghost" data-about>Sobre o Polvo ${__APP_VERSION__}</button><span class="hk"></span><button class="primary" data-close>Pronto</button></div>`;

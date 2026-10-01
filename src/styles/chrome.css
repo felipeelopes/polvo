@@ -123,3 +123,6 @@
 
 /* Rodapé da barra lateral: só o botão de recolher, à direita. */
 .sb-foot { justify-content: flex-end; }
+
+/* Branch/worktree sem sessões. */
+.wt-none { font-size: 11px; color: var(--faint); padding: 2px 8px 4px 34px; }

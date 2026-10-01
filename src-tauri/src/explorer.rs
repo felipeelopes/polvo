@@ -1,8 +1,9 @@
-//! "Abrir no Polvo" no menu do Explorer (Shift + clique direito numa pasta).
+//! "Abrir no Polvo" no menu do Explorer (clique direito numa pasta).
 //!
 //! As entradas ficam em `HKCU\Software\Classes` (sem precisar de administrador)
 //! e são reaplicadas a cada início, para apontar sempre para o executável atual.
-//! O valor `Extended` faz o item aparecer só com Shift pressionado.
+//! No Windows 11 o item fica em "Mostrar mais opções" (ou Shift + clique
+//! direito), onde o Windows coloca os menus clássicos.
 
 use std::sync::Mutex;
 
@@ -72,7 +73,8 @@ pub fn sync_menu(enabled: bool) -> AppResult<()> {
             let (k, _) = hkcu.create_subkey(key)?;
             k.set_value("", &"Abrir no Polvo")?;
             k.set_value("Icon", &format!("\"{exe}\",0"))?;
-            k.set_value("Extended", &"")?;
+            // Versões antigas exigiam Shift (valor `Extended`); agora aparece sempre.
+            let _ = k.delete_value("Extended");
             let (cmd, _) = k.create_subkey("command")?;
             cmd.set_value("", &format!("\"{exe}\" {OPEN_FLAG} \"%V\""))?;
         }
