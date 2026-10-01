@@ -17,7 +17,7 @@ export interface Session {
   cwd: string;
   title: string;
   sessionId: string | null;
-  /** Rótulo da janela dona da sessão (`main` ou `screen-2`). */
+  /** Rótulo da janela dona da sessão (`main` ou `w-…`). */
   window: string;
   minimized: boolean;
   createdAt: number;
@@ -43,10 +43,11 @@ export interface Rect {
 export interface Settings {
   onboarded: boolean;
   autostart: boolean;
-  screens: number;
   autoResume: boolean;
   claudeUsageBridge: boolean;
   checkUpdates: boolean;
+  /** Fornecedores escondidos pelo usuário, mesmo que instalados. */
+  disabledTools: ToolKind[];
 }
 
 export interface UsageWindow {
@@ -69,6 +70,21 @@ export interface Snapshot {
   layout: LayoutNode | null;
   view: View;
   recentDirs: string[];
+}
+
+/** Uma janela do Polvo ("instância"). `main` é a principal. */
+export interface WindowRecord {
+  label: string;
+  name: string;
+}
+
+export interface MonitorInfo {
+  index: number;
+  name: string;
+  width: number;
+  height: number;
+  primary: boolean;
+  current: boolean;
 }
 
 export interface DisplayInfo {

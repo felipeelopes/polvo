@@ -3,6 +3,7 @@ import { relaunch } from "@tauri-apps/plugin-process";
 import { check, type Update } from "@tauri-apps/plugin-updater";
 import { store } from "../core/store";
 import { esc, h } from "./dom";
+import { logo } from "./logo";
 
 const SIX_HOURS = 6 * 60 * 60 * 1000;
 let banner: HTMLDivElement | null = null;
@@ -10,26 +11,28 @@ let dismissed: string | null = null;
 
 export function startUpdateChecks(): void {
   const run = () => {
-    if (store.settings.checkUpdates) void checkNow();
+    if (store.settings.checkUpdates) void checkForUpdates(false);
   };
   window.setTimeout(run, 8000);
   window.setInterval(run, SIX_HOURS);
 }
 
-async function checkNow(): Promise<void> {
+/** Procura uma versão nova. `manual` ignora o "Depois" dado antes. Devolve se achou. */
+export async function checkForUpdates(manual: boolean): Promise<boolean> {
   let update: Update | null = null;
   try {
     update = await check();
   } catch {
-    return; // sem rede ou nenhuma release publicada ainda
+    return false; // sem rede ou nenhuma release publicada ainda
   }
-  if (!update || update.version === dismissed || banner) return;
-  show(update);
+  if (!update) return false;
+  if ((manual || update.version !== dismissed) && !banner) show(update);
+  return true;
 }
 
 function show(update: Update): void {
   banner = h("div", "update");
-  banner.innerHTML = `<b>Polvo ${esc(update.version)} disponível</b><p>${esc(update.body?.trim() || "Melhorias e correções.")}</p>
+  banner.innerHTML = `<div class="uhead">${logo(34, "wave")}<b>Polvo ${esc(update.version)} disponível</b></div><p>${esc(update.body?.trim() || "Melhorias e correções.")}</p>
     <div><button class="ghost" data-later>Depois</button><button class="primary" data-install>Atualizar e reiniciar</button></div>`;
   document.body.append(banner);
   banner.querySelector<HTMLButtonElement>("[data-later]")!.onclick = () => {

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { detectStatus, previewLines } from "../src/terminal/detector";
+import { contextFromScreen, detectStatus, previewLines } from "../src/terminal/detector";
 
 describe("detector de status", () => {
   it("reconhece pedido de permissão do Claude Code", () => {
@@ -23,5 +23,12 @@ describe("detector de status", () => {
   it("prévia ignora molduras, caixa de prompt vazia e linhas vazias", () => {
     const lines = previewLines(["╭──────╮", "│ > │", "", "● Read(src/app.ts)", "  ⎿ 120 lines", "────"]);
     expect(lines).toEqual(["● Read(src/app.ts)", "  ⎿ 120 lines"]);
+  });
+
+  it("lê o contexto mostrado na tela", () => {
+    expect(contextFromScreen(["  gpt-5 · 72% context left"])).toBe(28);
+    expect(contextFromScreen(["tokens 12k · 34% context used"])).toBe(34);
+    expect(contextFromScreen(["Context: 81%"])).toBe(81);
+    expect(contextFromScreen(["nada aqui"])).toBeNull();
   });
 });

@@ -22,6 +22,16 @@ export function detectStatus(tool: ToolKind, screen: string[], msSinceOutput: nu
   return "idle";
 }
 
+/** Percentual de contexto usado, quando o CLI o mostra na tela. */
+export function contextFromScreen(screen: string[]): number | null {
+  const tail = screen.slice(-12).join("\n");
+  const left = /(\d{1,3})%\s*(?:of\s*)?context left/i.exec(tail);
+  if (left) return Math.max(0, 100 - Number(left[1]));
+  const used = /(\d{1,3})%\s*(?:of\s*)?context(?:\s*used)?|context(?:\s*used)?[:\s]+(\d{1,3})%/i.exec(tail);
+  if (used) return Math.min(100, Number(used[1] ?? used[2]));
+  return null;
+}
+
 const DECORATION = /^[\s─━│┃╭╮╰╯┌┐└┘├┤┬┴┼═║╔╗╚╝>›❯·•*✻✳✶✢…\-_=]*$/;
 
 /** Últimas linhas com conteúdo, para a prévia nos cartões do Quadro. */

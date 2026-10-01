@@ -31,9 +31,29 @@ export async function refreshUsage(): Promise<void> {
   }
 }
 
-/** Provedores exibidos: os que têm dados ou sessões abertas. */
+/** Provedores exibidos: ativos e com dados ou sessões abertas. */
 function visibleProviders(): ToolKind[] {
-  return PROVIDERS.filter((p) => store.usage.some((u) => u.provider === p) || store.sessions.some((s) => s.tool === p));
+  return PROVIDERS.filter(
+    (p) => !store.settings.disabledTools.includes(p) && (store.usage.some((u) => u.provider === p) || store.sessions.some((s) => s.tool === p)),
+  );
+}
+
+/** Dois anéis concêntricos: fora = janela longa (semanal), dentro = 5h. */
+export function doubleRing(outer: number, inner: number, tool: ToolKind, size = 30): string {
+  const c = size / 2;
+  const arc = (r: number, p: number, color: string, sw: number) => {
+    const len = 2 * Math.PI * r;
+    return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${sw}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(len * Math.min(100, Math.max(0, p))) / 100} ${len}"/>`;
+  };
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">${arc(c - 2, outer, levelColor(tool, outer), 3)}${arc(c - 7.5, inner, levelColor(tool, inner), 3)}</svg>`;
+}
+
+/** Janelas com percentual, separadas em curta (5h) e longa (semanal…). */
+function split(u: UsageSnapshot | undefined) {
+  const pct = (u?.windows ?? []).filter((w) => w.usedPercent !== null);
+  const short = pct.find((w) => w.short === "5h");
+  const long = pct.find((w) => w !== short);
+  return { short, long };
 }
 
 export function renderRings(container: HTMLElement): void {
@@ -42,6 +62,12 @@ export function renderRings(container: HTMLElement): void {
       const u = store.usage.find((x) => x.provider === p);
       const w = u?.windows.find((x) => x.usedPercent !== null);
       const t = TOOLS[p];
+      const { short, long } = split(u);
+      if (short && long) {
+        const s5 = Math.round(short.usedPercent!);
+        const sl = Math.round(long.usedPercent!);
+        return `<button class="ur" data-pop data-p="${p}" title="Anel de fora: ${long.label} · anel de dentro: ${short.label}">${doubleRing(sl, s5, p)}<div><b>${t.short}</b><span>5h ${s5}% · ${long.short} ${sl}%</span></div></button>`;
+      }
       if (w) {
         const pct = Math.round(w.usedPercent!);
         return `<button class="ur" data-pop data-p="${p}">${ring(pct, levelColor(p, pct))}<div><b>${t.short}</b><span>${pct}% · ${w.short}</span></div></button>`;

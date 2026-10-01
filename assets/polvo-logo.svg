@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 114 114" role="img" aria-label="Polvo">
+  <title>Polvo</title>
+  <g fill="#FF8A70">
+    <rect x="25" y="62" width="12" height="34" rx="6"/>
+    <rect x="38" y="62" width="12" height="40" rx="6"/>
+    <rect x="51" y="62" width="12" height="43" rx="6"/>
+    <rect x="64" y="62" width="12" height="40" rx="6"/>
+    <rect x="77" y="62" width="12" height="34" rx="6"/>
+    <ellipse cx="57" cy="47" rx="31" ry="30"/>
+  </g>
+  <ellipse cx="45" cy="28" rx="9" ry="6" fill="#FFBCA8"/>
+  <ellipse cx="45" cy="50" rx="7" ry="8" fill="#fff"/>
+  <ellipse cx="69" cy="50" rx="7" ry="8" fill="#fff"/>
+  <circle cx="46" cy="51" r="4" fill="#281A3C"/>
+  <circle cx="70" cy="51" r="4" fill="#281A3C"/>
+  <circle cx="47.5" cy="48.5" r="1.4" fill="#fff"/>
+  <circle cx="71.5" cy="48.5" r="1.4" fill="#fff"/>
+  <ellipse cx="35" cy="61" rx="5" ry="3" fill="#FF6B7A" opacity=".85"/>
+  <ellipse cx="79" cy="61" rx="5" ry="3" fill="#FF6B7A" opacity=".85"/>
+  <path d="M51 62q6 5 12 0" stroke="#281A3C" stroke-width="2.6" fill="none" stroke-linecap="round"/>
+</svg>

@@ -54,6 +54,22 @@ pub fn run() -> i32 {
         }
     }
 
+    // Dados por sessão: contexto (quando o Claude informa) e o modelo, que
+    // ajuda a saber o tamanho da janela de contexto (200 mil ou 1 milhão).
+    if let Some(sid) = parsed.get("session_id").and_then(Value::as_str) {
+        let snapshot = json!({
+            "contextPercent": context_percent(&parsed),
+            "modelId": parsed.pointer("/model/id"),
+            "exceeds200k": parsed.get("exceeds_200k_tokens"),
+            "observedAt": paths::now_ms(),
+        });
+        if let Ok(bytes) = serde_json::to_vec(&snapshot) {
+            let dir = paths::usage_dir().join("sessions");
+            let _ = std::fs::create_dir_all(&dir);
+            let _ = paths::write_atomic(&dir.join(format!("{sid}.json")), &bytes);
+        }
+    }
+
     let line = match std::env::var(USER_STATUSLINE_ENV)
         .ok()
         .filter(|c| !c.trim().is_empty())
@@ -65,6 +81,26 @@ pub fn run() -> i32 {
     let _ = out.write_all(line.as_bytes());
     let _ = out.flush();
     0
+}
+
+/// Percentual da janela de contexto em uso. Usa `used_percentage` quando o
+/// Claude Code informa; senão calcula pelos tokens da última requisição.
+fn context_percent(v: &Value) -> Option<f64> {
+    let cw = v.get("context_window")?;
+    if let Some(p) = cw.get("used_percentage").and_then(Value::as_f64) {
+        return Some(p);
+    }
+    let size = cw.get("context_window_size").and_then(Value::as_f64)?;
+    let usage = cw.get("current_usage")?;
+    let tokens: f64 = [
+        "input_tokens",
+        "cache_creation_input_tokens",
+        "cache_read_input_tokens",
+    ]
+    .iter()
+    .filter_map(|k| usage.get(*k).and_then(Value::as_f64))
+    .sum();
+    (size > 0.0).then(|| (tokens / size * 100.0).min(100.0))
 }
 
 fn default_line(v: &Value) -> String {

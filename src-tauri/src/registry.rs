@@ -4,6 +4,7 @@
 
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::thread;
 use std::time::{Duration, SystemTime};
 
@@ -16,10 +17,12 @@ use crate::error::{AppError, AppResult};
 use crate::pty::PtyManager;
 use crate::settings::SettingsState;
 use crate::tools::{self, PlanOptions, StartMode, ToolKind};
-use crate::{bridge, discovery, paths, windows};
+use crate::windows::{self, WindowRecord};
+use crate::{bridge, discovery, paths};
 
 pub const EVT_SESSIONS: &str = "sessions-changed";
 pub const EVT_RUNTIME: &str = "session-runtime";
+pub const EVT_WINDOWS: &str = "windows-changed";
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -88,6 +91,8 @@ struct RuntimeEvent<'a> {
 struct WorkspaceFile {
     version: u32,
     sessions: Vec<SessionRecord>,
+    /// Janelas abertas (reabertas ao iniciar).
+    windows: Vec<WindowRecord>,
     /// Árvore de layout de cada janela (formato definido pelo frontend).
     layouts: HashMap<String, Value>,
     /// Visão ativa de cada janela: `tiles` ou `board`.
@@ -104,6 +109,11 @@ struct Inner {
 #[derive(Default)]
 pub struct Registry {
     inner: Mutex<Inner>,
+    /// O app está encerrando: janelas fechadas agora continuam lembradas.
+    exiting: AtomicBool,
+    /// Janelas que o usuário pediu para fechar (botão X). Só essas são
+    /// esquecidas; as destruídas pelo encerramento do app reabrem depois.
+    user_closing: Mutex<HashSet<String>>,
 }
 
 fn workspace_file() -> PathBuf {
@@ -123,6 +133,8 @@ impl Registry {
             .collect();
         Self {
             inner: Mutex::new(Inner { ws, runtime }),
+            exiting: AtomicBool::new(false),
+            user_closing: Mutex::new(HashSet::new()),
         }
     }
 
@@ -336,21 +348,31 @@ impl Registry {
         self.emit_runtime(app, id);
     }
 
-    /// Ao abrir o app: retoma tudo (ou deixa pausado) e ajusta as janelas.
-    pub fn boot(&self, app: &AppHandle, auto_resume: bool, screens: u8) {
+    /// Ao abrir o app: garante a janela principal, devolve sessões órfãs a
+    /// ela e retoma tudo (ou deixa pausado).
+    pub fn boot(&self, app: &AppHandle, auto_resume: bool) {
         let ids: Vec<String> = {
             let mut inner = self.inner.lock();
-            if screens < 2 {
-                for s in inner
-                    .ws
-                    .sessions
-                    .iter_mut()
-                    .filter(|s| s.window != windows::MAIN)
-                {
-                    s.window = windows::MAIN.into();
-                    s.minimized = true;
-                }
+            if !inner.ws.windows.iter().any(|w| w.label == windows::MAIN) {
+                inner.ws.windows.insert(
+                    0,
+                    WindowRecord {
+                        label: windows::MAIN.into(),
+                        name: "Janela 1".into(),
+                    },
+                );
             }
+            let open: HashSet<String> = inner.ws.windows.iter().map(|w| w.label.clone()).collect();
+            for s in inner
+                .ws
+                .sessions
+                .iter_mut()
+                .filter(|s| !open.contains(&s.window))
+            {
+                s.window = windows::MAIN.into();
+                s.minimized = true;
+            }
+            Self::save(&inner);
             inner.ws.sessions.iter().map(|s| s.id.clone()).collect()
         };
         if auto_resume {
@@ -360,16 +382,88 @@ impl Registry {
         }
     }
 
-    pub fn move_all(&self, app: &AppHandle, from: &str, to: &str) {
-        {
+    /// (id do Polvo, ferramenta, id da sessão do CLI) das sessões em execução.
+    pub fn session_refs(&self) -> Vec<(String, ToolKind, Option<String>)> {
+        let inner = self.inner.lock();
+        inner
+            .ws
+            .sessions
+            .iter()
+            .filter(|s| {
+                inner
+                    .runtime
+                    .get(&s.id)
+                    .is_some_and(|r| !matches!(r.status.as_str(), "paused" | "error"))
+            })
+            .map(|s| (s.id.clone(), s.tool, s.session_id.clone()))
+            .collect()
+    }
+
+    pub fn windows(&self) -> Vec<WindowRecord> {
+        self.inner.lock().ws.windows.clone()
+    }
+
+    fn emit_windows(&self, app: &AppHandle) {
+        let _ = app.emit(EVT_WINDOWS, self.windows());
+    }
+
+    /// Registra uma janela nova com o menor número livre ("Janela 2", "Janela 3"…).
+    pub fn add_window(&self, app: &AppHandle) -> WindowRecord {
+        let rec = {
             let mut inner = self.inner.lock();
-            for s in inner.ws.sessions.iter_mut().filter(|s| s.window == from) {
-                s.window = to.into();
+            let used: HashSet<String> = inner.ws.windows.iter().map(|w| w.name.clone()).collect();
+            let n = (2..)
+                .find(|n| !used.contains(&format!("Janela {n}")))
+                .unwrap_or(2);
+            let id = uuid::Uuid::new_v4().simple().to_string();
+            let rec = WindowRecord {
+                label: format!("w-{}", &id[..8]),
+                name: format!("Janela {n}"),
+            };
+            inner.ws.windows.push(rec.clone());
+            Self::save(&inner);
+            rec
+        };
+        self.emit_windows(app);
+        rec
+    }
+
+    /// Fechar a janela principal encerra o app e mantém todas as janelas lembradas.
+    pub fn mark_exiting(&self) {
+        self.exiting.store(true, Ordering::SeqCst);
+    }
+
+    /// O usuário clicou para fechar uma janela extra.
+    pub fn mark_user_closing(&self, label: &str) {
+        self.user_closing.lock().insert(label.to_string());
+    }
+
+    /// Uma janela extra foi destruída. Se foi o usuário que a fechou (e o app
+    /// não está encerrando), ela é esquecida e as sessões vão para o trilho
+    /// da principal.
+    pub fn window_closed(&self, app: &AppHandle, label: &str) {
+        let by_user = self.user_closing.lock().remove(label);
+        if !by_user || self.exiting.load(Ordering::SeqCst) || label == windows::MAIN {
+            return;
+        }
+        let moved = {
+            let mut inner = self.inner.lock();
+            inner.ws.windows.retain(|w| w.label != label);
+            inner.ws.layouts.remove(label);
+            inner.ws.views.remove(label);
+            let mut moved = 0;
+            for s in inner.ws.sessions.iter_mut().filter(|s| s.window == label) {
+                s.window = windows::MAIN.into();
                 s.minimized = true;
+                moved += 1;
             }
             Self::save(&inner);
+            moved
+        };
+        self.emit_windows(app);
+        if moved > 0 {
+            self.emit_sessions(app);
         }
-        self.emit_sessions(app);
     }
 }
 
@@ -469,18 +563,13 @@ pub struct SessionPatch {
     window: Option<String>,
 }
 
-/// Assíncrono: pode criar a janela da segunda tela.
 #[tauri::command]
-pub async fn session_update(
+pub fn session_update(
     app: AppHandle,
-    reg: State<'_, Registry>,
+    reg: State<Registry>,
     id: String,
     patch: SessionPatch,
 ) -> AppResult<()> {
-    // Mover para a segunda tela reabre a janela dela se estiver fechada.
-    if patch.window.as_deref() == Some(windows::SECOND) {
-        windows::apply_screens(&app, 2)?;
-    }
     {
         let mut inner = reg.inner.lock();
         let r = inner
@@ -497,6 +586,10 @@ pub async fn session_update(
         }
         if let Some(w) = patch.window {
             r.window = w;
+        }
+        let window = r.window.clone();
+        if !inner.ws.windows.iter().any(|w| w.label == window) {
+            return Err(AppError::msg("Essa janela não está aberta."));
         }
         Registry::save(&inner);
     }

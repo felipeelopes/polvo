@@ -33,6 +33,17 @@ fn claude_project_dir(cwd: &Path) -> PathBuf {
     claude_dir().join("projects").join(encoded)
 }
 
+/// Arquivo da conversa do Claude Code, em qualquer pasta de projeto.
+pub fn claude_transcript(id: &str) -> Option<PathBuf> {
+    let file = format!("{id}.jsonl");
+    fs::read_dir(claude_dir().join("projects"))
+        .into_iter()
+        .flatten()
+        .flatten()
+        .map(|e| e.path().join(&file))
+        .find(|p| p.is_file())
+}
+
 pub fn claude_session_exists(id: &str) -> bool {
     let file = format!("{id}.jsonl");
     fs::read_dir(claude_dir().join("projects"))

@@ -6,8 +6,10 @@ import { store } from "./core/store";
 import type { Side, View } from "./core/types";
 import { Terminals } from "./terminal/terminals";
 import { BoardView } from "./ui/board";
-import { h } from "./ui/dom";
-import { closePopover, toast } from "./ui/feedback";
+import { esc, h } from "./ui/dom";
+import { closePopover, popover, toast } from "./ui/feedback";
+import { openAbout } from "./ui/about";
+import { ICON } from "./ui/icons";
 import { openHelp } from "./ui/help";
 import { openNewSession, type NewSessionTarget } from "./ui/new-session";
 import { openSettings } from "./ui/onboarding";
@@ -35,7 +37,7 @@ export class App {
 
   constructor(root: HTMLElement) {
     const handlers: PaneHandlers = {
-      action: (a, id, extra) => this.action(a, id, extra),
+      action: (a, id, extra, anchor) => this.action(a, id, extra, anchor),
       activate: (id) => store.setActive(id),
     };
     this.titlebar = new Titlebar({
@@ -43,6 +45,9 @@ export class App {
       preset: (k) => (k === "undo" ? this.tiles.undo() : this.tiles.applyPreset(k as Preset | "equal")),
       openSettings: () => openSettings(),
       openHelp: (a) => openHelp(a),
+      newWindow: () => void this.newWindow(),
+      openMonitors: (a) => void this.openMonitors(a),
+      openAbout: () => openAbout(),
     });
     this.rail = new Rail((e, id) => {
       if (store.view === "tiles") this.tiles.startDrag(e, id, true);
@@ -67,11 +72,88 @@ export class App {
 
   async start(): Promise<void> {
     await events.onSessions((list) => store.setSessions(list));
+    await events.onWindows((list) => store.setWindows(list));
     await events.onRuntime((id, rt) => store.setRuntime(id, rt));
     this.terms.sync();
     this.rail.render();
     this.applyView();
     requestAnimationFrame(() => this.tiles.reconcile());
+    void this.refreshContext();
+    window.setInterval(() => void this.refreshContext(), 4000);
+  }
+
+  /** Contexto usado: backend (Claude/Codex) e, na falta, o que a tela mostra. */
+  private async refreshContext(): Promise<void> {
+    let fromBackend: Record<string, number> = {};
+    try {
+      fromBackend = await ipc.context();
+    } catch {
+      /* ignora */
+    }
+    const next: Record<string, number> = {};
+    for (const s of store.sessions) {
+      const v = fromBackend[s.id] ?? this.terms.screenContext.get(s.id);
+      if (v !== undefined) next[s.id] = v;
+    }
+    if (JSON.stringify(next) !== JSON.stringify(store.context)) {
+      store.context = next;
+      store.emit("context");
+    }
+  }
+
+  async newWindow(): Promise<string | null> {
+    try {
+      return await ipc.windowNew();
+    } catch (e) {
+      toast(String(e));
+      return null;
+    }
+  }
+
+  private async openMonitors(anchor: HTMLElement): Promise<void> {
+    const monitors = await ipc.monitorsList();
+    popover(
+      "monitors",
+      anchor,
+      (el) => {
+        el.innerHTML = `<div class="mh">Levar esta janela para</div>${monitors
+          .map(
+            (m) =>
+              `<button data-m="${m.index}" class="${m.current ? "cur" : ""}">${ICON.monitor} Monitor ${m.index + 1}${m.primary ? " (principal)" : ""}<small>${m.width}×${m.height}${m.current ? " · aqui" : ""}</small></button>`,
+          )
+          .join("")}<hr><button data-new>${ICON.window} Nova janela<small>outro monitor</small></button>`;
+        el.onclick = (e) => {
+          const b = (e.target as Element).closest<HTMLElement>("[data-m]");
+          if (b) {
+            closePopover();
+            void ipc.windowToMonitor(Number(b.dataset.m));
+          }
+        };
+      },
+      "menu",
+    );
+  }
+
+  private openMoveMenu(id: string, anchor?: HTMLElement): void {
+    if (!anchor) return;
+    const others = store.windows.filter((w) => w.label !== store.label);
+    popover(
+      `move:${id}`,
+      anchor,
+      (el) => {
+        el.innerHTML = `<div class="mh">Mover sessão para</div>${others
+          .map((w) => `<button data-w="${esc(w.label)}">${ICON.window} ${esc(w.name)}</button>`)
+          .join("")}${others.length ? "<hr>" : ""}<button data-w="__new">${ICON.window} Nova janela<small>abre em outro monitor</small></button>`;
+        el.onclick = async (e) => {
+          const target = (e.target as Element).closest<HTMLElement>("[data-w]")?.dataset.w;
+          if (!target) return;
+          closePopover();
+          const label = target === "__new" ? await this.newWindow() : target;
+          if (label) this.moveTo(id, label);
+        };
+      },
+      "menu",
+    );
   }
 
   newSession(target?: NewSessionTarget): void {
@@ -110,6 +192,16 @@ export class App {
         break;
       case "settings":
         this.tiles.updatePanes();
+        this.titlebar.render();
+        break;
+      case "windows":
+        this.titlebar.render();
+        this.board.render();
+        this.board.renderDrawer();
+        break;
+      case "context":
+        this.tiles.updatePanes();
+        this.board.render();
         break;
       case "usage":
         this.titlebar.render();
@@ -171,7 +263,7 @@ export class App {
 
   // ------------------------------------------------------------ ações
 
-  private action(a: PaneAction, id: string, extra?: string): void {
+  private action(a: PaneAction, id: string, extra?: string, anchor?: HTMLElement): void {
     switch (a) {
       case "split": {
         const r = this.tiles.geo.leaves.get(id);
@@ -180,7 +272,7 @@ export class App {
         break;
       }
       case "move":
-        this.moveToOtherScreen(id);
+        this.openMoveMenu(id, anchor);
         break;
       case "min":
         this.minimize(id);
@@ -245,13 +337,13 @@ export class App {
     this.terms.get(id)?.focus();
   }
 
-  private moveToOtherScreen(id: string): void {
-    if (store.settings.screens < 2) return;
-    const other = store.otherWindow;
-    store.patchLocal(id, { window: other, minimized: false });
+  private moveTo(id: string, label: string): void {
+    store.patchLocal(id, { window: label, minimized: false });
     store.setTree(removeLeaf(clone(store.tree), id), { undo: false });
-    void ipc.sessionUpdate(id, { window: other, minimized: false });
-    toast(`Sessão movida para a ${other === "main" ? "Tela 1" : "Tela 2"}`);
+    ipc
+      .sessionUpdate(id, { window: label, minimized: false })
+      .then(() => toast(`Sessão movida para a ${store.windowName(label)}`))
+      .catch((e) => toast(String(e)));
   }
 
   // ------------------------------------------------------------ teclado

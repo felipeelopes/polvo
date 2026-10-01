@@ -7,6 +7,7 @@ use tauri_plugin_autostart::ManagerExt;
 
 use crate::error::{AppResult, Context};
 use crate::paths;
+use crate::tools::ToolKind;
 
 #[derive(Serialize, Deserialize, Clone, Debug, PartialEq)]
 #[serde(rename_all = "camelCase", default)]
@@ -15,14 +16,14 @@ pub struct Settings {
     pub onboarded: bool,
     /// Abrir o Polvo junto com o Windows.
     pub autostart: bool,
-    /// 1 = uma janela; 2 = uma janela extra no segundo monitor.
-    pub screens: u8,
     /// Retomar as sessões abertas automaticamente ao iniciar.
     pub auto_resume: bool,
     /// Usar a ponte de statusline para ler os limites do Claude Code.
     pub claude_usage_bridge: bool,
     /// Procurar novas versões no GitHub.
     pub check_updates: bool,
+    /// Fornecedores escondidos pelo usuário, mesmo que instalados.
+    pub disabled_tools: Vec<ToolKind>,
 }
 
 impl Default for Settings {
@@ -30,10 +31,10 @@ impl Default for Settings {
         Self {
             onboarded: false,
             autostart: false,
-            screens: 1,
             auto_resume: true,
             claude_usage_bridge: true,
             check_updates: true,
+            disabled_tools: Vec::new(),
         }
     }
 }
@@ -71,20 +72,14 @@ pub fn settings_get(state: State<SettingsState>) -> Settings {
     state.get()
 }
 
-/// Assíncrono de propósito: criar a janela da segunda tela num comando
-/// síncrono trava a thread principal no Windows.
 #[tauri::command]
-pub async fn settings_set(
+pub fn settings_set(
     app: AppHandle,
-    state: State<'_, SettingsState>,
+    state: State<SettingsState>,
     settings: Settings,
 ) -> AppResult<Settings> {
-    let before = state.get();
     let saved = state.update(|s| *s = settings)?;
     sync_autostart(&app, saved.autostart)?;
-    if before.screens != saved.screens {
-        crate::windows::apply_screens(&app, saved.screens)?;
-    }
     Ok(saved)
 }
 

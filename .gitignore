@@ -19,3 +19,6 @@ Thumbs.db
 
 # Configuração local de agentes
 .claude/
+
+# Gerado pelo scripts/contributors.mjs
+src/generated/

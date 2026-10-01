@@ -1,12 +1,14 @@
 // Mantém um terminal para cada sessão desta janela e informa o status ao backend.
 import { ipc } from "../core/ipc";
 import { isRunning, store } from "../core/store";
-import { detectStatus, previewLines } from "./detector";
+import { contextFromScreen, detectStatus, previewLines } from "./detector";
 import { SessionTerminal } from "./session-terminal";
 
 export class Terminals {
   private map = new Map<string, SessionTerminal>();
   private reported = new Map<string, string>();
+  /** Contexto lido da tela, para CLIs sem fonte melhor (ex.: OpenCode). */
+  readonly screenContext = new Map<string, number>();
 
   constructor(private isAppShortcut: (e: KeyboardEvent) => boolean) {
     window.setInterval(() => this.tick(), 900);
@@ -45,6 +47,8 @@ export class Terminals {
       const t = this.map.get(s.id);
       if (!t || !t.connected || !isRunning(s) || t.lastOutput === 0) continue;
       const screen = t.screen();
+      const ctx = contextFromScreen(screen);
+      if (ctx !== null) this.screenContext.set(s.id, ctx);
       const status = detectStatus(s.tool, screen, now - t.lastOutput, now - t.lastInput);
       const preview = previewLines(screen);
       const key = `${status}\n${preview.join("\n")}`;

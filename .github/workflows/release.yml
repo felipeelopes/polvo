@@ -1,8 +1,7 @@
 name: Release
 
+# Só manual por enquanto (sem créditos de Actions). Para releases locais use: pnpm release
 on:
-  push:
-    tags: ["v*"]
   workflow_dispatch:
 
 permissions:

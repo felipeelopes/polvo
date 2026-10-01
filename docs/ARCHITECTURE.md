@@ -11,13 +11,14 @@
 │ Backend Rust (Tauri 2)                                             │
 │  Registry ── workspace.json   PtyManager ── ConPTY (portable-pty)  │
 │  tools (planos de início)     discovery (ids de sessão dos CLIs)   │
-│  usage + bridge (limites)     windows (2ª tela)  settings          │
+│  usage + bridge (limites)     windows (várias)   context, settings │
 └────────────────────────────────────────────────────────────────────┘
 ```
 
 ## Fonte da verdade
 
 - **Backend (`registry.rs`)** guarda as sessões: ferramenta, pasta, título, id da sessão do CLI, janela dona e se está recolhida. Tudo vai para `%APPDATA%\Polvo\workspace.json` a cada mudança (gravação atômica).
+- **Janelas**: dá para abrir várias (`windows.rs`). A lista fica no workspace e todas reabrem ao iniciar; posição, tamanho e monitor vêm do `tauri-plugin-window-state`. Abrir o Polvo de novo (single-instance) cria outra janela. Fechar a principal encerra o app; fechar uma extra pelo X a esquece e manda as sessões dela para o trilho da principal.
 - **Cada janela** guarda o próprio layout (árvore de divisões) e a visão (Painéis/Quadro), também persistidos no workspace por rótulo de janela.
 - O backend emite `sessions-changed` (lista completa) e `session-runtime` (status/prévia de uma sessão). Todas as janelas escutam.
 

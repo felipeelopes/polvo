@@ -41,6 +41,8 @@ export const ICON = {
   open: svg('<rect x="1.5" y="1.5" width="13" height="13" rx="2.5"/><path d="M8 1.5v13M8 8h6.5"/>', 14),
   gear: svg('<circle cx="8" cy="8" r="2.2"/><path d="M8 1.5v1.8M8 12.7v1.8M14.5 8h-1.8M3.3 8H1.5M12.6 3.4l-1.3 1.3M4.7 11.3l-1.3 1.3M12.6 12.6l-1.3-1.3M4.7 4.7L3.4 3.4"/>'),
   help: svg('<circle cx="8" cy="8" r="6.5"/><path d="M6.3 6.2a1.8 1.8 0 113 1.4c-.6.4-1.3.8-1.3 1.6M8 11.6v.1"/>'),
+  window: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M1.5 5.5h13M10 9.5h3M11.5 8v3"/>'),
+  monitor: svg('<rect x="1.5" y="2" width="13" height="9" rx="1.5"/><path d="M6 14h4M8 11v3"/>'),
   folder: svg('<path d="M1.5 4.5a1 1 0 011-1h3.2l1.5 1.5h6.3a1 1 0 011 1v6.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/>', 14),
   winMin: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg>',
   winMax: '<svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg>',

@@ -5,6 +5,7 @@ import { store } from "../core/store";
 import type { ToolKind, View } from "../core/types";
 import { h } from "./dom";
 import { ICON } from "./icons";
+import { logo } from "./logo";
 import { openUsage, renderRings } from "./usage";
 
 export interface TitlebarHost {
@@ -12,6 +13,9 @@ export interface TitlebarHost {
   preset(kind: Preset | "equal" | "undo"): void;
   openSettings(anchor: HTMLElement): void;
   openHelp(anchor: HTMLElement): void;
+  newWindow(): void;
+  openAbout(): void;
+  openMonitors(anchor: HTMLElement): void;
 }
 
 export class Titlebar {
@@ -24,7 +28,7 @@ export class Titlebar {
   constructor(host: TitlebarHost) {
     const win = getCurrentWindow();
     this.el.innerHTML = `
-      <div class="brand"><img src="/polvo.png" alt="">Polvo${store.isMain ? "" : " <small>Tela 2</small>"}</div>
+      <button class="brand" data-x="about" title="Sobre o Polvo">${logo(24, "still")}Polvo <small class="wname"></small></button>
       <div class="seg views">
         <button data-v="tiles" title="Painéis (Ctrl+Shift+1)">${ICON.tiles}Painéis</button>
         <button data-v="board" title="Quadro por status (Ctrl+Shift+2)">${ICON.board}Quadro</button>
@@ -39,6 +43,8 @@ export class Titlebar {
       </div>
       <div class="sp"></div>
       <div class="rings"></div>
+      <button class="ibtn" data-x="window" title="Nova janela (abre em outro monitor, se houver)">${ICON.window}</button>
+      <button class="ibtn" data-pop data-x="monitor" title="Levar esta janela para outro monitor">${ICON.monitor}</button>
       <button class="ibtn" data-pop data-x="help" title="Dicas e atalhos">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="Ajustes">${ICON.gear}</button>
       <button class="primary" data-new title="Ctrl+Shift+N">+ Nova sessão</button>
@@ -63,6 +69,9 @@ export class Titlebar {
       const x = t.closest<HTMLElement>("[data-x]");
       if (x?.dataset.x === "help") return host.openHelp(x);
       if (x?.dataset.x === "settings") return host.openSettings(x);
+      if (x?.dataset.x === "window") return host.newWindow();
+      if (x?.dataset.x === "about") return host.openAbout();
+      if (x?.dataset.x === "monitor") return host.openMonitors(x);
       const w = t.closest<HTMLElement>("[data-w]")?.dataset.w;
       if (w === "min") void win.minimize();
       if (w === "max") void win.toggleMaximize();
@@ -88,5 +97,7 @@ export class Titlebar {
     this.views.querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.v === store.view));
     this.tools.style.visibility = store.view === "tiles" ? "visible" : "hidden";
     renderRings(this.rings);
+    const many = store.windows.length > 1;
+    this.el.querySelector<HTMLElement>(".wname")!.textContent = many ? `· ${store.myName}` : "";
   }
 }

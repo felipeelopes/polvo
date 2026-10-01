@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/polvo-icon.png" width="120" alt="Polvo">
+  <img src="assets/polvo-logo.svg" width="140" alt="Polvo">
 </p>
 
 <h1 align="center">Polvo</h1>
@@ -35,9 +35,11 @@ Rodar vários agentes ao mesmo tempo vira uma bagunça de abas e janelas. O Polv
 | 📐 **Resize inteligente** | Ímã em ⅓, ½ e ⅔, alinhamento com outras divisórias, divisórias alinhadas que se movem juntas, tamanho mínimo garantido e colunas × linhas do terminal ao vivo. |
 | ⚡ **Facilitadores** | Grade, principal + pilha, colunas, linhas, igualar, desfazer, maximizar, atalhos de teclado. |
 | 🗂️ **Quadro** | Kanban automático: *Aguardando você*, *Trabalhando*, *Ocioso*, com prévia ao vivo e gaveta para abrir a sessão. |
-| 🖥️ **Uma ou duas telas** | Uma janela em cada monitor; mova sessões entre elas com um clique. |
-| 🔁 **Retomada automática** | Ao abrir, cada sessão volta no mesmo lugar e na mesma conversa. |
-| 📊 **Limites de uso** | Claude (via statusline, Pro/Max), Codex (arquivos de sessão), OpenCode (`opencode stats`). |
+| 🖥️ **Várias janelas** | Abra quantas janelas quiser e leve cada uma para o monitor certo. Abrir o Polvo de novo cria outra janela. |
+| 🔁 **Retomada automática** | Ao abrir, todas as janelas voltam no mesmo monitor e cada sessão continua a mesma conversa. |
+| 📊 **Limites de uso** | Claude com dois anéis (semanal por fora, 5h por dentro), Codex (arquivos de sessão), OpenCode (`opencode stats`). |
+| 🧠 **Contexto por sessão** | Cada painel mostra quanto da janela de contexto a conversa já usou. |
+| 🎛️ **Fornecedores** | Desative Claude, Codex ou OpenCode mesmo que estejam instalados. |
 | 🚀 **Inicia com o Windows** e **atualiza sozinho** a partir das releases do GitHub. |
 
 ## Instalação
@@ -79,13 +81,14 @@ pnpm app:dev      # abre o app com recarregamento automático
 pnpm test         # testes do motor de layout
 pnpm check        # typecheck + testes + rustfmt + clippy
 pnpm app:build    # gera os instaladores em src-tauri/target/release/bundle
+pnpm release      # compila, assina e publica a release no GitHub (veja docs/RELEASING.md)
 ```
 
 Contribuições são muito bem-vindas: leia o [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Roadmap
 
-- [ ] Arrastar uma sessão diretamente de uma tela para a outra
+- [ ] Arrastar uma sessão diretamente de uma janela para outra
 - [ ] Temas (claro, alto contraste) e fonte configurável
 - [ ] Notificações do Windows quando um agente pedir sua atenção
 - [ ] Perfis personalizados (modelo, variáveis de ambiente, WSL)
@@ -101,4 +104,4 @@ Contribuições são muito bem-vindas: leia o [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## English
 
-**Polvo** (Portuguese for *octopus*) is a native Windows app that runs Claude Code, Codex, OpenCode and shells side by side in draggable, snapping panes. It reopens every session exactly where you left off (using each CLI's own resume), shows your plan usage limits at a glance, offers a status board (*waiting for you* / *working* / *idle*), supports one or two monitors, starts with Windows and updates itself from GitHub releases. Built with Tauri 2, Rust, ConPTY and xterm.js. MIT licensed. Contributions welcome!
+**Polvo** (Portuguese for *octopus*) is a native Windows app that runs Claude Code, Codex, OpenCode and shells side by side in draggable, snapping panes. It reopens every session exactly where you left off (using each CLI's own resume), shows plan usage limits and per-session context usage at a glance, offers a status board (*waiting for you* / *working* / *idle*), supports as many windows as you want across monitors, starts with Windows and updates itself from GitHub releases. Built with Tauri 2, Rust, ConPTY and xterm.js. MIT licensed. Contributions welcome!

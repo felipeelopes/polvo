@@ -1,6 +1,7 @@
 //! Polvo — organize sessões de Claude Code, Codex, OpenCode e shells lado a lado.
 
 pub mod bridge;
+mod context;
 mod discovery;
 mod error;
 mod paths;
@@ -20,17 +21,36 @@ use settings::SettingsState;
 
 pub fn run() {
     let app = tauri::Builder::default()
-        // Uma só instância: abrir de novo apenas traz a janela para frente.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
-            if let Some(w) = app.get_webview_window(windows::MAIN) {
-                let _ = w.unminimize();
-                let _ = w.set_focus();
+        // Um processo só, várias janelas: abrir o Polvo de novo (menu Iniciar,
+        // atalho) cria uma nova janela, que pode ir para qualquer monitor.
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if args.iter().any(|a| a == "--autostart") {
+                return;
             }
+            let app = app.clone();
+            tauri::async_runtime::spawn(async move {
+                let rec = app.state::<Registry>().add_window(&app);
+                if let Err(e) = windows::open(&app, &rec, true) {
+                    log::warn!("não foi possível abrir nova janela: {e}");
+                }
+            });
         }))
+        // Log no console e em %LOCALAPPDATA%\dev.polvo.app\logs (ajuda a reportar bugs).
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::Stdout,
+                ))
+                .target(tauri_plugin_log::Target::new(
+                    tauri_plugin_log::TargetKind::LogDir { file_name: None },
+                ))
+                .build(),
+        )
+        // Lembra posição, tamanho e monitor de cada janela.
         .plugin(
             tauri_plugin_window_state::Builder::new()
                 .with_state_flags(StateFlags::all() & !StateFlags::VISIBLE)
-                .with_denylist(&[windows::SECOND])
                 .build(),
         )
         .plugin(tauri_plugin_autostart::init(
@@ -58,8 +78,13 @@ pub fn run() {
             pty::pty_write,
             pty::pty_resize,
             usage::usage_get,
+            context::context_get,
             windows::display_info,
             windows::window_focus,
+            windows::window_new,
+            windows::windows_list,
+            windows::monitors_list,
+            windows::window_to_monitor,
             windows::open_url,
         ])
         .setup(|app| {
@@ -71,39 +96,38 @@ pub fn run() {
                     log::warn!("{e}");
                 }
             }
-            app.state::<Registry>().boot(
-                &handle,
-                settings.onboarded && settings.auto_resume,
-                settings.screens,
-            );
-            if settings.onboarded && settings.screens >= 2 {
-                if let Err(e) = windows::apply_screens(&handle, 2) {
-                    log::warn!("não foi possível abrir a segunda tela: {e}");
-                }
-            }
+            app.state::<Registry>()
+                .boot(&handle, settings.onboarded && settings.auto_resume);
+            // Reabre todas as janelas que estavam abertas, cada uma no seu monitor.
+            windows::restore(&handle);
             Ok(())
         })
         .on_window_event(|window, event| {
-            if let WindowEvent::Destroyed = event {
-                let app = window.app_handle();
-                match window.label() {
-                    // Fechar a janela principal encerra o app (e a segunda tela).
-                    windows::MAIN => app.exit(0),
-                    // Fechar a segunda tela devolve as sessões para a principal.
-                    windows::SECOND => {
-                        app.state::<Registry>()
-                            .move_all(app, windows::SECOND, windows::MAIN);
-                    }
-                    _ => {}
+            let app = window.app_handle();
+            let reg = app.state::<Registry>();
+            match event {
+                // Fechar a principal encerra o Polvo; as outras janelas ficam
+                // lembradas e reabrem na próxima vez.
+                WindowEvent::CloseRequested { .. } if window.label() == windows::MAIN => {
+                    reg.mark_exiting();
                 }
+                WindowEvent::CloseRequested { .. } => reg.mark_user_closing(window.label()),
+                WindowEvent::Destroyed if window.label() == windows::MAIN => app.exit(0),
+                // Fechar uma janela extra devolve as sessões dela à principal.
+                WindowEvent::Destroyed => reg.window_closed(app, window.label()),
+                _ => {}
             }
         })
         .build(tauri::generate_context!())
         .expect("erro ao iniciar o Polvo");
 
     app.run(|app, event| {
-        if let RunEvent::Exit = event {
-            app.state::<PtyManager>().kill_all();
+        match event {
+            // Encerramento por qualquer motivo (atualização, desligar o Windows…):
+            // as janelas abertas continuam lembradas.
+            RunEvent::ExitRequested { .. } => app.state::<Registry>().mark_exiting(),
+            RunEvent::Exit => app.state::<PtyManager>().kill_all(),
+            _ => {}
         }
     });
 }

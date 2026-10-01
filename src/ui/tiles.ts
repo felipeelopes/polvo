@@ -28,6 +28,7 @@ import type { Terminals } from "../terminal/terminals";
 import { h, inside } from "./dom";
 import { toast } from "./feedback";
 import { TOOLS, toolIcon } from "./icons";
+import { logo } from "./logo";
 import { Pane, type PaneHandlers } from "./pane";
 
 type DropTarget =
@@ -75,7 +76,7 @@ export class TilesView {
   private drag: { id: string; fromRail: boolean; sx: number; sy: number; moved: boolean; target: DropTarget | null } | null = null;
 
   constructor(private host: TilesHost) {
-    this.empty.innerHTML = `<div><img src="/polvo.png" alt=""><h3>Nenhuma sessão aberta aqui</h3>Crie uma sessão ou arraste uma do trilho para cá.<br><button class="primary" data-new>+ Nova sessão</button></div>`;
+    this.empty.innerHTML = `<div>${logo(88, "idle")}<h3>Nenhuma sessão aberta aqui</h3>Crie uma sessão ou arraste uma do trilho para cá.<br><button class="primary" data-new>+ Nova sessão</button></div>`;
     this.compass.hidden = true;
     this.badge.hidden = true;
     this.ghost.hidden = true;

@@ -18,7 +18,8 @@ export function openNewSession(onCreated: (id: string, target?: NewSessionTarget
   const box = h("div", "mbox");
   modal.append(box);
   const near = target ? store.session(target.id) : undefined;
-  let tool: ToolKind = store.tools[lastTool] ? lastTool : ((Object.keys(TOOLS) as ToolKind[]).find((t) => store.tools[t]) ?? "shell");
+  const choices = (Object.keys(TOOLS) as ToolKind[]).filter((t) => !store.settings.disabledTools.includes(t));
+  let tool: ToolKind = store.toolEnabled(lastTool) ? lastTool : (choices.find((t) => store.tools[t]) ?? "shell");
   let cwd = near?.cwd ?? store.recentDirs[0] ?? "";
   let mode: StartMode = "new";
 
@@ -26,7 +27,7 @@ export function openNewSession(onCreated: (id: string, target?: NewSessionTarget
     box.innerHTML = `
       <h2>Nova sessão</h2>
       <div class="sub">${near ? `Abre ${target!.side === "right" ? "à direita" : "abaixo"} de “${esc(near.title)}”.` : "Entra no maior espaço livre. Depois é só arrastar."}</div>
-      <div class="tools">${(Object.keys(TOOLS) as ToolKind[])
+      <div class="tools" style="grid-template-columns:repeat(${choices.length},1fr)">${choices
         .map(
           (k) =>
             `<button class="tool${k === tool ? " on" : ""}" data-t="${k}" style="--acc:${TOOLS[k].color}" ${store.tools[k] ? "" : 'disabled title="Não encontrado no PATH"'}><span class="ic">${toolIcon(k, 17)}</span><b>${TOOLS[k].short}</b><small>${store.tools[k] ? TOOLS[k].vendor : "não instalado"}</small></button>`,

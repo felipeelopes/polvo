@@ -1,9 +1,8 @@
 name: CI
 
+# Só manual por enquanto (sem créditos de Actions). Para releases locais use: pnpm release
 on:
-  push:
-    branches: [main]
-  pull_request:
+  workflow_dispatch:
 
 concurrency:
   group: ci-${{ github.ref }}

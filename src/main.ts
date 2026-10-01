@@ -3,6 +3,7 @@ import "./styles/chrome.css";
 import "./styles/tiles.css";
 import "./styles/board.css";
 import "./styles/dialogs.css";
+import "./styles/logo.css";
 
 import { App } from "./app";
 import { ipc } from "./core/ipc";
@@ -13,12 +14,14 @@ import { startUpdateChecks } from "./ui/updater";
 import { refreshUsage } from "./ui/usage";
 
 async function boot(): Promise<void> {
-  const [settings, tools, display, snapshot] = await Promise.all([
+  const [settings, tools, display, snapshot, windows] = await Promise.all([
     ipc.settingsGet(),
     ipc.toolsAvailable(),
     ipc.displayInfo(),
     ipc.snapshot(store.label),
+    ipc.windowsList(),
   ]);
+  store.windows = windows;
   store.settings = settings;
   store.tools = tools;
   store.display = display;

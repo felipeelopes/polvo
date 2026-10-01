@@ -7,14 +7,16 @@
   "type": "module",
   "packageManager": "pnpm@10.29.3",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc --noEmit && vite build",
+    "dev": "node scripts/contributors.mjs && vite",
+    "build": "node scripts/contributors.mjs && tsc --noEmit && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
     "app:dev": "tauri dev",
     "app:build": "tauri build",
-    "test": "vitest run",
-    "typecheck": "tsc --noEmit",
+    "test": "node scripts/contributors.mjs && vitest run",
+    "release": "node scripts/release.mjs",
+    "version:set": "node scripts/version.mjs",
+    "typecheck": "node scripts/contributors.mjs && tsc --noEmit",
     "check": "pnpm typecheck && pnpm test && pnpm build && cargo fmt --manifest-path src-tauri/Cargo.toml --check && cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings"
   },
   "dependencies": {

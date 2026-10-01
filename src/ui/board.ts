@@ -77,13 +77,13 @@ export class BoardView {
   private card(s: Session): string {
     const t = TOOLS[s.tool];
     const usage = store.usage.find((u) => u.provider === s.tool)?.windows.find((w) => w.usedPercent !== null);
-    const where = s.window !== store.label ? (store.isMain ? "na Tela 2" : "na Tela 1") : s.minimized ? "no trilho" : "em painel";
+    const where = s.window !== store.label ? `na ${store.windowName(s.window)}` : s.minimized ? "no trilho" : "em painel";
     const st = s.runtime.status;
     const note = st === "paused" ? "pausada" : st === "exited" ? "encerrada" : st === "error" ? "erro ao iniciar" : "";
     return `<div class="kc ${st}${store.selected === s.id ? " sel" : ""}" data-id="${s.id}" style="--acc:${t.color}">
       <div class="kh"><span class="ic">${toolIcon(s.tool, 16)}</span><div><b>${esc(s.title)}</b><span>${t.short} · ${esc(basename(s.cwd))}</span></div><em>${ago(s.runtime.since)}</em></div>
       <div class="kp">${esc(s.runtime.preview.join("\n"))}</div>
-      <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${
+      <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${store.context[s.id] !== undefined ? `<span class="tag" title="Contexto usado">ctx ${Math.round(store.context[s.id])}%</span>` : ""}${
         usage
           ? `<span class="um">${usage.short} ${Math.round(usage.usedPercent!)}% <span class="bar"><i style="width:${usage.usedPercent}%;background:${levelColor(s.tool, usage.usedPercent!)}"></i></span></span>`
           : ""
@@ -101,7 +101,7 @@ export class BoardView {
       return;
     }
     if (s.window !== store.label) {
-      const other = s.window === "main" ? "Tela 1" : "Tela 2";
+      const other = store.windowName(s.window);
       this.drawer.innerHTML = `<div class="dempty"><div>“${esc(s.title)}” está aberta na ${other}.<br><button class="primary">Ir para a ${other}</button></div></div>`;
       this.drawer.querySelector("button")!.onclick = () => this.host.focusWindow(s.window);
       return;

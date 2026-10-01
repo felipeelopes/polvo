@@ -3,9 +3,9 @@
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ipc } from "./ipc";
 import { clone } from "./layout";
-import type { DisplayInfo, LayoutNode, Runtime, Session, Settings, ToolKind, UsageSnapshot, View } from "./types";
+import type { DisplayInfo, LayoutNode, Runtime, Session, Settings, ToolKind, UsageSnapshot, View, WindowRecord } from "./types";
 
-export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage";
+export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage" | "windows" | "context";
 
 const RUNNING = new Set(["starting", "working", "waiting", "idle"]);
 export const isRunning = (s: Session) => RUNNING.has(s.runtime.status);
@@ -19,7 +19,10 @@ class Store {
   zoom: string | null = null;
   selected: string | null = null;
   recentDirs: string[] = [];
-  settings: Settings = { onboarded: false, autostart: false, screens: 1, autoResume: true, claudeUsageBridge: true, checkUpdates: true };
+  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [] };
+  /** Percentual de contexto usado por sessão. */
+  context: Record<string, number> = {};
+  windows: WindowRecord[] = [];
   tools: Record<ToolKind, boolean> = { claude: false, codex: false, opencode: false, shell: true };
   display: DisplayInfo = { monitors: 1, mica: true };
   usage: UsageSnapshot[] = [];
@@ -37,12 +40,27 @@ class Store {
     this.listeners.forEach((fn) => fn(topic));
   }
 
+  /** Ferramenta instalada e não desativada pelo usuário. */
+  toolEnabled(t: ToolKind): boolean {
+    return this.tools[t] && !this.settings.disabledTools.includes(t);
+  }
+
   get isMain(): boolean {
     return this.label === "main";
   }
 
-  get otherWindow(): string {
-    return this.isMain ? "screen-2" : "main";
+  /** Nome amigável de uma janela ("Janela 1", "Janela 2"…). */
+  windowName(label: string): string {
+    return this.windows.find((w) => w.label === label)?.name ?? (label === "main" ? "Janela 1" : "outra janela");
+  }
+
+  get myName(): string {
+    return this.windowName(this.label);
+  }
+
+  setWindows(list: WindowRecord[]): void {
+    this.windows = list;
+    this.emit("windows");
   }
 
   /** Sessões desta janela, na ordem do registro. */

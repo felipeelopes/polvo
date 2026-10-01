@@ -15,6 +15,7 @@ use serde_json::Value;
 
 use crate::discovery;
 use crate::paths;
+use crate::settings::SettingsState;
 use crate::tools::ToolKind;
 
 #[derive(Serialize, Clone, Debug)]
@@ -39,15 +40,23 @@ pub struct UsageSnapshot {
 }
 
 #[tauri::command]
-pub async fn usage_get() -> Vec<UsageSnapshot> {
-    tauri::async_runtime::spawn_blocking(|| {
-        [claude(), codex(), opencode()]
-            .into_iter()
-            .flatten()
-            .collect()
+pub async fn usage_get(
+    settings: tauri::State<'_, SettingsState>,
+) -> crate::error::AppResult<Vec<UsageSnapshot>> {
+    let disabled = settings.get().disabled_tools;
+    Ok(tauri::async_runtime::spawn_blocking(move || {
+        let on = |t: ToolKind| !disabled.contains(&t);
+        [
+            on(ToolKind::Claude).then(claude).flatten(),
+            on(ToolKind::Codex).then(codex).flatten(),
+            on(ToolKind::Opencode).then(opencode).flatten(),
+        ]
+        .into_iter()
+        .flatten()
+        .collect()
     })
     .await
-    .unwrap_or_default()
+    .unwrap_or_default())
 }
 
 fn secs_to_ms(v: Option<&Value>) -> Option<i64> {
