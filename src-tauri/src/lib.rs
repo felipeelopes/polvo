@@ -7,6 +7,7 @@ mod error;
 mod explorer;
 mod git;
 mod paths;
+mod projects;
 mod pty;
 mod registry;
 mod settings;
@@ -99,6 +100,11 @@ pub fn run() {
             windows::open_url,
             explorer::open_folder_take,
             git::git_info,
+            projects::projects_list,
+            projects::project_add,
+            projects::project_create,
+            projects::project_clone,
+            projects::project_remove,
             versions::tools_versions,
         ])
         .setup(|app| {

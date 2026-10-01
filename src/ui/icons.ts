@@ -67,6 +67,8 @@ export const ICON = {
   branch: svg('<circle cx="4.5" cy="3.5" r="1.6"/><circle cx="4.5" cy="12.5" r="1.6"/><circle cx="11.5" cy="5.5" r="1.6"/><path d="M4.5 5.1v5.8M11.5 7.1c0 2.4-2.3 3-7 3.6"/>', 13),
   update: svg('<path d="M8 12.5V3.5M4.5 7L8 3.5 11.5 7"/><path d="M3 13.5h10"/>', 13),
   terminal: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M4.5 6.5l2 1.75-2 1.75M8.5 10.5h3"/>', 14),
+  plus: svg('<path d="M8 3v10M3 8h10"/>', 14),
+  focus: svg('<path d="M2 5V2.5a.5.5 0 01.5-.5H5M11 2h2.5a.5.5 0 01.5.5V5M14 11v2.5a.5.5 0 01-.5.5H11M5 14H2.5a.5.5 0 01-.5-.5V11"/><circle cx="8" cy="8" r="2"/>', 13),
   folder: svg('<path d="M1.5 4.5a1 1 0 011-1h3.2l1.5 1.5h6.3a1 1 0 011 1v6.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/>', 14),
   winMin: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg>',
   winMax: '<svg width="10" height="10" viewBox="0 0 10 10"><rect x=".5" y=".5" width="9" height="9" fill="none" stroke="currentColor"/></svg>',

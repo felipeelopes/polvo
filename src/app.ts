@@ -2,7 +2,7 @@
 // implementa as ações sobre sessões (recolher, mover de tela, encerrar…).
 import { events, ipc } from "./core/ipc";
 import { clone, insertAt, leaves, removeLeaf, smartInsert, type Preset } from "./core/layout";
-import { store } from "./core/store";
+import { normPath, store } from "./core/store";
 import type { Side, ToolKind, View } from "./core/types";
 import { Terminals } from "./terminal/terminals";
 import { BoardView } from "./ui/board";
@@ -14,6 +14,7 @@ import { openHelp } from "./ui/help";
 import { openNewSession, type NewSessionTarget } from "./ui/new-session";
 import { openSettings } from "./ui/onboarding";
 import type { PaneAction, PaneHandlers } from "./ui/pane";
+import { openProjectMenu, type ProjectHost } from "./ui/projects";
 import { Sidebar } from "./ui/sidebar";
 import { TilesView } from "./ui/tiles";
 import { Titlebar } from "./ui/titlebar";
@@ -37,6 +38,12 @@ export class App {
   private tiles: TilesView;
   private board: BoardView;
   private placements = new Map<string, NewSessionTarget>();
+  /** Sessão recém-criada a revelar (desliga o filtro se for de outro projeto). */
+  private reveal: string | null = null;
+  private projectHost: ProjectHost = {
+    start: (cwd, tool) => void this.newIn(cwd, tool),
+    openDialog: () => this.newSession(),
+  };
 
   constructor(root: HTMLElement) {
     const handlers: PaneHandlers = {
@@ -51,14 +58,24 @@ export class App {
       newWindow: () => void this.newWindow(),
       openMonitors: (a) => void this.openMonitors(a),
       openAbout: () => openAbout(),
+      projectMenu: (a) => openProjectMenu(a, this.projectHost),
+      clearProject: () => void store.setProject(null),
     });
     this.rail = new Sidebar({
       sessionDown: (e, id) => {
+        const s = store.session(id);
+        // Sessão de outro projeto: sai do filtro para mostrá-la.
+        if (s && !store.inProject(s)) {
+          void store.setProject(null).then(() => (store.view === "tiles" ? this.openInTiles(id) : this.board.select(id)));
+          return;
+        }
         if (store.view === "tiles") this.tiles.startDrag(e, id, true);
         else this.board.select(id);
       },
       newIn: (cwd, tool) => void this.newIn(cwd, tool),
-      openDialog: () => this.newSession(),
+      projectMenu: (a) => openProjectMenu(a, this.projectHost),
+      focusProject: (key) => void store.setProject(key),
+      removeProject: (path) => void ipc.projectRemove(path),
       resized: () => this.tiles.layout(),
     });
     this.tiles = new TilesView({ terms: this.terms, handlers, rail: () => this.rail.el, minimize: (id) => this.minimize(id) });
@@ -83,6 +100,10 @@ export class App {
   async start(): Promise<void> {
     await events.onSessions((list) => store.setSessions(list));
     await events.onWindows((list) => store.setWindows(list));
+    await events.onProjects((list) => {
+      store.projects = list;
+      store.emit("projects");
+    });
     // "Abrir no Polvo" pelo Explorer (Shift + clique direito numa pasta).
     if (store.isMain) {
       await events.onOpenFolder((folder) => this.openFolder(folder));
@@ -147,7 +168,7 @@ export class App {
 
   /** Repositório e worktrees de cada pasta, para agrupar a barra lateral. */
   private async refreshGit(): Promise<void> {
-    const paths = [...new Set(store.mine.map((s) => s.cwd))];
+    const paths = [...new Set([...store.mine.map((s) => s.cwd), ...store.projects.map((p) => p.path)])];
     if (!paths.length) return;
     try {
       const info = await ipc.gitInfo(paths);
@@ -163,6 +184,8 @@ export class App {
   /** Nova sessão direto numa pasta, sem diálogo, ao lado da sessão ativa. */
   async newIn(cwd: string, tool: ToolKind): Promise<void> {
     closePopover();
+    // Filtro ligado em outro projeto: desliga para a nova sessão aparecer.
+    if (store.project && normPath(store.git[cwd]?.project ?? cwd) !== store.project) await store.setProject(null);
     const near = store.active && store.session(store.active)?.window === store.label ? store.active : null;
     const r = near ? this.tiles.geo.leaves.get(near) : undefined;
     try {
@@ -272,9 +295,32 @@ export class App {
     switch (topic) {
       case "git":
         this.rail.render();
+        if (store.project) {
+          this.tiles.reconcile();
+          this.board.render();
+        }
+        break;
+      case "projects":
+        void this.refreshGit();
+        this.rail.render();
+        break;
+      case "project":
+        this.tiles.reconcile();
+        this.tiles.layout();
+        this.rail.render();
+        this.titlebar.render();
+        this.board.render();
+        this.board.renderDrawer();
         break;
       case "sessions":
         void this.refreshGit();
+        if (this.reveal) {
+          const s = store.session(this.reveal);
+          if (s) {
+            this.reveal = null;
+            if (!store.inProject(s)) void store.setProject(null);
+          }
+        }
         this.terms.sync();
         this.placeNew();
         this.tiles.reconcile();
@@ -338,7 +384,10 @@ export class App {
 
   private onCreated(id: string, target?: NewSessionTarget): void {
     if (target) this.placements.set(id, target);
-    if (store.session(id)) this.placeNew();
+    const created = store.session(id);
+    if (created && !store.inProject(created)) void store.setProject(null);
+    else if (!created) this.reveal = id;
+    if (created) this.placeNew();
     store.setActive(id);
     if (store.view === "board") {
       store.selected = id;
@@ -352,7 +401,9 @@ export class App {
 
   private setView(v: View): void {
     if (v === "board" && !store.selected) {
-      store.selected = (store.sessions.find((s) => s.runtime.status === "waiting") ?? store.session(store.active) ?? store.sessions[0])?.id ?? null;
+      const visible = store.sessions.filter((s) => store.inProject(s));
+      const active = store.session(store.active);
+      store.selected = (visible.find((s) => s.runtime.status === "waiting") ?? (active && store.inProject(active) ? active : undefined) ?? visible[0])?.id ?? null;
     }
     store.setView(v);
   }
@@ -400,6 +451,9 @@ export class App {
         break;
       case "open":
         this.openInTiles(id);
+        break;
+      case "dmax":
+        this.board.toggleMaximize();
         break;
       case "dclose":
         store.selected = null;
@@ -509,7 +563,8 @@ export class App {
         this.tiles.undo();
         break;
       case "KeyM":
-        if (store.active) this.action("zoom", store.active);
+        if (store.view === "board") this.board.toggleMaximize();
+        else if (store.active) this.action("zoom", store.active);
         break;
     }
   }

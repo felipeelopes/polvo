@@ -93,7 +93,7 @@ export class TilesView {
 
   /** Mantém a árvore igual ao conjunto de sessões visíveis desta janela. */
   reconcile(): void {
-    const visible = store.mine.filter((s) => !s.minimized).map((s) => s.id);
+    const visible = store.mine.filter((s) => !s.minimized && store.inProject(s)).map((s) => s.id);
     let tree = clone(store.tree);
     let changed = false;
     for (const id of leaves(tree)) {

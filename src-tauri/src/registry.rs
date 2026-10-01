@@ -23,6 +23,7 @@ use crate::{bridge, discovery, paths};
 pub const EVT_SESSIONS: &str = "sessions-changed";
 pub const EVT_RUNTIME: &str = "session-runtime";
 pub const EVT_WINDOWS: &str = "windows-changed";
+pub const EVT_PROJECTS: &str = "projects-changed";
 
 #[derive(Serialize, Deserialize, Clone, Debug)]
 #[serde(rename_all = "camelCase")]
@@ -108,6 +109,8 @@ struct WorkspaceFile {
     sessions: Vec<SessionRecord>,
     /// Janelas abertas (reabertas ao iniciar).
     windows: Vec<WindowRecord>,
+    /// Projetos da barra lateral (pastas), mesmo sem sessões abertas.
+    projects: Vec<crate::projects::ProjectRecord>,
     /// Árvore de layout de cada janela (formato definido pelo frontend).
     layouts: HashMap<String, Value>,
     /// Visão ativa de cada janela: `tiles` ou `board`.
@@ -261,6 +264,8 @@ impl Registry {
             mode
         };
         let plan = tools::plan(rec.tool, mode, rec.session_id.as_deref(), &cwd, &opts)?;
+        // A conversa ativa anotada pela statusline vale só para o processo que a gravou.
+        let _ = std::fs::remove_file(bridge::active_conversation_file(id));
         let started_at = SystemTime::now();
         let generation = app.state::<PtyManager>().spawn(app, id, &plan, &cwd)?;
 
@@ -453,6 +458,14 @@ impl Registry {
             let mut inner = self.inner.lock();
             for r in inner.ws.sessions.iter_mut() {
                 let Some(m) = metas.get(&r.id) else { continue };
+                // O usuário trocou de conversa no CLI (/resume, /clear): retoma essa da próxima vez.
+                if let Some(sid) = m.conversation.as_ref() {
+                    if r.session_id.as_ref() != Some(sid) {
+                        log::info!("sessão {} agora mostra a conversa {sid}", r.id);
+                        r.session_id = Some(sid.clone());
+                        changed = true;
+                    }
+                }
                 if let Some(t) = m.custom_title.as_ref().filter(|t| !t.trim().is_empty()) {
                     if r.cli_title.as_ref() != Some(t) {
                         r.cli_title = Some(t.clone());
@@ -481,6 +494,55 @@ impl Registry {
         if changed {
             self.emit_sessions(app);
         }
+    }
+
+    pub fn projects(&self) -> Vec<crate::projects::ProjectRecord> {
+        self.inner.lock().ws.projects.clone()
+    }
+
+    /// Adiciona (ou devolve, se já existir) um projeto e avisa as janelas.
+    pub fn add_project(
+        &self,
+        app: &AppHandle,
+        path: &str,
+        name: &str,
+    ) -> crate::projects::ProjectRecord {
+        let rec = {
+            let mut inner = self.inner.lock();
+            if let Some(p) = inner
+                .ws
+                .projects
+                .iter()
+                .find(|p| paths::same_path(&p.path, path))
+            {
+                return p.clone();
+            }
+            let rec = crate::projects::ProjectRecord {
+                path: path.to_string(),
+                name: name.to_string(),
+                added_at: paths::now_ms(),
+            };
+            inner.ws.projects.push(rec.clone());
+            inner.ws.recent_dirs.retain(|d| !paths::same_path(d, path));
+            inner.ws.recent_dirs.insert(0, path.to_string());
+            inner.ws.recent_dirs.truncate(12);
+            Self::save(&inner);
+            rec
+        };
+        let _ = app.emit(EVT_PROJECTS, self.projects());
+        rec
+    }
+
+    pub fn remove_project(&self, app: &AppHandle, path: &str) {
+        {
+            let mut inner = self.inner.lock();
+            inner
+                .ws
+                .projects
+                .retain(|p| !paths::same_path(&p.path, path));
+            Self::save(&inner);
+        }
+        let _ = app.emit(EVT_PROJECTS, self.projects());
     }
 
     pub fn windows(&self) -> Vec<WindowRecord> {
@@ -533,8 +595,15 @@ impl Registry {
         let moved = {
             let mut inner = self.inner.lock();
             inner.ws.windows.retain(|w| w.label != label);
-            inner.ws.layouts.remove(label);
-            inner.ws.views.remove(label);
+            let scoped = format!("{label}::");
+            inner
+                .ws
+                .layouts
+                .retain(|k, _| k != label && !k.starts_with(&scoped));
+            inner
+                .ws
+                .views
+                .retain(|k, _| k != label && !k.starts_with(&scoped));
             let mut moved = 0;
             for s in inner.ws.sessions.iter_mut().filter(|s| s.window == label) {
                 s.window = windows::MAIN.into();

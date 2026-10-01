@@ -83,7 +83,7 @@ impl PtyManager {
         cmd.cwd(cwd);
         cmd.env("TERM", "xterm-256color");
         cmd.env("COLORTERM", "truecolor");
-        cmd.env("POLVO_SESSION", id);
+        cmd.env(crate::bridge::POLVO_SESSION_ENV, id);
         // Se o Polvo foi aberto de dentro de outro agente, não deixa os
         // marcadores dele vazarem: o Claude Code, por exemplo, desliga a
         // gravação da conversa (e o resume) quando se vê como "sessão filha".

@@ -20,6 +20,23 @@ use crate::paths;
 
 pub const BRIDGE_FLAG: &str = "--statusline-bridge";
 pub const USER_STATUSLINE_ENV: &str = "POLVO_USER_STATUSLINE";
+/// Id da sessão do Polvo, herdado pelo Claude e pela statusline.
+pub const POLVO_SESSION_ENV: &str = "POLVO_SESSION";
+
+/// Arquivo com a conversa que uma sessão do Polvo está mostrando agora. Muda
+/// quando o usuário troca de conversa dentro do Claude (`/resume`, `/clear`).
+pub fn active_conversation_file(polvo_id: &str) -> PathBuf {
+    paths::usage_dir()
+        .join("active")
+        .join(format!("{polvo_id}.json"))
+}
+
+/// Conversa atual de uma sessão do Polvo, segundo a última statusline.
+pub fn active_conversation(polvo_id: &str) -> Option<String> {
+    let bytes = std::fs::read(active_conversation_file(polvo_id)).ok()?;
+    let v: Value = serde_json::from_slice(&bytes).ok()?;
+    v.get("sessionId")?.as_str().map(str::to_string)
+}
 
 /// Arquivo de settings passado ao Claude Code com `--settings`.
 pub fn claude_settings_file() -> AppResult<PathBuf> {
@@ -67,6 +84,23 @@ pub fn run() -> i32 {
             let dir = paths::usage_dir().join("sessions");
             let _ = std::fs::create_dir_all(&dir);
             let _ = paths::write_atomic(&dir.join(format!("{sid}.json")), &bytes);
+        }
+    }
+
+    // Qual conversa esta sessão do Polvo mostra (para retomar a certa depois de um /resume).
+    if let (Some(sid), Ok(polvo)) = (
+        parsed.get("session_id").and_then(Value::as_str),
+        std::env::var(POLVO_SESSION_ENV),
+    ) {
+        let file = active_conversation_file(&polvo);
+        if active_conversation(&polvo).as_deref() != Some(sid) {
+            if let Some(dir) = file.parent() {
+                let _ = std::fs::create_dir_all(dir);
+            }
+            let body = json!({ "sessionId": sid, "observedAt": paths::now_ms() });
+            if let Ok(bytes) = serde_json::to_vec(&body) {
+                let _ = paths::write_atomic(&file, &bytes);
+            }
         }
     }
 

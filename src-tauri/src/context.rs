@@ -33,6 +33,9 @@ const CODEX_BASELINE: f64 = 12_000.0;
 pub struct SessionMeta {
     /// Percentual da janela de contexto em uso.
     pub context: Option<f64>,
+    /// Conversa que o CLI mostra agora, quando difere da registrada.
+    #[serde(skip)]
+    pub conversation: Option<String>,
     /// Nome dado no CLI (`/rename`).
     pub custom_title: Option<String>,
     /// Título automático do CLI.
@@ -54,7 +57,13 @@ pub async fn session_meta(
             .filter_map(|(id, tool, sid)| {
                 let sid = sid?;
                 let meta = match tool {
-                    ToolKind::Claude => claude(&sid),
+                    ToolKind::Claude => match crate::bridge::active_conversation(&id) {
+                        Some(now) if now != sid => SessionMeta {
+                            conversation: Some(now.clone()),
+                            ..claude(&now)
+                        },
+                        _ => claude(&sid),
+                    },
                     ToolKind::Codex => SessionMeta {
                         context: codex(&sid),
                         ..Default::default()

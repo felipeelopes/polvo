@@ -16,13 +16,15 @@ import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
 
 async function boot(): Promise<void> {
-  const [settings, tools, display, snapshot, windows] = await Promise.all([
+  const [settings, tools, display, snapshot, windows, projects] = await Promise.all([
     ipc.settingsGet(),
     ipc.toolsAvailable(),
     ipc.displayInfo(),
-    ipc.snapshot(store.label),
+    ipc.snapshot(store.layoutKey),
     ipc.windowsList(),
+    ipc.projectsList(),
   ]);
+  store.projects = projects;
   store.windows = windows;
   store.settings = settings;
   store.tools = tools;

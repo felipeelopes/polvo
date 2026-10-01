@@ -33,3 +33,24 @@
 /* Quadro em janelas estreitas: colunas encolhem e a gaveta divide o espaço. */
 @media (max-width: 1280px) { .drawer { width: 46%; } .kch em { display: none; } }
 @media (max-width: 1050px) { .kcols { grid-template-columns: repeat(3, minmax(150px, 1fr)); overflow-x: auto; } .drawer { width: 50%; } }
+
+/* Divisórias do Quadro: entre colunas e entre colunas e gaveta. */
+.board { gap: 0; }
+.kcols { display: flex; gap: 0; overflow: hidden; }
+.kcol { flex: 1 1 0; min-width: 140px; }
+.kch .kmin { margin-left: 4px; width: 22px; height: 22px; border-radius: 6px; display: grid; place-items: center; color: var(--faint); flex: none; }
+.kch .kmin:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.kch em + .kmin { margin-left: 6px; }
+.kcol.collapsed { flex: 0 0 38px; min-width: 38px; align-items: center; gap: 10px; padding: 12px 0; cursor: pointer; }
+.kcol.collapsed:hover { background: rgba(255, 255, 255, 0.05); }
+.kcol.collapsed i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.kcol.collapsed .vt { writing-mode: vertical-rl; font-size: 12px; font-weight: 600; white-space: nowrap; color: var(--muted); }
+.kcol.collapsed b { font-size: 11px; color: var(--faint); font-weight: 400; }
+.ksplit, .dsplit { flex: 0 0 10px; cursor: col-resize; position: relative; }
+.ksplit::after, .dsplit::after { content: ""; position: absolute; top: 30%; bottom: 30%; left: 4px; width: 2px; border-radius: 2px; background: transparent; transition: background 0.15s; }
+.ksplit:hover::after, .dsplit:hover::after, .board.resizing .dsplit::after { background: var(--accent); }
+.drawer { width: 620px; min-width: 360px; max-width: calc(100% - 230px); }
+.board.resizing .drawer, .board.resizing .kcols { pointer-events: none; user-select: none; }
+.board.drawer-max .kcols, .board.drawer-max .dsplit { display: none; }
+.board.drawer-max .drawer { flex: 1; width: auto !important; max-width: none; }
+@media (max-width: 1050px) { .kcols { overflow-x: auto; } }

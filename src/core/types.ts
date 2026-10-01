@@ -96,6 +96,13 @@ export interface UsageSnapshot {
   observedAt: number;
 }
 
+/** Projeto salvo na barra lateral (aparece mesmo sem sessões). */
+export interface ProjectRecord {
+  path: string;
+  name: string;
+  addedAt: number;
+}
+
 export interface Snapshot {
   sessions: Session[];
   layout: LayoutNode | null;

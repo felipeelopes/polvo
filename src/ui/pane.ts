@@ -5,7 +5,7 @@ import { basename, esc, h } from "./dom";
 import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 
-export type PaneAction = "split" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dclose" | "start" | "rename";
+export type PaneAction = "split" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dmax" | "dclose" | "start" | "rename";
 
 export interface PaneHandlers {
   action(action: PaneAction, id: string, extra?: string, anchor?: HTMLElement): void;
@@ -49,6 +49,7 @@ export class Pane {
            <button data-a="close" title="Encerrar sessão">${ICON.close}</button>`
         : `<button data-a="terminal" title="Abrir terminal na pasta desta sessão">${ICON.terminal}</button>
            <button data-a="open" title="Abrir nos painéis">${ICON.open}</button>
+           <button data-a="dmax" title="Maximizar o chat (Ctrl+Shift+M)">${ICON.max}</button>
            <button data-a="dclose" title="Fechar gaveta">${ICON.close}</button>`;
     this.el.innerHTML = `
       <div class="ph">${toolIcon(s.tool, 15)}<div class="pt"><b title="Duplo clique para renomear"></b><span></span></div><span class="ctx" hidden></span><span class="st"></span><div class="pacts">${acts}</div></div>
@@ -135,6 +136,14 @@ export class Pane {
       n.innerHTML = `<b>Processo encerrado${s.runtime.exitCode ? ` (código ${s.runtime.exitCode})` : ""}</b><div><button class="primary" data-a="start">${s.sessionId ? "Retomar" : "Reiniciar"}</button><button class="ghost" data-a="close">Fechar</button></div>`;
     }
     n.hidden = !["paused", "error", "exited", "starting"].includes(st);
+  }
+
+  /** Na gaveta do Quadro: alterna o ícone de maximizar/restaurar. */
+  setMaximized(max: boolean): void {
+    const b = this.el.querySelector<HTMLElement>('[data-a="dmax"]');
+    if (!b) return;
+    b.innerHTML = max ? ICON.unmax : ICON.max;
+    b.title = max ? "Voltar ao Quadro (Ctrl+Shift+M)" : "Maximizar o chat (Ctrl+Shift+M)";
   }
 
   setSizeLabel(text: string): void {

@@ -1,9 +1,11 @@
-// Visão Quadro: sessões em colunas por status, com a sessão escolhida aberta na gaveta.
+// Visão Quadro: sessões em colunas por status, com a sessão escolhida aberta na
+// gaveta. As colunas e a gaveta são redimensionáveis por divisórias, cada coluna
+// pode ser recolhida por inteiro e a gaveta pode ser maximizada.
 import { store } from "../core/store";
 import type { Session, Status } from "../core/types";
 import type { Terminals } from "../terminal/terminals";
 import { ago, basename, esc, h } from "./dom";
-import { sessionColor, TOOLS, toolIcon } from "./icons";
+import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { Pane, type PaneHandlers } from "./pane";
 import { levelColor } from "./usage";
 
@@ -12,6 +14,30 @@ const COLUMNS: { key: string; title: string; color: string; sub: string; match: 
   { key: "working", title: "Trabalhando", color: "#8aa2ff", sub: "em andamento", match: (s) => s === "working" || s === "starting" },
   { key: "idle", title: "Ocioso", color: "#5d6274", sub: "prontas ou pausadas", match: (s) => ["idle", "paused", "exited", "error"].includes(s) },
 ];
+
+const STATE_KEY = "polvo.board";
+const MIN_DRAWER = 360;
+const MIN_COLS = 220;
+
+interface BoardLayout {
+  /** Peso de cada coluna (largura relativa). */
+  weights: Record<string, number>;
+  /** Colunas recolhidas. */
+  collapsed: string[];
+  /** Largura da gaveta em px. */
+  drawer: number;
+  /** Gaveta ocupando o Quadro inteiro. */
+  maximized: boolean;
+}
+
+function loadLayout(): BoardLayout {
+  const fallback: BoardLayout = { weights: { waiting: 1, working: 1, idle: 1 }, collapsed: [], drawer: 620, maximized: false };
+  try {
+    return { ...fallback, ...(JSON.parse(localStorage.getItem(STATE_KEY) ?? "{}") as Partial<BoardLayout>) };
+  } catch {
+    return fallback;
+  }
+}
 
 export interface BoardHost {
   terms: Terminals;
@@ -22,19 +48,34 @@ export interface BoardHost {
 export class BoardView {
   readonly el = h("div", "board");
   private cols = h("div", "kcols");
+  private split = h("div", "dsplit");
   private drawer = h("aside", "drawer");
   private pane: Pane | null = null;
+  private layout = loadLayout();
 
   constructor(private host: BoardHost) {
-    this.el.append(this.cols, this.drawer);
+    this.split.title = "Arraste para mudar a largura do chat · duplo clique maximiza";
+    this.el.append(this.cols, this.split, this.drawer);
     this.cols.addEventListener("click", (e) => {
-      const card = (e.target as Element).closest<HTMLElement>(".kc");
+      const t = e.target as Element;
+      const toggle = t.closest<HTMLElement>("[data-collapse]")?.dataset.collapse;
+      if (toggle) return this.toggleColumn(toggle);
+      const card = t.closest<HTMLElement>(".kc");
       if (card) this.select(card.dataset.id!);
     });
     this.cols.addEventListener("dblclick", (e) => {
-      const card = (e.target as Element).closest<HTMLElement>(".kc");
+      const t = e.target as Element;
+      if (t.closest(".ksplit")) return this.resetColumns();
+      const card = t.closest<HTMLElement>(".kc");
       if (card) host.handlers.action("open", card.dataset.id!);
     });
+    this.cols.addEventListener("pointerdown", (e) => {
+      const s = (e.target as Element).closest<HTMLElement>(".ksplit");
+      if (s) this.dragColumns(e, Number(s.dataset.i));
+    });
+    this.split.addEventListener("pointerdown", (e) => this.dragDrawer(e));
+    this.split.addEventListener("dblclick", () => this.toggleMaximize());
+    this.applyLayout();
   }
 
   select(id: string): void {
@@ -44,19 +85,33 @@ export class BoardView {
     this.renderDrawer();
   }
 
+  /** Maximiza a gaveta do chat (ou volta ao Quadro). */
+  toggleMaximize(): void {
+    this.layout.maximized = !this.layout.maximized;
+    this.save();
+    this.applyLayout();
+  }
+
   render(): void {
     if (store.view !== "board") return;
     const before = new Map<string, DOMRect>();
     this.cols.querySelectorAll<HTMLElement>(".kc").forEach((c) => before.set(c.dataset.id!, c.getBoundingClientRect()));
     const scrolls = [...this.cols.querySelectorAll(".klist")].map((l) => l.scrollTop);
+    const sessions = store.sessions.filter((s) => store.inProject(s));
 
-    this.cols.innerHTML = COLUMNS.map((col) => {
-      const items = store.sessions.filter((s) => col.match(s.runtime.status)).sort((a, b) => b.runtime.since - a.runtime.since);
-      return `<div class="kcol"><div class="kch"><i style="background:${col.color}"></i>${col.title} <span>${items.length}</span><em>${col.sub}</em></div>
-        <div class="klist">${items.length ? items.map((s) => this.card(s)).join("") : '<div class="knone">Nada aqui</div>'}</div></div>`;
+    this.cols.innerHTML = COLUMNS.map((col, i) => {
+      const items = sessions.filter((s) => col.match(s.runtime.status)).sort((a, b) => b.runtime.since - a.runtime.since);
+      const collapsed = this.layout.collapsed.includes(col.key);
+      const splitter = i < COLUMNS.length - 1 ? `<div class="ksplit" data-i="${i}" title="Arraste para mudar a largura · duplo clique iguala"></div>` : "";
+      if (collapsed) {
+        return `<div class="kcol collapsed" data-collapse="${col.key}" title="Expandir “${col.title}”"><i style="background:${col.color}"></i><span class="vt">${col.title}</span><b>${items.length}</b></div>${splitter}`;
+      }
+      return `<div class="kcol" style="flex:${this.layout.weights[col.key] ?? 1} 1 0"><div class="kch"><i style="background:${col.color}"></i>${col.title} <span>${items.length}</span><em>${col.sub}</em><button class="kmin" data-collapse="${col.key}" title="Recolher coluna">${ICON.min}</button></div>
+        <div class="klist">${items.length ? items.map((s) => this.card(s)).join("") : '<div class="knone">Nada aqui</div>'}</div></div>${splitter}`;
     }).join("");
 
-    this.cols.querySelectorAll(".klist").forEach((l, i) => (l.scrollTop = scrolls[i] ?? 0));
+    const lists = this.cols.querySelectorAll(".klist");
+    lists.forEach((l, i) => (l.scrollTop = scrolls[i] ?? 0));
     // Animação FLIP: cartões deslizam da posição antiga para a nova.
     this.cols.querySelectorAll<HTMLElement>(".kc").forEach((c) => {
       const prev = before.get(c.dataset.id!);
@@ -111,6 +166,7 @@ export class BoardView {
       this.drawer.replaceChildren(this.pane.el);
     }
     this.pane.update();
+    this.pane.setMaximized(this.layout.maximized);
     this.host.terms.get(s.id)?.mount(this.pane.body);
   }
 
@@ -118,5 +174,96 @@ export class BoardView {
   leave(): void {
     this.pane = null;
     this.drawer.replaceChildren();
+  }
+
+  // ------------------------------------------------------------ layout
+
+  private save(): void {
+    try {
+      localStorage.setItem(STATE_KEY, JSON.stringify(this.layout));
+    } catch {
+      /* ignora */
+    }
+  }
+
+  private applyLayout(): void {
+    const max = this.layout.maximized;
+    this.el.classList.toggle("drawer-max", max);
+    this.drawer.style.width = max ? "" : `${this.layout.drawer}px`;
+    this.pane?.setMaximized(max);
+  }
+
+  private toggleColumn(key: string): void {
+    const c = this.layout.collapsed;
+    this.layout.collapsed = c.includes(key) ? c.filter((k) => k !== key) : [...c, key];
+    this.save();
+    this.render();
+  }
+
+  private resetColumns(): void {
+    this.layout.weights = { waiting: 1, working: 1, idle: 1 };
+    this.save();
+    this.render();
+  }
+
+  /** Divisória entre duas colunas: troca largura entre elas. */
+  private dragColumns(e: PointerEvent, i: number): void {
+    e.preventDefault();
+    const cols = [...this.cols.querySelectorAll<HTMLElement>(".kcol")];
+    const a = cols[i];
+    const b = cols[i + 1];
+    if (!a || !b || a.classList.contains("collapsed") || b.classList.contains("collapsed")) return;
+    const ka = COLUMNS[i].key;
+    const kb = COLUMNS[i + 1].key;
+    const wa = a.getBoundingClientRect().width;
+    const wb = b.getBoundingClientRect().width;
+    const total = (this.layout.weights[ka] ?? 1) + (this.layout.weights[kb] ?? 1);
+    const x0 = e.clientX;
+    document.body.style.cursor = "col-resize";
+    const move = (ev: PointerEvent) => {
+      const dx = Math.max(-(wa - 140), Math.min(wb - 140, ev.clientX - x0));
+      const na = wa + dx;
+      this.layout.weights[ka] = (total * na) / (wa + wb);
+      this.layout.weights[kb] = total - this.layout.weights[ka];
+      a.style.flex = `${this.layout.weights[ka]} 1 0`;
+      b.style.flex = `${this.layout.weights[kb]} 1 0`;
+    };
+    addEventListener("pointermove", move);
+    addEventListener(
+      "pointerup",
+      () => {
+        removeEventListener("pointermove", move);
+        document.body.style.cursor = "";
+        this.save();
+      },
+      { once: true },
+    );
+  }
+
+  /** Divisória entre as colunas e a gaveta do chat. */
+  private dragDrawer(e: PointerEvent): void {
+    if (this.layout.maximized) return;
+    e.preventDefault();
+    const start = this.drawer.getBoundingClientRect().width;
+    const x0 = e.clientX;
+    const total = this.el.getBoundingClientRect().width;
+    document.body.style.cursor = "col-resize";
+    this.el.classList.add("resizing");
+    const move = (ev: PointerEvent) => {
+      const w = Math.max(MIN_DRAWER, Math.min(total - MIN_COLS, start - (ev.clientX - x0)));
+      this.layout.drawer = Math.round(w);
+      this.drawer.style.width = `${this.layout.drawer}px`;
+    };
+    addEventListener("pointermove", move);
+    addEventListener(
+      "pointerup",
+      () => {
+        removeEventListener("pointermove", move);
+        document.body.style.cursor = "";
+        this.el.classList.remove("resizing");
+        this.save();
+      },
+      { once: true },
+    );
   }
 }

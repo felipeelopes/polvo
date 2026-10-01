@@ -3,7 +3,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Preset } from "../core/layout";
 import { store } from "../core/store";
 import type { ToolKind, View } from "../core/types";
-import { h } from "./dom";
+import { esc, h } from "./dom";
 import { ICON } from "./icons";
 import { logo } from "./logo";
 import { availableUpdate, onUpdateAvailable, showUpdate } from "./updater";
@@ -17,6 +17,8 @@ export interface TitlebarHost {
   newWindow(): void;
   openAbout(): void;
   openMonitors(anchor: HTMLElement): void;
+  projectMenu(anchor: HTMLElement): void;
+  clearProject(): void;
 }
 
 export class Titlebar {
@@ -43,13 +45,14 @@ export class Titlebar {
         <button data-p="undo" title="Desfazer layout (Ctrl+Shift+Z)">${ICON.undo}</button>
       </div>
       <div class="sp"></div>
+      <button class="pchip" data-x="unfocus" hidden></button>
       <div class="rings"></div>
       <button class="ibtn" data-x="window" title="Nova janela (abre em outro monitor, se houver)">${ICON.window}</button>
       <button class="ibtn" data-pop data-x="monitor" title="Levar esta janela para outro monitor">${ICON.monitor}</button>
       <button class="ibtn" data-pop data-x="help" title="Dicas e atalhos">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="Ajustes">${ICON.gear}</button>
       <button class="upd-pill" data-x="update" hidden></button>
-      <button class="primary new-btn" data-new title="Nova sessão no projeto do chat em foco (Ctrl+Shift+N) · Shift+clique abre o diálogo">+<span class="lbl-n"> Nova sessão</span></button>
+      <button class="primary new-btn" data-x="projects" title="Abrir projeto, novo projeto, clonar repositório · Ctrl+Shift+N abre sessão no projeto em foco">+<span class="lbl-n"> Projeto</span></button>
       <div class="wc">
         <button data-w="min" title="Minimizar">${ICON.winMin}</button>
         <button data-w="max" title="Maximizar">${ICON.winMax}</button>
@@ -75,6 +78,8 @@ export class Titlebar {
       if (x?.dataset.x === "about") return host.openAbout();
       if (x?.dataset.x === "update") return showUpdate();
       if (x?.dataset.x === "monitor") return host.openMonitors(x);
+      if (x?.dataset.x === "projects") return host.projectMenu(x);
+      if (x?.dataset.x === "unfocus") return host.clearProject();
       const w = t.closest<HTMLElement>("[data-w]")?.dataset.w;
       if (w === "min") void win.minimize();
       if (w === "max") void win.toggleMaximize();
@@ -113,6 +118,12 @@ export class Titlebar {
     this.views.querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.v === store.view));
     this.tools.style.visibility = store.view === "tiles" ? "visible" : "hidden";
     renderRings(this.rings);
+    const chip = this.el.querySelector<HTMLElement>(".pchip")!;
+    chip.hidden = !store.project;
+    if (store.project) {
+      chip.innerHTML = `${ICON.focus}<span>${esc(store.projectName)}</span>${ICON.close}`;
+      chip.title = "Mostrando só este projeto — clique para ver todos";
+    }
     const many = store.windows.length > 1;
     this.el.querySelector<HTMLElement>(".wname")!.textContent = many ? `· ${store.myName}` : "";
   }

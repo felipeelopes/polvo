@@ -1,6 +1,6 @@
 // Barra lateral: sessões agrupadas por projeto (repositório), com os worktrees
 // de cada um. Recolhida, vira o trilho de ícones.
-import { store } from "../core/store";
+import { normPath, store } from "../core/store";
 import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
 import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
@@ -14,8 +14,12 @@ export interface SidebarHost {
   sessionDown(e: PointerEvent, id: string): void;
   /** Nova sessão direto numa pasta (sem perguntar). */
   newIn(cwd: string, tool: ToolKind): void;
-  /** Diálogo completo de nova sessão. */
-  openDialog(): void;
+  /** Menu de projeto (abrir, novo, clonar). */
+  projectMenu(anchor: HTMLElement): void;
+  /** Liga ("só este projeto") ou desliga o filtro de projeto. */
+  focusProject(key: string | null): void;
+  /** Tira um projeto salvo (sem sessões) da barra. */
+  removeProject(path: string): void;
   /** A largura mudou (recolher/expandir). */
   resized(): void;
 }
@@ -33,6 +37,8 @@ interface ProjectGroup {
   path: string;
   branch: string | null;
   worktrees: WorktreeGroup[];
+  /** Projeto salvo (Abrir/Novo/Clonar), mesmo sem sessões. */
+  saved: boolean;
 }
 
 const readJson = <T>(key: string, fallback: T): T => {
@@ -43,9 +49,9 @@ const readJson = <T>(key: string, fallback: T): T => {
   }
 };
 
-const norm = (p: string) => p.replace(/\//g, "\\").replace(/\\+$/, "").toLowerCase();
+const norm = normPath;
 
-/** Agrupa as sessões desta janela por projeto e worktree. */
+/** Agrupa as sessões desta janela por projeto e worktree (e inclui os projetos salvos). */
 export function groupSessions(sessions: Session[]): ProjectGroup[] {
   const groups = new Map<string, ProjectGroup>();
   for (const s of sessions) {
@@ -64,6 +70,7 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
           main: w.main,
           sessions: [],
         })),
+        saved: false,
       };
       groups.set(key, g);
     }
@@ -74,6 +81,23 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
       g.worktrees.push(wt);
     }
     wt.sessions.push(s);
+  }
+  for (const p of store.projects) {
+    const info = store.git[p.path];
+    const key = norm(info?.project ?? p.path);
+    const g = groups.get(key);
+    if (g) {
+      g.saved = true;
+      continue;
+    }
+    groups.set(key, {
+      key,
+      name: p.name || basename(p.path),
+      path: info?.project ?? p.path,
+      branch: info?.branch ?? null,
+      worktrees: (info?.worktrees ?? [{ path: p.path, branch: null, main: true }]).map((w) => ({ path: w.path, label: w.branch ?? basename(w.path), main: w.main, sessions: [] })),
+      saved: true,
+    });
   }
   return [...groups.values()];
 }
@@ -90,7 +114,7 @@ export class Sidebar {
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
-    foot.innerHTML = `<button class="sb-new" data-dialog title="Nova sessão em qualquer pasta (diálogo)">+ <span>Nova sessão…</span></button><button class="sb-toggle" data-toggle title="Recolher / expandir a barra"></button>`;
+    foot.innerHTML = `<button class="sb-new" data-projmenu title="Abrir projeto, novo projeto, clonar repositório…">+ <span>Projeto</span></button><button class="sb-toggle" data-toggle title="Recolher / expandir a barra"></button>`;
     this.el.append(this.body, foot);
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("click", (e) => this.onClick(e));
@@ -108,28 +132,32 @@ export class Sidebar {
     return `<div class="ritems">${mine
       .map(
         (s) =>
-          `<div class="ri${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">${toolIcon(s.tool, 19)}<i class="sd ${s.runtime.status}"></i></div>`,
+          `<div class="ri${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}${store.inProject(s) ? "" : " out"}" data-id="${s.id}" style="--acc:${sessionColor(s)}">${toolIcon(s.tool, 19)}<i class="sd ${s.runtime.status}"></i></div>`,
       )
       .join("")}</div>`;
   }
 
   private renderGroups(mine: Session[]): string {
-    if (!mine.length) return '<div class="sb-empty">Nenhuma sessão nesta janela.<br>Use o “+” abaixo para começar.</div>';
+    if (!mine.length && !store.projects.length) return '<div class="sb-empty">Nenhum projeto ainda.<br>Use “+ Projeto” abaixo para abrir uma pasta, criar um projeto ou clonar um repositório.</div>';
     const tools = (cwd: string) =>
       (["claude", "codex", "opencode", "shell"] as ToolKind[])
         .filter((t) => store.toolEnabled(t))
         .map((t) => `<button class="sb-tool" data-new="${esc(cwd)}" data-tool="${t}" title="Novo ${TOOLS[t].short} aqui">${toolIcon(t, 13)}</button>`)
         .join("");
-    return mine.length
-      ? groupSessions(mine)
+    return groupSessions(mine)
           .map((g) => {
             const closed = this.closed.has(g.key);
             const all = g.worktrees.flatMap((w) => w.sessions);
             const multi = g.worktrees.length > 1;
+            const focused = store.project === g.key;
+            const out = !!store.project && !focused;
+            const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? "Mostrar todos os projetos" : "Ver só este projeto (Painéis e Quadro)"}">${ICON.focus}</button>`;
+            const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="Tirar da barra (não apaga a pasta)">${ICON.close}</button>` : "";
             const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${!multi && g.branch ? `<em>${esc(g.branch)}</em>` : ""}<span class="cnt">${all.length}</span>
-                <span class="pg-acts">${tools(g.path)}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="Nova sessão neste projeto (${TOOLS[lastTool(all)].short})">+</button></span></div>`;
-            if (closed) return `<div class="pg">${head}</div>`;
+                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${!multi && g.branch ? `<em>${esc(g.branch)}</em>` : ""}${focused ? '<span class="pg-flag">só este</span>' : ""}<span class="cnt">${all.length}</span>
+                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="Nova sessão neste projeto (${TOOLS[lastTool(all)].short})">+</button></span></div>`;
+            const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
+            if (closed) return `<div class="${cls}">${head}</div>`;
             const body = g.worktrees
               .filter((w) => w.sessions.length || multi)
               .map((w) => {
@@ -139,10 +167,9 @@ export class Sidebar {
                   <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${lastTool(w.sessions.length ? w.sessions : all)}" title="Nova sessão neste worktree">+</button></span></div>${rows}</div>`;
               })
               .join("");
-            return `<div class="pg">${head}${body}</div>`;
+            return `<div class="${cls}">${head}${body || (all.length ? "" : '<div class="pg-none">Sem sessões · use o “+”</div>')}</div>`;
           })
-          .join("")
-      : "";
+          .join("");
   }
 
   private row(s: Session): string {
@@ -165,7 +192,18 @@ export class Sidebar {
       this.host.newIn(add.dataset.new!, add.dataset.tool as ToolKind);
       return;
     }
-    if (t.closest("[data-dialog]")) return this.host.openDialog();
+    const menu = t.closest<HTMLElement>("[data-projmenu]");
+    if (menu) return this.host.projectMenu(menu);
+    const focus = t.closest<HTMLElement>("[data-focus]")?.dataset.focus;
+    if (focus !== undefined) {
+      e.stopPropagation();
+      return this.host.focusProject(store.project === focus ? null : focus);
+    }
+    const remove = t.closest<HTMLElement>("[data-remove]")?.dataset.remove;
+    if (remove) {
+      e.stopPropagation();
+      return this.host.removeProject(remove);
+    }
     if (t.closest("[data-toggle]")) {
       this.collapsed = !this.collapsed;
       localStorage.setItem(COLLAPSED_KEY, JSON.stringify(this.collapsed));
