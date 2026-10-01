@@ -23,6 +23,8 @@ export interface Session {
   createdAt: number;
   /** Renomeada pelo usuário: o título do terminal não substitui mais o nome. */
   titleLocked: boolean;
+  /** Cor da sessão (`/color` do CLI); null usa a cor da ferramenta. */
+  color: string | null;
   runtime: Runtime;
 }
 

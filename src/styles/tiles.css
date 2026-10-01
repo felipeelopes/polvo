@@ -79,3 +79,9 @@
 
 /* contexto usado pela conversa, no cabeçalho do painel */
 .ctx { display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); font-variant-numeric: tabular-nums; padding: 3px 7px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); flex: none; }
+
+/* Borda adaptativa: cada painel tinge a borda com a cor da sessão (/color). */
+.pane { border-color: color-mix(in srgb, var(--acc) 24%, var(--line)); }
+.pane.active { border-color: color-mix(in srgb, var(--acc) 70%, transparent); box-shadow: 0 0 0 1px color-mix(in srgb, var(--acc) 35%, transparent), 0 0 26px -12px var(--acc); }
+.pane .ph { background: linear-gradient(90deg, color-mix(in srgb, var(--acc) 9%, transparent), transparent 55%); }
+.drawer { border-color: color-mix(in srgb, var(--acc, #8aa2ff) 35%, var(--line)); }

@@ -8,6 +8,26 @@ export const TOOLS: Record<ToolKind, { name: string; short: string; color: strin
   shell: { name: "PowerShell", short: "Shell", color: "#A78BFA", vendor: "Terminal comum" },
 };
 
+/** Cores aceitas pelo `/color` do Claude Code (e do Polvo). */
+export const SESSION_COLORS: Record<string, string> = {
+  red: "#F07178",
+  orange: "#F78C6C",
+  yellow: "#E5C07B",
+  green: "#3FB27F",
+  cyan: "#56C7D9",
+  blue: "#7C9CFF",
+  purple: "#C792EA",
+  pink: "#FF7AB2",
+};
+
+/** Cor de destaque da sessão: a do `/color`, ou a da ferramenta. */
+export function sessionColor(s: { tool: ToolKind; color?: string | null }): string {
+  const c = s.color?.trim().toLowerCase();
+  if (c && SESSION_COLORS[c]) return SESSION_COLORS[c];
+  if (c && /^#[0-9a-f]{3,8}$/i.test(c)) return c;
+  return TOOLS[s.tool].color;
+}
+
 const TOOL_PATHS: Record<ToolKind, string> = {
   claude: [0, 30, 60, 90, 120, 150].map((a) => `<line x1="12" y1="3.5" x2="12" y2="20.5" transform="rotate(${a} 12 12)"/>`).join(""),
   codex: '<path d="M12 3l7.8 4.5v9L12 21l-7.8-4.5v-9z"/><circle cx="12" cy="12" r="2.6" fill="CC" stroke="none"/>',

@@ -97,3 +97,9 @@
 .upd-pill { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 11px; border-radius: 99px; font-size: 12px; font-weight: 600; color: #0b1020; background: linear-gradient(135deg, #8aa2ff, #c792ea); white-space: nowrap; animation: rise 0.25s; }
 .upd-pill:hover { filter: brightness(1.08); }
 @media (max-width: 1240px) { .upd-pill span { display: none; } .upd-pill { padding: 0 8px; } }
+
+/* Linha selecionada e sessões coloridas na barra lateral usam a cor da sessão. */
+.si.on { background: color-mix(in srgb, var(--acc) 16%, rgba(255, 255, 255, 0.06)); }
+.si.colored:not(.on) { background: color-mix(in srgb, var(--acc) 7%, transparent); }
+.si.on::before { width: 3px; height: 16px; }
+.ri.on { background: color-mix(in srgb, var(--acc) 22%, rgba(255, 255, 255, 0.08)); }

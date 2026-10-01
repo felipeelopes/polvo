@@ -89,7 +89,7 @@ class Store {
   }
 
   /** Atualização otimista: aplica já e deixa o backend confirmar pelo evento. */
-  patchLocal(id: string, patch: Partial<Pick<Session, "minimized" | "window" | "title" | "titleLocked">>): void {
+  patchLocal(id: string, patch: Partial<Pick<Session, "minimized" | "window" | "title" | "titleLocked" | "color">>): void {
     const s = this.session(id);
     if (s) Object.assign(s, patch);
   }

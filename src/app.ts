@@ -136,9 +136,9 @@ export class App {
 
   /** Contexto usado: backend (Claude/Codex) e, na falta, o que a tela mostra. */
   private async refreshContext(): Promise<void> {
-    let fromBackend: Record<string, number> = {};
+    const fromBackend: Record<string, number> = {};
     try {
-      fromBackend = await ipc.context();
+      for (const [id, m] of Object.entries(await ipc.sessionMeta())) if (m.context !== null) fromBackend[id] = m.context;
     } catch {
       /* ignora */
     }

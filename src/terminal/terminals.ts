@@ -35,7 +35,7 @@ export class Terminals {
       let t = this.map.get(s.id);
       if (!t) {
         const id = s.id;
-        t = new SessionTerminal(id, s.tool, this.isAppShortcut, (raw) => this.onTitle(id, raw));
+        t = new SessionTerminal(id, s.tool, this.isAppShortcut, (raw) => this.onTitle(id, raw), (cmd, arg) => this.onCommand(id, cmd, arg));
         this.map.set(s.id, t);
       }
       // Um novo início (retomar/reiniciar) muda `since` com status "starting".
@@ -43,6 +43,19 @@ export class Terminals {
         void t.connect(s.runtime.since);
       }
     }
+  }
+
+  /** `/rename` e `/color` digitados no terminal valem também no Polvo. */
+  private onCommand(id: string, cmd: "rename" | "color", arg: string): void {
+    if (cmd === "rename") {
+      store.patchLocal(id, { title: arg, titleLocked: true });
+      ipc.sessionUpdate(id, { title: arg }).catch(() => {});
+    } else {
+      const color = arg.split(/\s+/)[0].toLowerCase();
+      store.patchLocal(id, { color: color === "default" ? null : color });
+      ipc.sessionUpdate(id, { color }).catch(() => {});
+    }
+    store.emit("runtime");
   }
 
   /** O nome do chat acompanha o título do terminal (se o usuário não renomeou). */

@@ -3,7 +3,7 @@
 import { store } from "../core/store";
 import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
-import { ICON, TOOLS, toolIcon } from "./icons";
+import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { statusPill } from "./pane";
 
 const COLLAPSED_KEY = "polvo.sidebar.collapsed";
@@ -108,7 +108,7 @@ export class Sidebar {
     return `<div class="ritems">${mine
       .map(
         (s) =>
-          `<div class="ri${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}" data-id="${s.id}" style="--acc:${TOOLS[s.tool].color}">${toolIcon(s.tool, 19)}<i class="sd ${s.runtime.status}"></i></div>`,
+          `<div class="ri${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">${toolIcon(s.tool, 19)}<i class="sd ${s.runtime.status}"></i></div>`,
       )
       .join("")}</div>`;
   }
@@ -146,8 +146,7 @@ export class Sidebar {
   }
 
   private row(s: Session): string {
-    const t = TOOLS[s.tool];
-    return `<div class="si${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}" data-id="${s.id}" style="--acc:${t.color}">
+    return `<div class="si${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}${s.color ? " colored" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
       ${toolIcon(s.tool, 14)}<span class="si-t">${esc(s.title)}</span>${store.context[s.id] !== undefined ? `<span class="si-ctx">${Math.round(store.context[s.id])}%</span>` : ""}<i class="sd ${s.runtime.status}"></i></div>`;
   }
 
@@ -189,7 +188,7 @@ export class Sidebar {
     if (!item || !s) return;
     showTip(
       item,
-      `<b>${esc(s.title)}</b> <span>· ${TOOLS[s.tool].short} · ${esc(basename(s.cwd))}${s.minimized ? " · recolhida" : ""}</span><div class="st ${s.runtime.status}" style="margin-top:6px;--acc:${TOOLS[s.tool].color}">${statusPill(s.runtime.status)}</div>`,
+      `<b>${esc(s.title)}</b> <span>· ${TOOLS[s.tool].short} · ${esc(basename(s.cwd))}${s.minimized ? " · recolhida" : ""}</span><div class="st ${s.runtime.status}" style="margin-top:6px;--acc:${sessionColor(s)}">${statusPill(s.runtime.status)}</div>`,
     );
   }
 

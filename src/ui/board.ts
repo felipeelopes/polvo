@@ -3,7 +3,7 @@ import { store } from "../core/store";
 import type { Session, Status } from "../core/types";
 import type { Terminals } from "../terminal/terminals";
 import { ago, basename, esc, h } from "./dom";
-import { TOOLS, toolIcon } from "./icons";
+import { sessionColor, TOOLS, toolIcon } from "./icons";
 import { Pane, type PaneHandlers } from "./pane";
 import { levelColor } from "./usage";
 
@@ -80,7 +80,7 @@ export class BoardView {
     const where = s.window !== store.label ? `na ${store.windowName(s.window)}` : s.minimized ? "no trilho" : "em painel";
     const st = s.runtime.status;
     const note = st === "paused" ? "pausada" : st === "exited" ? "encerrada" : st === "error" ? "erro ao iniciar" : "";
-    return `<div class="kc ${st}${store.selected === s.id ? " sel" : ""}" data-id="${s.id}" style="--acc:${t.color}">
+    return `<div class="kc ${st}${store.selected === s.id ? " sel" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
       <div class="kh"><span class="ic">${toolIcon(s.tool, 16)}</span><div><b>${esc(s.title)}</b><span>${t.short} · ${esc(basename(s.cwd))}</span></div><em>${ago(s.runtime.since)}</em></div>
       <div class="kp">${esc(s.runtime.preview.join("\n"))}</div>
       <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${store.context[s.id] !== undefined ? `<span class="tag" title="Contexto usado">ctx ${Math.round(store.context[s.id])}%</span>` : ""}${

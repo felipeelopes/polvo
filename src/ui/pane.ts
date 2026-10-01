@@ -2,7 +2,7 @@
 import { store } from "../core/store";
 import type { Session, Status } from "../core/types";
 import { basename, esc, h } from "./dom";
-import { ICON, TOOLS, toolIcon } from "./icons";
+import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 
 export type PaneAction = "split" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dclose" | "start" | "rename";
@@ -89,6 +89,7 @@ export class Pane {
     const s = store.session(this.id);
     if (!s) return;
     const st = s.runtime.status;
+    this.el.style.setProperty("--acc", sessionColor(s));
     if (this.nameEl.contentEditable !== "true") this.nameEl.textContent = s.title;
     const sub = this.el.querySelector<HTMLElement>(".pt span")!;
     sub.textContent = `${TOOLS[s.tool].short} · ${basename(s.cwd)}`;

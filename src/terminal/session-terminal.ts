@@ -68,6 +68,7 @@ export class SessionTerminal {
     readonly tool: ToolKind,
     isAppShortcut: (e: KeyboardEvent) => boolean,
     onTitle?: (title: string) => void,
+    private onCommand?: (cmd: "rename" | "color", arg: string) => void,
   ) {
     this.host.className = "term-host";
     this.term = new Terminal({
@@ -89,6 +90,7 @@ export class SessionTerminal {
     // onData também recebe cliques do mouse e relatórios de foco enviados ao CLI.
     this.term.onData((data) => {
       this.stimulus();
+      this.trackInput(data);
       ipc.ptyWrite(this.id, data).catch(() => {});
     });
     this.host.addEventListener("pointerdown", () => this.stimulus(), true);
@@ -122,6 +124,23 @@ export class SessionTerminal {
   focus(): void {
     this.stimulus();
     this.term.focus();
+  }
+
+  private line = "";
+
+  /** Acompanha a linha digitada para reconhecer `/rename …` e `/color …`. */
+  private trackInput(data: string): void {
+    if (data.startsWith("\x1b")) return; // setas e outras teclas especiais
+    for (const ch of data) {
+      if (ch === "\r" || ch === "\n") {
+        const m = /^\/(rename|color)\s+(.+)$/i.exec(this.line.trim());
+        if (m) this.onCommand?.(m[1].toLowerCase() as "rename" | "color", m[2].trim());
+        this.line = "";
+      } else if (ch === "\x7f" || ch === "\b") this.line = this.line.slice(0, -1);
+      else if (ch === "\x15" || ch === "\x03") this.line = "";
+      else if (ch >= " ") this.line += ch;
+    }
+    if (this.line.length > 300) this.line = this.line.slice(-300);
   }
 
   /** Marca que o que vier a seguir do terminal é reação a algo que fizemos. */

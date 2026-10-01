@@ -122,3 +122,13 @@
 .prov.off { opacity: 0.5; cursor: default; }
 .update p b { display: inline; margin: 0; font-weight: 600; color: var(--text); }
 .update p code { font: 11px var(--mono); padding: 0 4px; border-radius: 4px; background: rgba(255, 255, 255, 0.08); }
+
+/* Proteção ao fechar com chats em andamento. */
+.mbox.guard { width: min(520px, calc(100vw - 32px)); }
+.mbox.guard .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 14px; }
+.busy { list-style: none; margin: 0 0 16px; padding: 0; display: grid; gap: 6px; }
+.busy li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); font-size: 12.5px; }
+.busy li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.busy li em { font-style: normal; font-size: 11px; color: var(--warn); }
+.danger { height: 32px; padding: 0 14px; border-radius: 8px; background: var(--bad); color: #fff; font-weight: 600; font-size: 12.5px; }
+.danger:hover { filter: brightness(1.08); }

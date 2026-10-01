@@ -88,7 +88,7 @@ pub fn run() {
             pty::pty_write,
             pty::pty_resize,
             usage::usage_get,
-            context::context_get,
+            context::session_meta,
             windows::display_info,
             windows::window_focus,
             windows::window_new,
@@ -121,13 +121,17 @@ pub fn run() {
             let app = window.app_handle();
             let reg = app.state::<Registry>();
             match event {
+                // O pedido de fechar pode ser cancelado pela proteção de chats em
+                // andamento; por isso o encerramento só é marcado na destruição.
+                WindowEvent::CloseRequested { .. } if window.label() != windows::MAIN => {
+                    reg.mark_user_closing(window.label())
+                }
                 // Fechar a principal encerra o Polvo; as outras janelas ficam
                 // lembradas e reabrem na próxima vez.
-                WindowEvent::CloseRequested { .. } if window.label() == windows::MAIN => {
+                WindowEvent::Destroyed if window.label() == windows::MAIN => {
                     reg.mark_exiting();
+                    app.exit(0)
                 }
-                WindowEvent::CloseRequested { .. } => reg.mark_user_closing(window.label()),
-                WindowEvent::Destroyed if window.label() == windows::MAIN => app.exit(0),
                 // Fechar uma janela extra devolve as sessões dela à principal.
                 WindowEvent::Destroyed => reg.window_closed(app, window.label()),
                 _ => {}

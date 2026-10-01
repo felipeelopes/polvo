@@ -42,6 +42,15 @@ pub struct SessionRecord {
     /// O usuário renomeou: o título do terminal não substitui mais o nome.
     #[serde(default)]
     pub title_locked: bool,
+    /// Cor da sessão (`/color` do CLI ou escolhida no Polvo).
+    #[serde(default)]
+    pub color: Option<String>,
+    /// Último nome/cor vindos do CLI já aplicados (para não desfazer um
+    /// renomear feito depois no Polvo).
+    #[serde(default)]
+    pub cli_title: Option<String>,
+    #[serde(default)]
+    pub cli_color: Option<String>,
 }
 
 fn main_window() -> String {
@@ -403,6 +412,48 @@ impl Registry {
             .collect()
     }
 
+    /// Aplica nome (`/rename`) e cor (`/color`) definidos no CLI quando mudam.
+    /// Sem `/rename`, o título automático do CLI vale se o nome não estiver fixo.
+    pub fn apply_cli_meta(
+        &self,
+        app: &AppHandle,
+        metas: &HashMap<String, crate::context::SessionMeta>,
+    ) {
+        let mut changed = false;
+        {
+            let mut inner = self.inner.lock();
+            for r in inner.ws.sessions.iter_mut() {
+                let Some(m) = metas.get(&r.id) else { continue };
+                if let Some(t) = m.custom_title.as_ref().filter(|t| !t.trim().is_empty()) {
+                    if r.cli_title.as_ref() != Some(t) {
+                        r.cli_title = Some(t.clone());
+                        r.title = t.trim().to_string();
+                        r.title_locked = true;
+                        changed = true;
+                    }
+                } else if let Some(t) = m.ai_title.as_ref().filter(|t| !t.trim().is_empty()) {
+                    if !r.title_locked && r.title != *t {
+                        r.title = t.trim().to_string();
+                        changed = true;
+                    }
+                }
+                if let Some(c) = &m.color {
+                    if r.cli_color.as_ref() != Some(c) {
+                        r.cli_color = Some(c.clone());
+                        r.color = Some(c.clone()).filter(|c| c != "default");
+                        changed = true;
+                    }
+                }
+            }
+            if changed {
+                Self::save(&inner);
+            }
+        }
+        if changed {
+            self.emit_sessions(app);
+        }
+    }
+
     pub fn windows(&self) -> Vec<WindowRecord> {
         self.inner.lock().ws.windows.clone()
     }
@@ -547,6 +598,9 @@ pub fn session_create(
             minimized: false,
             created_at: paths::now_ms(),
             title_locked: named,
+            color: None,
+            cli_title: None,
+            cli_color: None,
         });
         inner.runtime.insert(id.clone(), Runtime::new("starting"));
         inner.ws.recent_dirs.retain(|d| !paths::same_path(d, &cwd));
@@ -568,6 +622,8 @@ pub struct SessionPatch {
     title: Option<String>,
     /// Título vindo do terminal (o CLI o define); ignorado se o nome estiver travado.
     auto_title: Option<String>,
+    /// Cor da sessão; texto vazio volta à cor da ferramenta.
+    color: Option<String>,
     minimized: Option<bool>,
     window: Option<String>,
 }
@@ -595,6 +651,9 @@ pub fn session_update(
             if !r.title_locked {
                 r.title = t.trim().to_string();
             }
+        }
+        if let Some(c) = patch.color {
+            r.color = Some(c.trim().to_string()).filter(|c| !c.is_empty() && c != "default");
         }
         if let Some(m) = patch.minimized {
             r.minimized = m;

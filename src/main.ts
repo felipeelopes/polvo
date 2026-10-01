@@ -12,6 +12,7 @@ import { openNewSession } from "./ui/new-session";
 import { openOnboarding } from "./ui/onboarding";
 import { startUpdateChecks } from "./ui/updater";
 import { initZoom } from "./ui/zoom";
+import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
 
 async function boot(): Promise<void> {
@@ -32,6 +33,7 @@ async function boot(): Promise<void> {
   store.recentDirs = snapshot.recentDirs;
   document.body.classList.toggle("no-mica", !display.mica);
   initZoom();
+  installCloseGuard();
 
   // Em desenvolvimento, `__polvo.store` fica acessível no DevTools para depuração.
   const root = document.getElementById("app")!;
