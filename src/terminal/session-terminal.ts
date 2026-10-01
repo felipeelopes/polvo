@@ -132,7 +132,13 @@ export class SessionTerminal {
     try {
       const history = await ipc.ptyAttach(this.id, (bytes) => this.onBytes(bytes));
       this.term.reset();
-      if (history.length) this.term.write(history);
+      // O CLI pode já ter escrito tudo e estar parado esperando (ex.: Codex
+      // retomado antes de a janela abrir): o histórico também conta como saída,
+      // senão o status nunca sairia de "iniciando".
+      if (history.length) {
+        this.term.write(history);
+        this.lastOutput = performance.now();
+      }
       for (const chunk of this.pending ?? []) this.term.write(chunk);
       this.connected = true;
       this.cols = this.rows = 0;

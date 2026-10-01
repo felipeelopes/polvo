@@ -11,7 +11,7 @@ const WAITING: Record<ToolKind, RegExp[]> = {
   opencode: [/Allow once/i, /Allow always/i, /Permission required/i],
   shell: [],
 };
-const GENERIC_WAITING = [/\[y\/n\]/i, /\(y\/n\)/i, /Press any key/i];
+const GENERIC_WAITING = [/\[y\/n\]/i, /\(y\/n\)/i, /Press any key/i, /enter (to )?continue/i];
 
 export interface Detection {
   status: Status;

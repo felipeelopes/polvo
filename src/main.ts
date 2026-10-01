@@ -32,10 +32,9 @@ async function boot(): Promise<void> {
   document.body.classList.toggle("no-mica", !display.mica);
 
   // Em desenvolvimento, `__polvo.store` fica acessível no DevTools para depuração.
-  if (import.meta.env.DEV) Object.assign(window, { __polvo: { store } });
-
   const root = document.getElementById("app")!;
   const app = new App(root);
+  if (import.meta.env.DEV) Object.assign(window, { __polvo: { store, app } });
   await app.start();
 
   void refreshUsage();

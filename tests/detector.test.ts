@@ -27,6 +27,11 @@ describe("detector de status", () => {
     expect(d.next("a", { status: "waiting", certain: true })).toBe("waiting");
   });
 
+  it("menus que pedem Enter (ex.: aviso de atualização do Codex) aguardam você", () => {
+    const screen = ["  1. Update now", "  2. Skip", "  3. Skip until next version", "  enter continue · esc skip"];
+    expect(detectStatus("codex", screen, 9000).status).toBe("waiting");
+  });
+
   it("tela parada é ocioso", () => {
     expect(detectStatus("opencode", ["> "], 9000)).toEqual({ status: "idle", certain: false });
   });
