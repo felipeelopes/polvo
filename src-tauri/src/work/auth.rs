@@ -39,15 +39,24 @@ const SERVICE: &str = "dev.polvo.app";
 /// Entra podem passar disso, então são guardados em pedaços.
 const CHUNK: usize = 1000;
 
-pub fn http() -> &'static reqwest::Client {
-    static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
-    CLIENT.get_or_init(|| {
-        reqwest::Client::builder()
-            .timeout(Duration::from_secs(30))
-            .user_agent(concat!("Polvo/", env!("CARGO_PKG_VERSION")))
-            .build()
-            .expect("cliente HTTP")
-    })
+/// Cliente HTTP compartilhado. O reqwest vem sem provedor de criptografia
+/// (usamos o `ring`, já presente pelo atualizador): instala antes de criar,
+/// senão a criação entra em pânico e, em release (`panic = "abort"`), fecha o app.
+pub fn http() -> AppResult<&'static reqwest::Client> {
+    static CLIENT: OnceLock<Result<reqwest::Client, String>> = OnceLock::new();
+    CLIENT
+        .get_or_init(|| {
+            if rustls::crypto::CryptoProvider::get_default().is_none() {
+                let _ = rustls::crypto::ring::default_provider().install_default();
+            }
+            reqwest::Client::builder()
+                .timeout(Duration::from_secs(30))
+                .user_agent(concat!("Polvo/", env!("CARGO_PKG_VERSION")))
+                .build()
+                .map_err(|e| e.to_string())
+        })
+        .as_ref()
+        .map_err(|e| AppError::msg(tr("work.network", &[("error", e)])))
 }
 
 pub fn net(e: reqwest::Error) -> AppError {
@@ -228,7 +237,8 @@ fn fifteen_min() -> u64 {
 }
 
 async fn github_device(client_id: &str, progress: &Channel<Value>) -> AppResult<()> {
-    let dc: DeviceCode = http()
+    let client = http()?;
+    let dc: DeviceCode = client
         .post("https://github.com/login/device/code")
         .header("Accept", "application/json")
         .form(&[("client_id", client_id), ("scope", GITHUB_SCOPES)])
@@ -240,7 +250,7 @@ async fn github_device(client_id: &str, progress: &Channel<Value>) -> AppResult<
         .map_err(net)?;
     let _ = progress.send(json!({ "code": dc.user_code, "url": dc.verification_uri }));
     let token = poll(dc, |device| {
-        http()
+        client
             .post("https://github.com/login/oauth/access_token")
             .header("Accept", "application/json")
             .form(&[
@@ -400,7 +410,8 @@ fn entra_scope() -> String {
 
 async fn entra_device(client_id: &str, progress: &Channel<Value>) -> AppResult<String> {
     let scope = entra_scope();
-    let dc: DeviceCode = http()
+    let client = http()?;
+    let dc: DeviceCode = client
         .post(format!("{ENTRA}/devicecode"))
         .form(&[("client_id", client_id), ("scope", scope.as_str())])
         .send()
@@ -411,7 +422,7 @@ async fn entra_device(client_id: &str, progress: &Channel<Value>) -> AppResult<S
         .map_err(net)?;
     let _ = progress.send(json!({ "code": dc.user_code, "url": dc.verification_uri }));
     let token = poll(dc, |device| {
-        http().post(format!("{ENTRA}/token")).form(&[
+        client.post(format!("{ENTRA}/token")).form(&[
             ("client_id", client_id.to_string()),
             ("device_code", device),
             ("grant_type", DEVICE_GRANT.to_string()),
@@ -464,7 +475,7 @@ async fn entra_access() -> AppResult<String> {
         return Err(AppError::msg(tr("work.adoNotConnected", &[])));
     };
     let scope = entra_scope();
-    let v: Value = http()
+    let v: Value = http()?
         .post(format!("{ENTRA}/token"))
         .form(&[
             ("client_id", client_id),
@@ -578,6 +589,11 @@ mod tests {
             .encode(r#"{"preferred_username":"ana@contoso.com"}"#);
         let tok = json!({ "id_token": format!("x.{payload}.y") });
         assert_eq!(account_of(&tok).as_deref(), Some("ana@contoso.com"));
+    }
+
+    #[test]
+    fn cliente_http_sem_panico() {
+        assert!(http().is_ok());
     }
 
     #[test]

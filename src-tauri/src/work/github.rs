@@ -45,7 +45,7 @@ pub async fn graphql(query: &str) -> AppResult<Value> {
     let token = token()?;
     let v = send(
         &token,
-        http()
+        http()?
             .post(format!("{API}/graphql"))
             .json(&json!({ "query": query })),
     )
@@ -66,7 +66,7 @@ pub async fn graphql(query: &str) -> AppResult<Value> {
 
 pub async fn rest(method: Method, path: &str, body: Option<Value>) -> AppResult<Value> {
     let token = token()?;
-    let mut req = http()
+    let mut req = http()?
         .request(method, format!("{API}{path}"))
         // full+json devolve também o HTML já renderizado pelo GitHub.
         .header("Accept", "application/vnd.github.full+json");

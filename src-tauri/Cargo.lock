@@ -2863,6 +2863,7 @@ dependencies = [
  "parking_lot",
  "portable-pty",
  "reqwest",
+ "rustls",
  "serde",
  "serde_json",
  "sys-locale",

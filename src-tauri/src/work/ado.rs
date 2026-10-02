@@ -80,7 +80,7 @@ async fn request(
     url: &str,
     body: Option<Value>,
 ) -> AppResult<Value> {
-    let mut req = http()
+    let mut req = http()?
         .request(method, url)
         .header("Authorization", auth)
         .header("Accept", "application/json");

@@ -66,7 +66,12 @@ fn decode(s: &str) -> String {
     let mut i = 0;
     while i < b.len() {
         if b[i] == b'%' && i + 2 < b.len() {
-            if let Ok(v) = u8::from_str_radix(&s[i + 1..i + 3], 16) {
+            // Bytes, não fatia de &str: um caractere acentuado logo após o
+            // `%` cortaria um caractere ao meio (pânico).
+            if let Some(v) = std::str::from_utf8(&b[i + 1..i + 3])
+                .ok()
+                .and_then(|h| u8::from_str_radix(h, 16).ok())
+            {
                 out.push(v);
                 i += 3;
                 continue;
@@ -293,6 +298,11 @@ mod tests {
             (Some("nox"), "nox/proj/repo")
         );
         assert_eq!(parse_remote("https://gitlab.com/a/b").kind, "other");
+        // "%" seguido de acento não pode derrubar o app.
+        assert_eq!(
+            parse_remote("https://dev.azure.com/o/Proj%ção/_git/r").kind,
+            "ado"
+        );
     }
 
     #[test]
