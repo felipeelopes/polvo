@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- **Meu trabalho** (Ctrl+Shift+3): uma nova tela com seus commits, issues e PRs do GitHub e work items, sprint e PRs do Azure DevOps, num lugar só. A lista “Para fazer” traz os bugs urgentes primeiro, filtra pendentes e só bugs, e aguenta backlogs grandes com busca, grupos e atalhos de teclado.
+- **Leve um item para um agente** com a tecla A: implementar, implementar numa worktree nova, planejar antes ou investigar um bug, já com a descrição e os comentários no prompt. Veja e responda os comentários sem sair do Polvo, ou abra o registro no navegador com O.
+- **Conexão simples e segura**: usa o login que você já tem no GitHub CLI e no Azure CLI (ou entre pelo navegador com um código), com PAT como alternativa. Os tokens ficam no Gerenciador de Credenciais do Windows.
+
 ## 0.2.2
 
 - **Telas menores**: Ajustes e os demais diálogos (onboarding, Sobre, nova sessão, projetos, Git, novidades) rolam por dentro, com o rodapé de botões sempre à vista. Popovers não passam mais da borda da tela, e as grades viram uma ou duas colunas em janelas estreitas.

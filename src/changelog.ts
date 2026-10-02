@@ -9,6 +9,61 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.0",
+    notes: {
+      pt: [
+        "**Meu trabalho** (Ctrl+Shift+3): uma nova tela com seus commits, issues e PRs do GitHub e work items, sprint e PRs do Azure DevOps, num lugar só. A lista “Para fazer” traz os bugs urgentes primeiro, filtra pendentes e só bugs, e aguenta backlogs grandes com busca, grupos e atalhos de teclado.",
+        "**Leve um item para um agente** com a tecla A: implementar, implementar numa worktree nova, planejar antes ou investigar um bug, já com a descrição e os comentários no prompt. Veja e responda os comentários sem sair do Polvo, ou abra o registro no navegador com O.",
+        "**Conexão simples e segura**: usa o login que você já tem no GitHub CLI e no Azure CLI (ou entre pelo navegador com um código), com PAT como alternativa. Os tokens ficam no Gerenciador de Credenciais do Windows.",
+      ],
+      en: [
+        "**My work** (Ctrl+Shift+3): a new view with your commits, GitHub issues and PRs, and Azure DevOps work items, sprint and PRs in one place. The “To do” list puts urgent bugs first, filters pending items and bugs only, and handles large backlogs with search, groups and keyboard shortcuts.",
+        "**Hand an item to an agent** with the A key: implement, implement in a new worktree, plan first or investigate a bug, with the description and comments already in the prompt. Read and reply to comments without leaving Polvo, or open the record in the browser with O.",
+        "**Simple, secure connection**: reuses the login you already have in GitHub CLI and Azure CLI (or sign in through the browser with a code), with a PAT as a fallback. Tokens stay in Windows Credential Manager.",
+      ],
+      es: [
+        "**Mi trabajo** (Ctrl+Shift+3): una nueva vista con tus commits, issues y PRs de GitHub, y work items, sprint y PRs de Azure DevOps en un solo lugar. La lista “Por hacer” pone primero los bugs urgentes, filtra pendientes y solo bugs, y aguanta backlogs grandes con búsqueda, grupos y atajos de teclado.",
+        "**Lleva un elemento a un agente** con la tecla A: implementar, implementar en una worktree nueva, planificar antes o investigar un bug, con la descripción y los comentarios ya en el prompt. Lee y responde comentarios sin salir de Polvo, o abre el registro en el navegador con O.",
+        "**Conexión simple y segura**: usa el inicio de sesión que ya tienes en GitHub CLI y Azure CLI (o entra por el navegador con un código), con PAT como alternativa. Los tokens se guardan en el Administrador de credenciales de Windows.",
+      ],
+      fr: [
+        "**Mon travail** (Ctrl+Shift+3) : une nouvelle vue qui réunit vos commits, les issues et PR GitHub, et les work items, le sprint et les PR Azure DevOps. La liste « À faire » met les bugs urgents en tête, filtre les éléments en attente et les bugs, et gère les gros backlogs avec recherche, groupes et raccourcis clavier.",
+        "**Confiez un élément à un agent** avec la touche A : implémenter, implémenter dans une nouvelle worktree, planifier d'abord ou enquêter sur un bug, avec la description et les commentaires déjà dans le prompt. Lisez et répondez aux commentaires sans quitter Polvo, ou ouvrez l'élément dans le navigateur avec O.",
+        "**Connexion simple et sûre** : réutilise votre connexion à GitHub CLI et Azure CLI (ou connectez-vous dans le navigateur avec un code), avec un PAT en secours. Les tokens restent dans le Gestionnaire d'identification de Windows.",
+      ],
+      de: [
+        "**Meine Arbeit** (Strg+Umschalt+3): eine neue Ansicht mit deinen Commits, GitHub-Issues und -PRs sowie Azure-DevOps-Work-Items, Sprint und PRs an einem Ort. Die Liste „Zu erledigen“ zeigt dringende Bugs zuerst, filtert offene Einträge und nur Bugs und bewältigt große Backlogs mit Suche, Gruppen und Tastenkürzeln.",
+        "**Übergib einen Eintrag an einen Agenten** mit der Taste A: implementieren, in einer neuen Worktree implementieren, erst planen oder einen Bug untersuchen – Beschreibung und Kommentare stehen schon im Prompt. Lies und beantworte Kommentare direkt in Polvo oder öffne den Eintrag mit O im Browser.",
+        "**Einfache, sichere Verbindung**: nutzt deine bestehende Anmeldung in GitHub CLI und Azure CLI (oder melde dich im Browser mit einem Code an), mit PAT als Alternative. Die Tokens bleiben in der Windows-Anmeldeinformationsverwaltung.",
+      ],
+      it: [
+        "**Il mio lavoro** (Ctrl+Maiusc+3): una nuova vista con i tuoi commit, le issue e le PR di GitHub e i work item, lo sprint e le PR di Azure DevOps in un unico posto. La lista “Da fare” mette prima i bug urgenti, filtra gli elementi in sospeso e solo i bug, e regge backlog grandi con ricerca, gruppi e scorciatoie da tastiera.",
+        "**Affida un elemento a un agente** con il tasto A: implementare, implementare in una nuova worktree, pianificare prima o indagare su un bug, con descrizione e commenti già nel prompt. Leggi e rispondi ai commenti senza uscire da Polvo, o apri l'elemento nel browser con O.",
+        "**Connessione semplice e sicura**: usa l'accesso che hai già in GitHub CLI e Azure CLI (o accedi dal browser con un codice), con un PAT come alternativa. I token restano in Gestione credenziali di Windows.",
+      ],
+      ja: [
+        "**マイワーク**（Ctrl+Shift+3）：コミット、GitHub の Issue と PR、Azure DevOps の作業項目・スプリント・PR を 1 か所にまとめた新しいビュー。「やること」リストは緊急のバグを先頭に表示し、未完了やバグだけの絞り込み、検索・グループ・キーボードショートカットで大きなバックログも扱えます。",
+        "**A キーで項目をエージェントへ**：実装、新しい worktree での実装、先に計画、バグの調査を選べ、説明とコメントはプロンプトに入った状態で渡されます。コメントは Polvo の中で読んで返信でき、O キーでブラウザーの元の項目を開けます。",
+        "**シンプルで安全な接続**：GitHub CLI と Azure CLI の既存のログインを使います（またはブラウザーでコードを入力してサインイン）。代わりに PAT も使えます。トークンは Windows 資格情報マネージャーに保存されます。",
+      ],
+      zh: [
+        "**我的工作**（Ctrl+Shift+3）：全新视图，把你的提交、GitHub 的 issue 和 PR，以及 Azure DevOps 的工作项、冲刺和 PR 集中在一处。“待办”列表把紧急 bug 放在最前，可只看待处理项或只看 bug，并通过搜索、分组和快捷键应对大型待办列表。",
+        "**按 A 键把条目交给智能体**：实现、在新 worktree 中实现、先做计划或调查 bug，描述和评论已自动放进提示词。无需离开 Polvo 即可查看和回复评论，按 O 在浏览器中打开原条目。",
+        "**简单安全的连接**：复用你在 GitHub CLI 和 Azure CLI 中已有的登录（或在浏览器中输入代码登录），也可改用 PAT。令牌保存在 Windows 凭据管理器中。",
+      ],
+      ko: [
+        "**내 작업**(Ctrl+Shift+3): 커밋, GitHub 이슈와 PR, Azure DevOps 작업 항목·스프린트·PR을 한곳에 모은 새 화면입니다. “할 일” 목록은 긴급 버그를 먼저 보여 주고, 대기 중인 항목이나 버그만 걸러 볼 수 있으며, 검색·그룹·단축키로 큰 백로그도 다룰 수 있습니다.",
+        "**A 키로 항목을 에이전트에게**: 구현, 새 worktree에서 구현, 먼저 계획, 버그 조사 중에서 고를 수 있고 설명과 댓글이 프롬프트에 담겨 전달됩니다. Polvo를 떠나지 않고 댓글을 읽고 답할 수 있으며, O 키로 브라우저에서 원본 항목을 엽니다.",
+        "**간단하고 안전한 연결**: GitHub CLI와 Azure CLI에 이미 로그인된 계정을 그대로 쓰거나 브라우저에서 코드로 로그인하며, PAT도 쓸 수 있습니다. 토큰은 Windows 자격 증명 관리자에 보관됩니다.",
+      ],
+      ru: [
+        "**Моя работа** (Ctrl+Shift+3): новый экран, где собраны ваши коммиты, issues и PR из GitHub, а также рабочие элементы, спринт и PR из Azure DevOps. Список «К выполнению» показывает срочные баги первыми, фильтрует незавершённое и только баги и справляется с большими бэклогами благодаря поиску, группам и горячим клавишам.",
+        "**Передайте элемент агенту** клавишей A: реализовать, реализовать в новом worktree, сначала спланировать или разобраться с багом — описание и комментарии уже будут в промпте. Читайте комментарии и отвечайте на них, не выходя из Polvo, или откройте запись в браузере клавишей O.",
+        "**Простое и безопасное подключение**: используется ваш вход в GitHub CLI и Azure CLI (или вход в браузере по коду), PAT — как запасной вариант. Токены хранятся в диспетчере учётных данных Windows.",
+      ],
+    },
+  },
+  {
     version: "0.2.2",
     notes: {
       pt: ["**Telas menores**: Ajustes e os demais diálogos rolam por dentro, com os botões sempre à vista; popovers e grades se ajustam a janelas estreitas ou baixas."],
