@@ -919,7 +919,7 @@ export class ChangesPane {
     const isProt = !!st.branch && PROTECTED.test(st.branch) && total > 0 && !amend;
     prot.hidden = !isProt;
     if (isProt) prot.innerHTML = `${GI.warn}<span>${esc(t("git.commit.protected", { branch: st.branch! }))}</span><button data-c="branch">${esc(t("git.commit.createBranch"))}</button>`;
-    this.box.classList.toggle("empty", !total && !amend);
+    this.box.classList.toggle("gc-idle", !total && !amend);
   }
 
   private async generate(btn: HTMLButtonElement): Promise<void> {
