@@ -179,7 +179,7 @@
 .gs { display: grid; grid-template-columns: 1fr 1fr; }
 .gh.gl { min-width: 0; overflow: hidden; }
 .gh.gl .gt { overflow: hidden; text-overflow: ellipsis; }
-.gh.empty { background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255, 255, 255, 0.025) 5px 10px); }
+.gh.gh-blank { background: repeating-linear-gradient(-45deg, transparent 0 5px, rgba(255, 255, 255, 0.025) 5px 10px); }
 .gs .gh:first-child { border-right: 1px solid var(--line); }
 .gd-body.split { min-width: 0; }
 /* conflito */
@@ -354,7 +354,7 @@
 .gc-amend button:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
 .gc-prot { padding: 7px 10px; border-radius: 8px; }
 .gc-btn { height: 36px; border-radius: 9px; font-size: 13px; }
-.gc-commit.empty .gc-msg { opacity: 0.55; }
+.gc-commit.gc-idle .gc-msg { opacity: 0.55; }
 
 /* cabeçalho do diff */
 .gd-flag { height: 22px; padding: 0 8px; border-radius: 99px; background: rgba(229, 163, 58, 0.15); color: #f2c46d; font-size: 11px; white-space: nowrap; }

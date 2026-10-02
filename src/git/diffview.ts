@@ -134,7 +134,7 @@ export class DiffView {
   }
 
   private half(l: DiffLine | undefined, hi: number, li: number): string {
-    if (!l) return `<div class="gh empty"></div>`;
+    if (!l) return `<div class="gh gh-blank"></div>`;
     const pick = l.kind !== " " ? ` data-k="${hi}:${li}"` : "";
     const n = l.kind === "-" ? l.old : l.new;
     return `<div class="gh ${this.cls(l, hi, li)}"${pick} data-n="${(l.new ?? l.old) ?? ""}"><span class="gn">${n ?? ""}</span><span class="gt">${paint(l.text, this.lang) || " "}</span></div>`;
