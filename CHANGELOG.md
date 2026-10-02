@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.6
+
+- **Shift+Enter quebra a linha** nos terminais (Claude Code, Codex e outros CLIs), como no VS Code, em vez de enviar a mensagem.
+
 ## 0.1.5
 
 - **10 idiomas**: English, Português, Español, Français, Deutsch, Italiano, 日本語, 简体中文, 한국어 e Русский. Segue o idioma do Windows ou o escolhido em Ajustes (também no onboarding).
