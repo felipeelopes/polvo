@@ -331,10 +331,23 @@ class Doc {
   }
 }
 
+/** Ferramenta fixa no painel (ex.: Git), com aba própria antes dos documentos. */
+export interface DockTool {
+  readonly tab: HTMLElement;
+  readonly el: HTMLElement;
+  headHtml(): string;
+  onHead(e: MouseEvent): void;
+  shown(): void;
+  hidden(): void;
+  onKey(e: KeyboardEvent): boolean;
+}
+
 export class DocsPanel {
   readonly el = h("aside", "docs");
   docs: Doc[] = [];
   active: Doc | null = null;
+  private tool: DockTool | null = null;
+  private toolOn = false;
   private tabs = h("div", "dtabs");
   private head = h("div", "docs-acts");
   private info = h("div", "docs-info");
@@ -394,7 +407,51 @@ export class DocsPanel {
     if (hash) requestAnimationFrame(() => doc.scrollTo(hash));
   }
 
+  /** Liga uma ferramenta (Git) ao painel. */
+  attachTool(tool: DockTool): void {
+    this.tool = tool;
+    this.tabs.prepend(tool.tab);
+    tool.el.hidden = true;
+    this.stack.append(tool.el);
+    tool.tab.addEventListener("click", () => this.showTool());
+  }
+
+  get toolVisible(): boolean {
+    return this.toolOn && !this.el.hidden;
+  }
+
+  showTool(): void {
+    if (!this.tool) return;
+    this.show();
+    this.toolOn = true;
+    for (const d of this.docs) {
+      d.el.hidden = true;
+      d.renderTab();
+    }
+    this.tool.el.hidden = false;
+    this.tool.shown();
+    this.renderHead();
+    this.persist();
+  }
+
+  private hideTool(): void {
+    if (!this.toolOn || !this.tool) return;
+    this.toolOn = false;
+    this.tool.el.hidden = true;
+    this.tool.hidden();
+  }
+
+  /** Atalho: abre o Git, ou fecha o painel se o Git já está à vista. */
+  toggleTool(): void {
+    if (this.toolVisible) {
+      this.hideTool();
+      if (this.active) this.activate(this.active);
+      else this.hide();
+    } else this.showTool();
+  }
+
   activate(doc: Doc): void {
+    this.hideTool();
     this.active = doc;
     for (const d of this.docs) {
       d.el.hidden = d !== doc;
@@ -415,13 +472,23 @@ export class DocsPanel {
       if (next) this.activate(next);
       else {
         this.active = null;
-        this.hide();
+        if (this.tool) this.showTool();
+        else this.hide();
       }
     }
     this.persist();
   }
 
   renderHead(): void {
+    const common = `<button class="ibtn" data-a="max" title="${esc(t(this.maximized ? "docs.panel.restore" : "docs.panel.expand"))}">${this.maximized ? I.min : I.max}</button>
+      <button class="ibtn" data-a="close" title="${esc(t("docs.panel.closePanel"))}">${I.x}</button>`;
+    if (this.toolOn && this.tool) {
+      this.head.innerHTML = this.tool.headHtml() + common;
+      this.info.hidden = true;
+      this.bar.hidden = true;
+      return;
+    }
+    this.info.hidden = false;
     const d = this.active;
     if (!d) return;
     const mode = (m: Mode, label: string, key: string) => `<button data-mode="${m}" class="${d.mode === m ? "on" : ""}" title="${esc(label)} (${key})">${esc(label)}</button>`;
@@ -430,8 +497,7 @@ export class DocsPanel {
       <button class="ibtn${tocOn ? " on" : ""}" data-a="toc" title="${esc(t("docs.panel.toc"))}">${I.toc}</button>
       <button class="ibtn${d.dirty ? " hot" : ""}" data-a="save" title="${esc(t("docs.panel.save"))}" ${d.dirty ? "" : "disabled"}>${I.save}</button>
       <button class="ibtn" data-a="more" data-pop title="${esc(t("docs.panel.more"))}">${I.more}</button>
-      <button class="ibtn" data-a="max" title="${esc(t(this.maximized ? "docs.panel.restore" : "docs.panel.expand"))}">${this.maximized ? I.min : I.max}</button>
-      <button class="ibtn" data-a="close" title="${esc(t("docs.panel.closePanel"))}">${I.x}</button>`;
+      ${common}`;
     this.info.innerHTML = `<span class="docs-path" title="${esc(d.path)}">${esc(d.path)}</span><span class="docs-state${d.dirty ? " dirty" : ""}">${esc(t(d.dirty ? "docs.panel.stateUnsaved" : "docs.panel.stateSaved"))}</span>`;
     if (d.missing) this.showBar(t("docs.panel.missing"), `<button data-b="save">${esc(t("docs.panel.saveAgain"))}</button><button data-b="close">${esc(t("docs.panel.closeTabButton"))}</button>`);
     else if (d.conflict) this.showBar(t("docs.panel.conflict"), `<button data-b="reload">${esc(t("docs.panel.useDisk"))}</button><button data-b="keep">${esc(t("docs.panel.keepMine"))}</button>`);
@@ -462,6 +528,10 @@ export class DocsPanel {
 
   private onAction(e: MouseEvent): void {
     const target = e.target as Element;
+    const common = target.closest<HTMLElement>("[data-a]")?.dataset.a;
+    if (common === "max") return this.setMax(!this.maximized);
+    if (common === "close") return void this.closeAll();
+    if (this.toolOn && this.tool) return this.tool.onHead(e);
     const d = this.active;
     if (!d) return;
     const mode = target.closest<HTMLElement>("[data-mode]")?.dataset.mode as Mode | undefined;
@@ -521,6 +591,13 @@ export class DocsPanel {
   }
 
   private onKey(e: KeyboardEvent): void {
+    if (this.toolOn && this.tool) {
+      if (this.tool.onKey(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      return;
+    }
     const d = this.active;
     if (!d || !e.ctrlKey || e.altKey) return;
     const k = e.key.toLowerCase();
@@ -546,6 +623,7 @@ export class DocsPanel {
   }
 
   private hide(): void {
+    this.hideTool();
     this.setMax(false);
     this.el.hidden = true;
     this.persist();
@@ -622,14 +700,14 @@ export class DocsPanel {
   /** Lembra abas, aba ativa e largura por janela (reabre após recarregar). */
   private persist(): void {
     try {
-      localStorage.setItem(KEY(), JSON.stringify({ open: !this.el.hidden, paths: this.docs.map((d) => d.path), active: this.active?.path ?? null, width: this.width }));
+      localStorage.setItem(KEY(), JSON.stringify({ open: !this.el.hidden, git: this.toolOn, paths: this.docs.map((d) => d.path), active: this.active?.path ?? null, width: this.width }));
     } catch {
       /* sem armazenamento */
     }
   }
 
   private restore(): void {
-    let saved: { open?: boolean; paths?: string[]; active?: string | null; width?: number } = {};
+    let saved: { open?: boolean; git?: boolean; paths?: string[]; active?: string | null; width?: number } = {};
     try {
       saved = JSON.parse(localStorage.getItem(KEY()) ?? "{}");
     } catch {
@@ -640,7 +718,8 @@ export class DocsPanel {
     void (async () => {
       for (const p of saved.paths!) await this.open(p, undefined, true);
       const act = this.docs.find((d) => d.path === saved.active);
-      if (act) this.activate(act);
+      if (saved.git && this.tool) this.showTool();
+      else if (act) this.activate(act);
     })();
   }
 }

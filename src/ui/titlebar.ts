@@ -1,7 +1,7 @@
 // Barra de título personalizada (a janela não tem moldura do Windows).
 import { getCurrentWindow } from "@tauri-apps/api/window";
 import type { Preset } from "../core/layout";
-import { store } from "../core/store";
+import { normPath, store } from "../core/store";
 import type { ToolKind, View } from "../core/types";
 import { t } from "../i18n";
 import { esc, h } from "./dom";
@@ -21,6 +21,7 @@ export interface TitlebarHost {
   openMonitors(anchor: HTMLElement): void;
   projectMenu(anchor: HTMLElement): void;
   clearProject(): void;
+  openGit(): void;
 }
 
 export class Titlebar {
@@ -48,6 +49,7 @@ export class Titlebar {
       </div>
       <div class="sp"></div>
       <button class="pchip" data-x="unfocus" hidden></button>
+      <button class="gchip" data-x="git" hidden></button>
       <div class="rings"></div>
       <button class="ibtn" data-x="window" title="${t("titlebar.newWindow")}">${ICON.window}</button>
       <button class="ibtn" data-pop data-x="monitor" title="${t("titlebar.monitor")}">${ICON.monitor}</button>
@@ -83,6 +85,7 @@ export class Titlebar {
       if (x?.dataset.x === "monitor") return host.openMonitors(x);
       if (x?.dataset.x === "projects") return host.projectMenu(x);
       if (x?.dataset.x === "unfocus") return host.clearProject();
+      if (x?.dataset.x === "git") return host.openGit();
       const w = tg.closest<HTMLElement>("[data-w]")?.dataset.w;
       if (w === "min") void win.minimize();
       if (w === "max") void win.toggleMaximize();
@@ -117,6 +120,22 @@ export class Titlebar {
     }
   }
 
+  /** Branch e selos de git da sessão em foco (clique abre o painel Git). */
+  private renderGit(): void {
+    const chip = this.el.querySelector<HTMLElement>(".gchip")!;
+    const s = store.session(store.active);
+    const info = s ? store.git[s.cwd] : null;
+    const sum = info ? store.gitSummary[normPath(info.root)] : undefined;
+    chip.hidden = !info;
+    if (!info) return;
+    const branch = sum?.branch ?? info.branch ?? "HEAD";
+    const parts = [sum?.changed ? `<i class="c">●${sum.changed}</i>` : "", sum?.ahead ? `<i class="a">↑${sum.ahead}</i>` : "", sum?.behind ? `<i class="b">↓${sum.behind}</i>` : ""].join("");
+    chip.className = `gchip${sum?.conflicts ? " bad" : ""}`;
+    chip.innerHTML = `${ICON.branch}<span class="gchip-b">${esc(branch)}</span>${parts}`;
+    chip.title = `${t("git.tabHint")}
+${info.root}`;
+  }
+
   render(): void {
     this.views.querySelectorAll<HTMLElement>("button").forEach((b) => b.classList.toggle("on", b.dataset.v === store.view));
     this.tools.style.visibility = store.view === "tiles" ? "visible" : "hidden";
@@ -127,6 +146,7 @@ export class Titlebar {
       chip.innerHTML = `${ICON.focus}<span>${esc(store.projectName)}</span>${ICON.close}`;
       chip.title = t("titlebar.projectChip");
     }
+    this.renderGit();
     const many = store.windows.length > 1;
     this.el.querySelector<HTMLElement>(".wname")!.textContent = many ? `· ${store.myName}` : "";
   }

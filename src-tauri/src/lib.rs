@@ -7,6 +7,7 @@ mod error;
 mod explorer;
 mod files;
 mod git;
+mod gitops;
 pub mod i18n;
 mod paths;
 mod projects;
@@ -102,6 +103,31 @@ pub fn run() {
             windows::open_url,
             explorer::open_folder_take,
             git::git_info,
+            gitops::git_status,
+            gitops::git_summaries,
+            gitops::git_diff,
+            gitops::git_file_at,
+            gitops::git_stage,
+            gitops::git_unstage,
+            gitops::git_apply,
+            gitops::git_discard,
+            gitops::git_commit,
+            gitops::git_undo_commit,
+            gitops::git_ignore,
+            gitops::git_init,
+            gitops::git_log,
+            gitops::git_commit_files,
+            gitops::git_branches,
+            gitops::git_action,
+            gitops::git_stashes,
+            gitops::git_remote,
+            gitops::git_web_url,
+            gitops::gh_prs,
+            gitops::gh_pr_create,
+            gitops::git_ai_message,
+            gitops::open_in_editor,
+            gitops::editor_available,
+            gitops::gh_available,
             projects::projects_list,
             projects::project_add,
             projects::project_create,

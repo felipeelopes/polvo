@@ -1,0 +1,18 @@
+/* Selos de git na barra lateral e o chip de branch na barra de título. */
+.sb-git { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 1px 5px; border-radius: 99px; background: rgba(255, 255, 255, 0.06); font-size: 10px; font-style: normal; font-variant-numeric: tabular-nums; cursor: pointer; flex: none; line-height: 1.5; }
+.sb-git:hover { background: rgba(138, 162, 255, 0.2); }
+.sb-git i { font-style: normal; }
+.sb-git .c, .gchip .c { color: #f2c46d; }
+.sb-git .a, .gchip .a { color: #a5b9ff; }
+.sb-git .b, .gchip .b { color: #8ee0ec; }
+.sb-git.bad { background: rgba(229, 83, 75, 0.22); }
+.wt-h:hover .sb-git, .pg-h:hover .sb-git { display: none; }
+
+.gchip { display: inline-flex; align-items: center; gap: 6px; height: 30px; max-width: 260px; padding: 0 10px; border-radius: var(--r-sm, 8px); background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.gchip:hover { border-color: var(--line2); color: var(--text); }
+.gchip svg { color: var(--accent); }
+.gchip .gchip-b { font-family: var(--mono); font-size: 11.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.gchip i { font-style: normal; font-size: 11px; }
+.gchip.bad { border-color: rgba(229, 83, 75, 0.5); }
+@media (max-width: 1240px) { .gchip .gchip-b { max-width: 90px; } }
+@media (max-width: 1000px) { .gchip { display: none; } }

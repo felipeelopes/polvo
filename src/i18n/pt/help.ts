@@ -19,5 +19,6 @@ export default {
     maximize: "Maximizar / restaurar o painel",
     undo: "Desfazer layout",
     zoom: "Zoom da interface",
+    git: "Painel Git",
   },
 };

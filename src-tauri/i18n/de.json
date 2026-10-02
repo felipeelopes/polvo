@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "In Polvo öffnen",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "Autostart mit Windows konnte nicht aktiviert werden",
-  "settings.autostartDisableFailed": "Autostart mit Windows konnte nicht deaktiviert werden"
+  "settings.autostartDisableFailed": "Autostart mit Windows konnte nicht deaktiviert werden",
+  "git.notRepo": "Dieser Ordner ist kein Git-Repository.",
+  "git.ghMissing": "Die GitHub CLI (gh) wurde nicht gefunden. Installiere sie von https://cli.github.com und führe „gh auth login“ aus.",
+  "git.claudeMissing": "Claude Code wurde im PATH nicht gefunden.",
+  "git.nothingToCommit": "Es gibt keine Änderungen zum Committen."
 }

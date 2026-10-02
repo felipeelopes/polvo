@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "Abrir no Polvo",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "Não foi possível ativar a inicialização com o Windows",
-  "settings.autostartDisableFailed": "Não foi possível desativar a inicialização com o Windows"
+  "settings.autostartDisableFailed": "Não foi possível desativar a inicialização com o Windows",
+  "git.notRepo": "Esta pasta não é um repositório git.",
+  "git.ghMissing": "O GitHub CLI (gh) não foi encontrado. Instale em https://cli.github.com e rode “gh auth login”.",
+  "git.claudeMissing": "O Claude Code não foi encontrado no PATH.",
+  "git.nothingToCommit": "Não há alterações para o commit."
 }

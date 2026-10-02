@@ -60,6 +60,16 @@ Ao abrir o app com *retomar automaticamente*, `Registry::boot` inicia todas as s
 
 `tauri-plugin-updater` consulta `https://github.com/felipeelopes/polvo/releases/latest/download/latest.json`. O workflow `release.yml` gera e assina os instaladores e o `latest.json`. Veja [RELEASING.md](RELEASING.md).
 
+## Git
+
+O painel lateral (o mesmo dos documentos Markdown) tem uma aba **Git** fixa (`Ctrl+Shift+G`), que segue o repositório da sessão em foco.
+
+- **Backend (`gitops.rs`)**: tudo pelo git da linha de comando, para valer a configuração, os hooks e as credenciais do usuário. Leituras usam `--no-optional-locks` (os agentes podem estar usando o git ao mesmo tempo); escritas passam por um lock por repositório. `GIT_EDITOR=true` e `GIT_TERMINAL_PROMPT=0` evitam travar esperando editor ou senha. Fetch/pull/push mandam o progresso por um `Channel`. PRs vêm do `gh`; a mensagem de commit com IA usa `claude -p`.
+- **Frontend (`src/git/`)**: `view.ts` (repositório, branch, sincronizar, faixas), `changes.ts` (arquivos, diff, stash, commit), `history.ts`, `branches.ts`, `prs.ts`. Carregado só quando o painel abre.
+- **Linhas e trechos**: `diff.ts` lê o diff unificado e monta patches parciais aplicados com `git apply --cached` (incluir/tirar) ou `git apply --reverse` (descartar). Os testes em `tests/diff-git.test.ts` conferem com o git de verdade, inclusive arquivos CRLF.
+- **Selos**: a cada 6 s o app pede `git_summaries` dos worktrees desta janela (alterados, à frente, atrás, conflitos) para a barra lateral e o chip de branch da barra de título.
+- **Agentes**: "Revisar", "Resolver conflito" e "Explicar commit" abrem uma sessão do agente na pasta e digitam o pedido quando ele fica pronto. "Nova branch numa worktree" cria a pasta ao lado do repositório e inicia um agente nela.
+
 ## Decisões
 
 - **Sem framework de UI**: TypeScript puro com módulos pequenos. O app é imperativo (terminais, arrastar), e isso mantém o bundle mínimo.

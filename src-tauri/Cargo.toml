@@ -33,6 +33,7 @@ dirs = "6"
 parking_lot = "0.12"
 thiserror = "2"
 log = "0.4"
+trash = "5"
 sys-locale = "0.3"
 
 [target.'cfg(windows)'.dependencies]

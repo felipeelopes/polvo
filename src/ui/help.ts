@@ -21,6 +21,7 @@ export function openHelp(anchor: HTMLElement): void {
           <kbd>Ctrl Shift 1 / 2</kbd><span>${t("help.keys.views")}</span>
           <kbd>Ctrl Alt ←↑→↓</kbd><span>${t("help.keys.focus")}</span>
           <kbd>Ctrl Alt Shift ←↑→↓</kbd><span>${t("help.keys.swap")}</span>
+          <kbd>Ctrl Shift G</kbd><span>${t("help.keys.git")}</span>
           <kbd>Ctrl Shift M</kbd><span>${t("help.keys.maximize")}</span>
           <kbd>Ctrl Shift Z</kbd><span>${t("help.keys.undo")}</span>
           <kbd>Ctrl + / Ctrl − / Ctrl 0</kbd><span>${t("help.keys.zoom")}</span>

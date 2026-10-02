@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "Открыть в Polvo",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "Не удалось включить автозапуск с Windows",
-  "settings.autostartDisableFailed": "Не удалось отключить автозапуск с Windows"
+  "settings.autostartDisableFailed": "Не удалось отключить автозапуск с Windows",
+  "git.notRepo": "Эта папка не является git-репозиторием.",
+  "git.ghMissing": "GitHub CLI (gh) не найден. Установите его с https://cli.github.com и выполните «gh auth login».",
+  "git.claudeMissing": "Claude Code не найден в PATH.",
+  "git.nothingToCommit": "Нет изменений для коммита."
 }

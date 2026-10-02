@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "在 Polvo 中打开",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "无法启用随 Windows 启动",
-  "settings.autostartDisableFailed": "无法停用随 Windows 启动"
+  "settings.autostartDisableFailed": "无法停用随 Windows 启动",
+  "git.notRepo": "此文件夹不是 git 仓库。",
+  "git.ghMissing": "未找到 GitHub CLI (gh)。请从 https://cli.github.com 安装，并运行“gh auth login”。",
+  "git.claudeMissing": "在 PATH 中未找到 Claude Code。",
+  "git.nothingToCommit": "没有可提交的更改。"
 }

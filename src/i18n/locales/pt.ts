@@ -20,6 +20,7 @@ import board from "../pt/board";
 import tiles from "../pt/tiles";
 import terminal from "../pt/terminal";
 import docs from "../pt/docs";
+import git from "../pt/git";
 
 export default {
   app,
@@ -43,4 +44,5 @@ export default {
   tiles,
   terminal,
   docs,
+  git,
 };

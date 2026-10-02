@@ -20,7 +20,7 @@ use crate::error::{AppError, AppResult, Context};
 use crate::tools::LaunchPlan;
 
 /// Variáveis de sessão de agentes que não devem passar para os processos filhos.
-const INHERITED_AGENT_VARS: &[&str] = &[
+pub(crate) const INHERITED_AGENT_VARS: &[&str] = &[
     "CLAUDECODE",
     "CLAUDE_CODE_CHILD_SESSION",
     "CLAUDE_CODE_SESSION_ID",

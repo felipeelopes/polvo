@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "Ouvrir dans Polvo",
   "git.detached": "(détachée)",
   "settings.autostartEnableFailed": "Impossible d'activer le lancement au démarrage de Windows",
-  "settings.autostartDisableFailed": "Impossible de désactiver le lancement au démarrage de Windows"
+  "settings.autostartDisableFailed": "Impossible de désactiver le lancement au démarrage de Windows",
+  "git.notRepo": "Ce dossier n’est pas un dépôt git.",
+  "git.ghMissing": "GitHub CLI (gh) est introuvable. Installez-le depuis https://cli.github.com et lancez « gh auth login ».",
+  "git.claudeMissing": "Claude Code est introuvable dans le PATH.",
+  "git.nothingToCommit": "Aucune modification à commiter."
 }

@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "Polvo で開く",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "Windows 起動時の自動起動を有効にできませんでした",
-  "settings.autostartDisableFailed": "Windows 起動時の自動起動を無効にできませんでした"
+  "settings.autostartDisableFailed": "Windows 起動時の自動起動を無効にできませんでした",
+  "git.notRepo": "このフォルダーは git リポジトリではありません。",
+  "git.ghMissing": "GitHub CLI (gh) が見つかりません。https://cli.github.com からインストールし、「gh auth login」を実行してください。",
+  "git.claudeMissing": "Claude Code が PATH に見つかりません。",
+  "git.nothingToCommit": "コミットする変更がありません。"
 }

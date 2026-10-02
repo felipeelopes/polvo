@@ -4,6 +4,7 @@ import { getCurrentWindow } from "@tauri-apps/api/window";
 import { ipc } from "./ipc";
 import { t } from "../i18n";
 import { clone } from "./layout";
+import type { GitSummary } from "../git/api";
 import type { DisplayInfo, LayoutNode, ProjectRecord, RepoInfo, Runtime, Session, Settings, ToolKind, ToolVersion, UsageSnapshot, View, WindowRecord } from "./types";
 
 export type Topic = "sessions" | "runtime" | "layout" | "view" | "active" | "settings" | "usage" | "windows" | "context" | "git" | "projects" | "project";
@@ -28,6 +29,8 @@ class Store {
   versions: Partial<Record<ToolKind, ToolVersion>> = {};
   /** Informações de git por pasta de sessão (para agrupar a barra lateral). */
   git: Record<string, RepoInfo | null> = {};
+  /** Selos de git por worktree (caminho normalizado). */
+  gitSummary: Record<string, GitSummary> = {};
   /** Percentual de contexto usado por sessão. */
   context: Record<string, number> = {};
   windows: WindowRecord[] = [];

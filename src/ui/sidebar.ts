@@ -5,7 +5,8 @@ import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
 import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { statusPill } from "./pane";
-import { t } from "../i18n";
+import { t, tn } from "../i18n";
+import "../styles/git-badges.css";
 
 const COLLAPSED_KEY = "polvo.sidebar.collapsed";
 const CLOSED_KEY = "polvo.sidebar.closedGroups";
@@ -21,6 +22,24 @@ export interface SidebarHost {
   removeProject(path: string): void;
   /** A largura mudou (recolher/expandir). */
   resized(): void;
+  /** Abre o painel Git num repositório/worktree. */
+  openGit(path: string): void;
+}
+
+/** Selo de git de um worktree: alterados, para enviar, para puxar, conflitos. */
+function gitBadge(path: string): string {
+  const g = store.gitSummary[norm(path)];
+  if (!g || (!g.changed && !g.ahead && !g.behind)) return "";
+  const tip = [
+    g.conflicts ? t("git.badge.conflicts") : "",
+    g.changed ? tn("git.badge.changed", g.changed) : "",
+    g.ahead ? t("git.badge.ahead", { n: g.ahead }) : "",
+    g.behind ? t("git.badge.behind", { n: g.behind }) : "",
+    t("git.badge.open"),
+  ]
+    .filter(Boolean)
+    .join("\n");
+  return `<span class="sb-git${g.conflicts ? " bad" : ""}" data-git="${esc(path)}" title="${esc(tip)}">${g.changed ? `<i class="c">●${g.changed}</i>` : ""}${g.ahead ? `<i class="a">↑${g.ahead}</i>` : ""}${g.behind ? `<i class="b">↓${g.behind}</i>` : ""}</span>`;
 }
 
 interface WorktreeGroup {
@@ -161,7 +180,7 @@ export class Sidebar {
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
             const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}<span class="cnt">${all.length}</span>
+                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
                 <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">${ICON.plusSm}</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
@@ -172,7 +191,7 @@ export class Sidebar {
                 const rows = w.sessions.map((s) => this.row(s)).join("");
                 if (!tree) return rows;
                 const tool = lastTool(w.sessions.length ? w.sessions : all);
-                return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : `<em>${t("sidebar.worktree")}</em>`}
+                return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : `<em>${t("sidebar.worktree")}</em>`}${gitBadge(w.path)}
                   <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="${t("sidebar.newInWorktree", { tool: TOOLS[tool].short, branch: esc(w.label) })}">${ICON.plusSm}</button></span></div>${rows || `<div class="wt-none">${t("sidebar.noSessions")}</div>`}</div>`;
               })
               .join("");
@@ -195,6 +214,11 @@ export class Sidebar {
 
   private onClick(e: MouseEvent): void {
     const t = e.target as Element;
+    const gitPath = t.closest<HTMLElement>("[data-git]")?.dataset.git;
+    if (gitPath) {
+      e.stopPropagation();
+      return this.host.openGit(gitPath);
+    }
     const add = t.closest<HTMLElement>("[data-new]");
     if (add) {
       e.stopPropagation();

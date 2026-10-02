@@ -22,6 +22,9 @@ import { isZoomKey, zoomKey } from "./ui/zoom";
 import { outdatedSessions, refreshUsage, refreshUsagePopovers, versionActions } from "./ui/usage";
 import { TOOLS } from "./ui/icons";
 import type { DocsPanel } from "./docs/panel";
+import type { GitView } from "./git/view";
+import { git as gitApi } from "./git/api";
+import { defaultTool } from "./ui/projects";
 import { t, tn } from "./i18n";
 
 /** O painel de documentos estava aberto nesta janela (reabre ao iniciar). */
@@ -33,12 +36,21 @@ function docsWereOpen(): boolean {
   }
 }
 
+/** O Git era a aba visível do painel. */
+function gitWasOpen(): boolean {
+  try {
+    return !!JSON.parse(localStorage.getItem(`polvo.docs.${store.label}`) ?? "{}").git;
+  } catch {
+    return false;
+  }
+}
+
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
 /** Atalhos do app: o terminal os ignora para que cheguem aqui. */
 export function isAppShortcut(e: KeyboardEvent): boolean {
   if (isZoomKey(e)) return true;
-  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "KeyZ", "KeyM"].includes(e.code)) return true;
+  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "KeyZ", "KeyM", "KeyG"].includes(e.code)) return true;
   return e.ctrlKey && e.altKey && e.key in ARROWS;
 }
 
@@ -73,6 +85,7 @@ export class App {
       openMonitors: (a) => void this.openMonitors(a),
       openAbout: () => openAbout(),
       projectMenu: (a) => openProjectMenu(a, this.projectHost),
+      openGit: () => this.openGit(),
       clearProject: () => void store.setProject(null),
     });
     this.rail = new Sidebar({
@@ -89,6 +102,7 @@ export class App {
       newIn: (cwd, tool) => void this.newIn(cwd, tool),
       focusProject: (key) => void store.setProject(key),
       removeProject: (path) => void ipc.projectRemove(path),
+      openGit: (path) => this.openGit(path),
       resized: () => this.tiles.layout(),
     });
     this.tiles = new TilesView({ terms: this.terms, handlers, rail: () => this.rail.el, minimize: (id) => this.minimize(id) });
@@ -100,7 +114,7 @@ export class App {
     main.append(this.rail.el, content);
     this.docsMount = (panel) => main.append(panel.el);
     this.docsContent = content;
-    if (docsWereOpen()) void this.docsPanel();
+    if (docsWereOpen()) void this.docsPanel().then((p) => gitWasOpen() && p.showTool());
     root.append(this.titlebar.el, main);
 
     document.addEventListener("click", (e) => {
@@ -115,12 +129,77 @@ export class App {
 
   private docsContent: HTMLElement | null = null;
 
+  private gitView: GitView | null = null;
+
   private docsPanel(): Promise<DocsPanel> {
-    return (this.docs ??= import("./docs/panel").then(({ DocsPanel }) => {
+    return (this.docs ??= Promise.all([import("./docs/panel"), import("./git/view")]).then(([{ DocsPanel }, { GitView }]) => {
       const panel = new DocsPanel(this.docsContent!);
+      this.gitView = new GitView({
+        newSession: (cwd, tool) => void this.newIn(cwd, tool ?? defaultTool()),
+        askAgent: (cwd, prompt) => void this.askAgent(cwd, prompt),
+        openTerminal: (cwd) => void this.newIn(cwd, "shell"),
+        openDoc: (path) => this.openDoc(path),
+        gitChanged: () => {
+          void this.refreshGit();
+          void this.refreshSummaries();
+        },
+      });
+      panel.attachTool(this.gitView);
       this.docsMount(panel);
       return panel;
     }));
+  }
+
+  /** Abre (ou fecha) o painel Git; com `path`, mostra aquele repositório. */
+  openGit(path?: string, toggle = false): void {
+    this.docsPanel()
+      .then((p) => {
+        if (path) this.gitView?.setRepo(path, true);
+        if (toggle && !path) p.toggleTool();
+        else p.showTool();
+      })
+      .catch((e) => toast(String(e)));
+  }
+
+  /** Abre um agente na pasta e envia um pedido assim que ele estiver pronto. */
+  private async askAgent(cwd: string, prompt: string): Promise<void> {
+    const tool = (["claude", "codex", "opencode"] as ToolKind[]).find((k) => store.toolEnabled(k));
+    if (!tool) return toast(t("git.noAgent"));
+    const id = await this.newIn(cwd, tool);
+    if (!id) return;
+    // Espera o CLI sair de "iniciando" (ou até 20 s) antes de digitar.
+    const start = Date.now();
+    while (Date.now() - start < 20_000) {
+      const st = store.session(id)?.runtime.status;
+      if (st && st !== "starting" && st !== "paused") break;
+      await new Promise((r) => setTimeout(r, 400));
+    }
+    await new Promise((r) => setTimeout(r, 900));
+    await ipc.ptyWrite(id, prompt).catch(() => {});
+    await new Promise((r) => setTimeout(r, 350));
+    await ipc.ptyWrite(id, "\r").catch(() => {});
+  }
+
+  /** Selos de git (alterados, à frente, atrás) dos worktrees desta janela. */
+  private async refreshSummaries(): Promise<void> {
+    const roots = new Set<string>();
+    for (const s of store.mine) {
+      const info = store.git[s.cwd];
+      if (!info) continue;
+      roots.add(info.root);
+      for (const w of info.worktrees) roots.add(w.path);
+    }
+    if (!roots.size) return;
+    try {
+      const res = await gitApi.summaries([...roots]);
+      const next = Object.fromEntries(Object.entries(res).map(([k, v]) => [normPath(k), v]));
+      if (JSON.stringify(next) !== JSON.stringify(store.gitSummary)) {
+        store.gitSummary = next;
+        store.emit("git");
+      }
+    } catch {
+      /* ignora */
+    }
   }
 
   /** Abre um arquivo Markdown no painel de documentos (Ctrl + clique no terminal). */
@@ -152,6 +231,8 @@ export class App {
     window.setInterval(() => void this.refreshContext(), 4000);
     void this.refreshGit();
     window.setInterval(() => void this.refreshGit(), 30_000);
+    window.setInterval(() => document.hasFocus() && void this.refreshSummaries(), 6000);
+    window.addEventListener("focus", () => void this.refreshSummaries());
     versionActions.restart = (tool) => this.restartOutdated(tool);
     versionActions.update = (tool) => void this.runToolUpdate(tool);
     void this.refreshVersions();
@@ -208,6 +289,7 @@ export class App {
       if (JSON.stringify(info) !== JSON.stringify(Object.fromEntries(paths.map((p) => [p, store.git[p] ?? null])))) {
         Object.assign(store.git, info);
         store.emit("git");
+        void this.refreshSummaries();
       }
     } catch {
       /* git indisponível: agrupa só por pasta */
@@ -215,7 +297,7 @@ export class App {
   }
 
   /** Nova sessão direto numa pasta, sem diálogo, ao lado da sessão ativa. */
-  async newIn(cwd: string, tool: ToolKind): Promise<void> {
+  async newIn(cwd: string, tool: ToolKind): Promise<string | null> {
     closePopover();
     // Filtro ligado em outro projeto: desliga para a nova sessão aparecer.
     if (store.project && normPath(store.git[cwd]?.project ?? cwd) !== store.project) await store.setProject(null);
@@ -224,8 +306,10 @@ export class App {
     try {
       const id = await ipc.sessionCreate({ tool, cwd, mode: "new", window: store.label });
       this.onCreated(id, near && store.view === "tiles" ? { id: near, side: r && r.w >= r.h ? "right" : "bottom" } : undefined);
+      return id;
     } catch (e) {
       toast(String(e));
+      return null;
     }
   }
 
@@ -328,6 +412,7 @@ export class App {
     switch (topic) {
       case "git":
         this.rail.render();
+        this.titlebar.render();
         if (store.project) {
           this.tiles.reconcile();
           this.board.render();
@@ -376,6 +461,7 @@ export class App {
         break;
       case "active":
         this.rail.render();
+        this.titlebar.render();
         this.tiles.layout();
         break;
       case "settings":
@@ -598,6 +684,9 @@ export class App {
       case "KeyM":
         if (store.view === "board") this.board.toggleMaximize();
         else if (store.active) this.action("zoom", store.active);
+        break;
+      case "KeyG":
+        this.openGit(undefined, true);
         break;
     }
   }

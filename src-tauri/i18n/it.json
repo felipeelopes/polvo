@@ -42,5 +42,9 @@
   "explorer.openInPolvo": "Apri in Polvo",
   "git.detached": "(detached)",
   "settings.autostartEnableFailed": "Impossibile attivare l'avvio con Windows",
-  "settings.autostartDisableFailed": "Impossibile disattivare l'avvio con Windows"
+  "settings.autostartDisableFailed": "Impossibile disattivare l'avvio con Windows",
+  "git.notRepo": "Questa cartella non è un repository git.",
+  "git.ghMissing": "GitHub CLI (gh) non trovata. Installala da https://cli.github.com ed esegui “gh auth login”.",
+  "git.claudeMissing": "Claude Code non è stato trovato nel PATH.",
+  "git.nothingToCommit": "Non ci sono modifiche da committare."
 }
