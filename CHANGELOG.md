@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.1
+
+- **Cor e ícone por projeto**: clique com o botão direito num projeto da barra lateral (ou escolha ao criar e clonar). As sessões sem cor própria herdam a cor do projeto, e o `/color` da sessão continua valendo acima dela. ([#5](https://github.com/felipeelopes/polvo/pull/5))
+- **Barra lateral recolhida mostra projetos** em vez de sessões: um item por projeto, com ícone ou iniciais na cor do projeto, quantidade de sessões e o status mais urgente; clique para ver as sessões e iniciar uma nova. ([#5](https://github.com/felipeelopes/polvo/pull/5))
+- A caixa de commit do painel Git volta para o lugar quando o repositório não tem alterações. ([#2](https://github.com/felipeelopes/polvo/pull/2))
+- Colaboradores na tela **Sobre** e nos READMEs, sem nomes repetidos e com link para o perfil no GitHub.
+- Primeiras contribuições da comunidade. Obrigado, [@GabrielFranciscon](https://github.com/GabrielFranciscon)!
+
 ## 0.2.0
 
 - **Gerenciador de Git** integrado, com tudo do GitHub Desktop: alterações, diff unificado ou lado a lado com seleção de linhas e trechos, commit (com coautores, corrigir o último commit, `--no-verify` e assinatura), branches (trocar, criar, renomear, apagar, merge, squash, rebase e comparar), histórico (reverter, cherry-pick, tag, reset, editar mensagem e juntar commits não enviados), stash, conflitos, pull requests com status do CI e configurações do repositório. Abra com `Ctrl+Shift+G` ou pelo ícone de branch na barra de título, em cada sessão e na barra lateral.

@@ -9,6 +9,81 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.2.1",
+    notes: {
+      pt: [
+        "**Cor e ícone por projeto**: clique com o botão direito num projeto da barra lateral (ou escolha ao criar e clonar). As sessões sem cor própria herdam a cor do projeto.",
+        "**Barra lateral recolhida mostra projetos**: um item por projeto, com ícone ou iniciais, quantidade de sessões e o status mais urgente; clique para ver as sessões.",
+        "A caixa de commit volta para o lugar quando o repositório não tem alterações.",
+        "Colaboradores na tela **Sobre** e nos READMEs, sem nomes repetidos e com link para o perfil no GitHub.",
+        "Primeiras contribuições da comunidade. Obrigado, @GabrielFranciscon!",
+      ],
+      en: [
+        "**Project color and icon**: right-click a project in the sidebar (or pick them when creating or cloning). Sessions without their own color inherit the project's.",
+        "**Collapsed sidebar shows projects**: one item per project, with its icon or initials, session count and most urgent status; click to see its sessions.",
+        "The commit box stays in place when the repository has no changes.",
+        "Contributors in the **About** screen and the READMEs, without duplicate names and linking to their GitHub profiles.",
+        "First community contributions. Thank you, @GabrielFranciscon!",
+      ],
+      es: [
+        "**Color e icono por proyecto**: haz clic derecho en un proyecto de la barra lateral (o elígelos al crear y clonar). Las sesiones sin color propio heredan el del proyecto.",
+        "**La barra lateral contraída muestra proyectos**: un elemento por proyecto, con icono o iniciales, número de sesiones y el estado más urgente; haz clic para ver sus sesiones.",
+        "El cuadro de commit vuelve a su sitio cuando el repositorio no tiene cambios.",
+        "Colaboradores en la pantalla **Acerca de** y en los README, sin nombres repetidos y con enlace a su perfil de GitHub.",
+        "Primeras contribuciones de la comunidad. ¡Gracias, @GabrielFranciscon!",
+      ],
+      fr: [
+        "**Couleur et icône par projet** : clic droit sur un projet dans la barre latérale (ou au moment de créer et cloner). Les sessions sans couleur propre héritent de celle du projet.",
+        "**La barre latérale réduite affiche les projets** : un élément par projet, avec icône ou initiales, nombre de sessions et statut le plus urgent ; cliquez pour voir ses sessions.",
+        "La zone de commit reste à sa place quand le dépôt n’a pas de modifications.",
+        "Contributeurs dans l’écran **À propos** et les README, sans noms en double et avec un lien vers leur profil GitHub.",
+        "Premières contributions de la communauté. Merci, @GabrielFranciscon !",
+      ],
+      de: [
+        "**Farbe und Symbol pro Projekt**: Rechtsklick auf ein Projekt in der Seitenleiste (oder beim Erstellen und Klonen wählen). Sitzungen ohne eigene Farbe übernehmen die des Projekts.",
+        "**Eingeklappte Seitenleiste zeigt Projekte**: ein Eintrag pro Projekt mit Symbol oder Initialen, Anzahl der Sitzungen und dringendstem Status; Klick zeigt die Sitzungen.",
+        "Das Commit-Feld bleibt an seinem Platz, wenn das Repository keine Änderungen hat.",
+        "Mitwirkende im **Info**-Fenster und in den READMEs, ohne doppelte Namen und mit Link zum GitHub-Profil.",
+        "Erste Beiträge aus der Community. Danke, @GabrielFranciscon!",
+      ],
+      it: [
+        "**Colore e icona per progetto**: clic destro su un progetto nella barra laterale (o sceglili quando crei e cloni). Le sessioni senza colore proprio ereditano quello del progetto.",
+        "**La barra laterale compressa mostra i progetti**: un elemento per progetto, con icona o iniziali, numero di sessioni e stato più urgente; clicca per vedere le sessioni.",
+        "La casella di commit resta al suo posto quando il repository non ha modifiche.",
+        "Contributori nella schermata **Informazioni** e nei README, senza nomi duplicati e con link al profilo GitHub.",
+        "Primi contributi della community. Grazie, @GabrielFranciscon!",
+      ],
+      ja: [
+        "**プロジェクトごとの色とアイコン**: サイドバーのプロジェクトを右クリック（作成・クローン時にも選択可）。独自の色がないセッションはプロジェクトの色を引き継ぎます。",
+        "**折りたたんだサイドバーにプロジェクトを表示**: プロジェクトごとに 1 項目で、アイコンまたはイニシャル、セッション数、最も急ぎの状態を表示。クリックでセッション一覧。",
+        "変更がないリポジトリでもコミット欄が正しい位置に表示されます。",
+        "**情報**画面と README のコントリビューター一覧から重複をなくし、GitHub プロフィールへのリンクを追加。",
+        "コミュニティからの初めてのコントリビューション。ありがとう、@GabrielFranciscon！",
+      ],
+      zh: [
+        "**按项目设置颜色和图标**：在侧边栏右键单击项目（创建和克隆时也可选择）。没有自己颜色的会话会继承项目的颜色。",
+        "**折叠的侧边栏显示项目**：每个项目一项，带图标或首字母、会话数量和最紧急的状态；点击查看其会话。",
+        "仓库没有更改时，提交框会保持在原位。",
+        "**关于**界面和 README 中的贡献者列表不再重复，并链接到其 GitHub 个人主页。",
+        "首批社区贡献。感谢 @GabrielFranciscon！",
+      ],
+      ko: [
+        "**프로젝트별 색상과 아이콘**: 사이드바에서 프로젝트를 마우스 오른쪽 버튼으로 클릭하세요(생성·복제할 때도 선택 가능). 자체 색상이 없는 세션은 프로젝트 색상을 따릅니다.",
+        "**접힌 사이드바에 프로젝트 표시**: 프로젝트마다 하나씩, 아이콘 또는 이니셜, 세션 수, 가장 급한 상태를 보여 주며 클릭하면 세션이 열립니다.",
+        "저장소에 변경 사항이 없을 때도 커밋 상자가 제자리에 있습니다.",
+        "**정보** 화면과 README의 기여자 목록에서 중복을 없애고 GitHub 프로필 링크를 추가했습니다.",
+        "커뮤니티의 첫 기여입니다. 고마워요, @GabrielFranciscon!",
+      ],
+      ru: [
+        "**Цвет и значок проекта**: щёлкните проект в боковой панели правой кнопкой (или выберите при создании и клонировании). Сессии без своего цвета наследуют цвет проекта.",
+        "**Свёрнутая боковая панель показывает проекты**: по одному элементу на проект — значок или инициалы, число сессий и самый срочный статус; щелчок открывает сессии.",
+        "Поле коммита остаётся на месте, когда в репозитории нет изменений.",
+        "Участники в окне **О программе** и в README — без повторов и со ссылками на профили GitHub.",
+        "Первые вклады сообщества. Спасибо, @GabrielFranciscon!",
+      ],
+    },
+  },
+  {
     version: "0.2.0",
     notes: {
       pt: [
