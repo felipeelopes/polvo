@@ -257,6 +257,13 @@ export class SessionTerminal {
     if (e.type !== "keydown") return true;
     if (isAppShortcut(e)) return false;
     const key = e.key.toLowerCase();
+    // Shift+Enter quebra a linha: o xterm mandaria só "\r" (= Enter). Envia ESC+CR,
+    // o mesmo que o VS Code manda, que os CLIs tratam como nova linha sem enviar.
+    if (key === "enter" && e.shiftKey && !e.ctrlKey && !e.altKey && !e.metaKey) {
+      this.term.input("\x1b\r");
+      e.preventDefault();
+      return false;
+    }
     // Ctrl+C copia quando há seleção; sem seleção, envia ^C normalmente.
     if (e.ctrlKey && !e.altKey && key === "c" && (e.shiftKey || this.term.hasSelection())) {
       this.copySelection();
