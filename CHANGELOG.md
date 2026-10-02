@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.0
+
+- **Gerenciador de Git** integrado, com tudo do GitHub Desktop: alterações, diff unificado ou lado a lado com seleção de linhas e trechos, commit (com coautores, corrigir o último commit, `--no-verify` e assinatura), branches (trocar, criar, renomear, apagar, merge, squash, rebase e comparar), histórico (reverter, cherry-pick, tag, reset, editar mensagem e juntar commits não enviados), stash, conflitos, pull requests com status do CI e configurações do repositório. Abra com `Ctrl+Shift+G` ou pelo ícone de branch na barra de título, em cada sessão e na barra lateral.
+- **Os agentes ajudam no Git**: mensagem de commit gerada pelo Claude, revisão das alterações, resolução de conflitos e explicação de commits.
+- **Nova branch numa worktree** com uma sessão do agente já aberta nela, para vários agentes trabalharem no mesmo repositório sem conflito.
+- **Stash fácil**: guarde tudo ou um arquivo só, veja o conteúdo e restaure com um clique; ao trocar de branch, as alterações podem ficar guardadas e voltam quando você retorna.
+- **Sincronizar** com um botão que mostra o que falta (buscar, puxar, enviar ou publicar), com progresso, busca automática e “Atualizar a partir de main”.
+- **Selos de Git** na barra lateral e na barra de título: arquivos alterados, commits para enviar e para puxar.
+- **Polvo animado** na marca e interface mais alinhada.
+- **Novidades ao atualizar**: depois de cada atualização, o Polvo mostra o que mudou, no idioma do app.
+
 ## 0.1.6
 
 - **Shift+Enter quebra a linha** nos terminais (Claude Code, Codex e outros CLIs), como no VS Code, em vez de enviar a mensagem.
