@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.3",
+    notes: {
+      pt: [
+        "**Filtro por estado** no “Para fazer” (tecla E): escolha um ou vários estados reais, como New e Committed, com as cores do Azure DevOps.",
+        "**Mude o estado sem sair do Polvo** (tecla S): os estados reais do work item no Azure DevOps, ou fechar e reabrir a issue no GitHub.",
+        "**Ações rápidas** (tecla .): copiar o ID para a mensagem do commit, o link ou o nome de branch, criar a branch com checkout e abrir um terminal no projeto. Itens que já têm branch local mostram um selo e abrem a sessão nela.",
+        "**Resumo para a daily**: ontem, hoje e impedimentos montados a partir dos seus commits, PRs e work items, prontos para copiar. Revisões paradas há mais de um dia ficam destacadas.",
+      ],
+      en: [
+        "**Filter by state** in “To do” (E key): pick one or more real states, such as New and Committed, in Azure DevOps colors.",
+        "**Change the state without leaving Polvo** (S key): the work item's real Azure DevOps states, or close and reopen the GitHub issue.",
+        "**Quick actions** (. key): copy the ID for your commit message, the link or a branch name, create the branch and check it out, and open a terminal in the project. Items that already have a local branch show a badge and open the session on it.",
+        "**Standup summary**: yesterday, today and blockers built from your commits, PRs and work items, ready to copy. Reviews waiting more than a day are highlighted.",
+      ],
+      es: [
+        "**Filtro por estado** en “Por hacer” (tecla E): elige uno o varios estados reales, como New y Committed, con los colores de Azure DevOps.",
+        "**Cambia el estado sin salir de Polvo** (tecla S): los estados reales del work item en Azure DevOps, o cerrar y reabrir la issue en GitHub.",
+        "**Acciones rápidas** (tecla .): copiar el ID para el mensaje del commit, el enlace o el nombre de branch, crear la branch con checkout y abrir una terminal en el proyecto. Los elementos que ya tienen branch local muestran una insignia y abren la sesión en ella.",
+        "**Resumen para la daily**: ayer, hoy e impedimentos armados con tus commits, PRs y work items, listos para copiar. Las revisiones paradas más de un día se destacan.",
+      ],
+      fr: [
+        "**Filtre par état** dans « À faire » (touche E) : choisissez un ou plusieurs états réels, comme New et Committed, aux couleurs d'Azure DevOps.",
+        "**Changez l'état sans quitter Polvo** (touche S) : les vrais états du work item dans Azure DevOps, ou fermer et rouvrir l'issue GitHub.",
+        "**Actions rapides** (touche .) : copier l'ID pour le message de commit, le lien ou un nom de branche, créer la branche avec checkout et ouvrir un terminal dans le projet. Les éléments qui ont déjà une branche locale affichent un badge et ouvrent la session dessus.",
+        "**Résumé pour le daily** : hier, aujourd'hui et blocages, construits à partir de vos commits, PR et work items, prêts à copier. Les revues en attente depuis plus d'un jour sont mises en avant.",
+      ],
+      de: [
+        "**Filter nach Zustand** in „Zu erledigen“ (Taste E): Wähle einen oder mehrere echte Zustände wie New und Committed, in den Azure-DevOps-Farben.",
+        "**Zustand ändern, ohne Polvo zu verlassen** (Taste S): die echten Zustände des Work Items in Azure DevOps oder das GitHub-Issue schließen und wieder öffnen.",
+        "**Schnellaktionen** (Taste .): ID für die Commit-Nachricht, Link oder Branch-Namen kopieren, Branch anlegen und auschecken und ein Terminal im Projekt öffnen. Einträge mit lokalem Branch zeigen ein Abzeichen und öffnen die Sitzung darauf.",
+        "**Zusammenfassung fürs Daily**: gestern, heute und Hindernisse aus deinen Commits, PRs und Work Items, fertig zum Kopieren. Reviews, die länger als einen Tag warten, werden hervorgehoben.",
+      ],
+      it: [
+        "**Filtro per stato** in “Da fare” (tasto E): scegli uno o più stati reali, come New e Committed, con i colori di Azure DevOps.",
+        "**Cambia lo stato senza uscire da Polvo** (tasto S): gli stati reali del work item in Azure DevOps, oppure chiudi e riapri la issue su GitHub.",
+        "**Azioni rapide** (tasto .): copia l'ID per il messaggio di commit, il link o un nome di branch, crea il branch con checkout e apri un terminale nel progetto. Gli elementi che hanno già un branch locale mostrano un badge e aprono la sessione su di esso.",
+        "**Riepilogo per il daily**: ieri, oggi e impedimenti costruiti dai tuoi commit, PR e work item, pronti da copiare. Le revisioni ferme da più di un giorno sono evidenziate.",
+      ],
+      ja: [
+        "**状態で絞り込み**（E キー）：「やること」で New や Committed など実際の状態を 1 つ以上選べます。色は Azure DevOps と同じです。",
+        "**Polvo から状態を変更**（S キー）：Azure DevOps の作業項目の実際の状態、または GitHub の Issue のクローズと再オープン。",
+        "**クイックアクション**（. キー）：コミットメッセージ用の ID、リンク、branch 名のコピー、branch の作成と checkout、プロジェクトでのターミナル起動。ローカル branch がある項目にはバッジが付き、その branch でセッションを開けます。",
+        "**デイリー用のまとめ**：コミット、PR、作業項目から昨日・今日・障害をまとめ、そのままコピーできます。1 日以上待っているレビューは強調表示されます。",
+      ],
+      zh: [
+        "**按状态筛选**（E 键）：在“待办”中选择一个或多个真实状态，如 New 和 Committed，颜色与 Azure DevOps 一致。",
+        "**不离开 Polvo 即可更改状态**（S 键）：使用 Azure DevOps 工作项的真实状态，或关闭、重新打开 GitHub issue。",
+        "**快捷操作**（. 键）：复制用于提交信息的 ID、链接或 branch 名称，创建 branch 并 checkout，在项目中打开终端。已有本地 branch 的条目会显示标记，并可直接在其上打开会话。",
+        "**站会摘要**：根据你的提交、PR 和工作项生成昨天、今天和阻碍，可直接复制。等待超过一天的评审会被突出显示。",
+      ],
+      ko: [
+        "**상태로 필터**(E 키): “할 일”에서 New, Committed 같은 실제 상태를 하나 이상 고를 수 있으며 Azure DevOps 색으로 표시됩니다.",
+        "**Polvo에서 바로 상태 변경**(S 키): Azure DevOps 작업 항목의 실제 상태로 바꾸거나 GitHub 이슈를 닫고 다시 엽니다.",
+        "**빠른 작업**(. 키): 커밋 메시지용 ID, 링크, branch 이름 복사, branch 생성 및 checkout, 프로젝트에서 터미널 열기. 로컬 branch가 있는 항목에는 배지가 붙고 해당 branch에서 세션을 엽니다.",
+        "**데일리 요약**: 커밋, PR, 작업 항목으로 어제·오늘·장애 요소를 정리해 바로 복사할 수 있습니다. 하루 넘게 기다리는 리뷰는 강조됩니다.",
+      ],
+      ru: [
+        "**Фильтр по состоянию** в «К выполнению» (клавиша E): выберите одно или несколько реальных состояний, например New и Committed, в цветах Azure DevOps.",
+        "**Меняйте состояние, не выходя из Polvo** (клавиша S): реальные состояния рабочего элемента в Azure DevOps или закрытие и повторное открытие issue в GitHub.",
+        "**Быстрые действия** (клавиша .): скопировать ID для сообщения коммита, ссылку или имя ветки, создать ветку с checkout и открыть терминал в проекте. У элементов с локальной веткой есть значок, и сессия открывается прямо в ней.",
+        "**Сводка для стендапа**: вчера, сегодня и блокеры по вашим коммитам, PR и рабочим элементам — готово к копированию. Ревью, ожидающие больше дня, выделены.",
+      ],
+    },
+  },
+  {
     version: "0.3.2",
     notes: {
       pt: ["**Meu trabalho com os estados reais do Azure DevOps**: work items mostram o estado e o tipo como no Boards (Committed, Approved, Product Backlog Item…), com as cores de lá. Filtros, pendentes, grupos e sprint seguem a categoria oficial de cada estado, inclusive em processos customizados."],

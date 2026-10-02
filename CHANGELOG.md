@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3
+
+- **Filtro por estado** no “Para fazer” (tecla E): escolha um ou vários estados reais, como New e Committed, com as cores do Azure DevOps.
+- **Mude o estado sem sair do Polvo** (tecla S): os estados reais do work item no Azure DevOps, ou fechar e reabrir a issue no GitHub.
+- **Ações rápidas** (tecla .): copiar o ID para a mensagem do commit, o link ou o nome de branch, criar a branch com checkout e abrir um terminal no projeto. Itens que já têm branch local mostram um selo e abrem a sessão nela.
+- **Resumo para a daily**: ontem, hoje e impedimentos montados a partir dos seus commits, PRs e work items, prontos para copiar. Revisões paradas há mais de um dia ficam destacadas.
+
 ## 0.3.2
 
 - **Meu trabalho com os estados reais do Azure DevOps**: work items mostram o estado e o tipo como no Boards (Committed, Approved, Product Backlog Item…), com as cores de lá. Filtros, pendentes, grupos e sprint seguem a categoria oficial de cada estado, inclusive em processos customizados.
