@@ -1,5 +1,5 @@
 /* Popovers, diálogos (nova sessão, onboarding, ajustes) e avisos. */
-.pop { position: fixed; z-index: 200; width: 320px; padding: 14px; border-radius: var(--r-lg); background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--line2); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); animation: rise 0.14s; }
+.pop { position: fixed; z-index: 200; width: 320px; max-width: calc(100vw - 24px); max-height: calc(100vh - 24px); overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--thumb) transparent; padding: 14px; border-radius: var(--r-lg); background: var(--glass); backdrop-filter: blur(30px); border: 1px solid var(--line2); box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5); animation: rise 0.14s; }
 .pop h4 { margin: 0 0 10px; font-size: 13px; }
 .poph { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
 .poph .ic { width: 30px; height: 30px; border-radius: var(--r-sm); display: grid; place-items: center; background: color-mix(in srgb, var(--acc) 16%, transparent); }
@@ -16,10 +16,14 @@
 .help li span:first-child { color: var(--accent); text-align: center; }
 .help .keys { margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--line); display: grid; grid-template-columns: auto 1fr; gap: 6px 12px; font-size: 12px; color: var(--muted); }
 
-.modal { position: fixed; inset: 0; z-index: 300; background: rgba(5, 7, 15, 0.5); display: grid; place-items: center; animation: fade-in 0.16s var(--ease); }
+.modal { position: fixed; inset: 0; z-index: 300; padding: 16px; background: rgba(5, 7, 15, 0.5); display: grid; place-items: center; animation: fade-in 0.16s var(--ease); }
 .modal .mbox { animation: pop-in 0.22s var(--ease); }
 @keyframes pop-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-.mbox { width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 40px); overflow: auto; scrollbar-width: thin; scrollbar-color: var(--thumb) transparent; background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--line2); border-radius: var(--r-xl); padding: 24px; box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6); }
+/* Diálogos: em janelas baixas o conteúdo rola por dentro e o rodapé de botões fica sempre à vista. */
+.mbox { --px: 24px; --pt: 24px; --pb: 24px; position: relative; width: min(640px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: hidden auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: var(--thumb) transparent; background: var(--glass); backdrop-filter: blur(40px); border: 1px solid var(--line2); border-radius: var(--r-xl); padding: var(--pt) var(--px) var(--pb); box-shadow: 0 40px 100px rgba(0, 0, 0, 0.6); }
+.mbox > .mfoot { position: sticky; bottom: calc(-1 * var(--pb)); z-index: 2; margin-left: calc(-1 * var(--px)); margin-right: calc(-1 * var(--px)); margin-bottom: calc(-1 * var(--pb)); padding: 12px var(--px) var(--pb); background: rgb(24, 26, 40); border-radius: 0 0 var(--r-xl) var(--r-xl); }
+/* A linha acima do rodapé só aparece quando há conteúdo rolando por baixo dele. */
+.mbox.scrolls > .mfoot { box-shadow: 0 -1px 0 var(--line-soft), 0 -14px 20px -10px rgba(0, 0, 0, 0.45); }
 .mbox h2 { margin: 0 0 4px; font-size: 16px; font-weight: 600; }
 .mbox .sub { color: var(--muted); font-size: 12.5px; margin-bottom: 16px; }
 .tools { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 18px; }
@@ -54,7 +58,7 @@
 .mon::after { content: ""; position: absolute; left: 50%; bottom: -9px; width: 18px; height: 5px; transform: translateX(-50%); border-radius: 2px; background: currentColor; }
 .opt.on .mon { color: var(--accent); }
 
-.onb { width: min(680px, calc(100vw - 32px)); padding: 30px 32px 24px; }
+.onb { --px: 32px; --pt: 30px; width: min(680px, calc(100vw - 32px)); }
 .onb .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 18px; }
 .onb .hero img { width: 64px; height: 64px; }
 .onb h2 { font-size: 20px; }
@@ -103,8 +107,8 @@
 .menu hr { border: 0; border-top: 1px solid var(--line); margin: 4px 6px; }
 
 /* Sobre */
-.about { position: relative; width: min(560px, calc(100vw - 32px)); overflow: hidden; }
-.about > *:not(.bubbles) { position: relative; }
+.about { width: min(560px, calc(100vw - 32px)); }
+.about > :not(.bubbles, .mfoot) { position: relative; }
 .about-hero { display: flex; align-items: center; gap: 20px; margin: 4px 0 18px; }
 .about-hero h2 { font-size: 24px; margin: 0; }
 .about-hero .ver { color: var(--accent); font-size: 12.5px; margin: 2px 0 6px; font-variant-numeric: tabular-nums; }
@@ -122,8 +126,7 @@ button.person:hover { border-color: var(--line2); background: var(--hover); }
 .update .uhead b { margin: 0; }
 
 /* fornecedores (onboarding e ajustes) */
-.onb { position: relative; overflow: hidden; }
-.onb > *:not(.bubbles) { position: relative; }
+.onb > :not(.bubbles, .mfoot) { position: relative; }
 .prov { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--r-md); background: rgba(255, 255, 255, 0.04); border: 1px solid var(--line); font-size: 12.5px; cursor: pointer; }
 .prov:hover { border-color: var(--line2); }
 .prov > span:first-of-type { display: flex; flex-direction: column; line-height: 1.3; flex: 1; }
@@ -179,3 +182,22 @@ button.person:hover { border-color: var(--line2); background: var(--hover); }
 .ps .ps-ic.on { background: color-mix(in srgb, var(--pc) 20%, transparent); box-shadow: inset 0 0 0 1.5px var(--pc); }
 .ps-hint { padding: 10px 6px 0; font-size: 11.5px; line-height: 1.45; color: var(--faint); white-space: normal; }
 .mbox .ps { padding: 0; margin-bottom: 6px; }
+
+/* Janelas estreitas ou baixas: grades viram uma ou duas colunas e os respiros diminuem. */
+@media (max-width: 720px) {
+  .tools { grid-template-columns: repeat(2, 1fr); }
+  .opts, .detected { grid-template-columns: 1fr; }
+  .mbox, .onb, .wn { --px: 18px; --pt: 20px; --pb: 18px; }
+  .about-hero { gap: 14px; }
+  .lang-row { flex-wrap: wrap; }
+}
+@media (max-height: 680px) {
+  .mbox, .onb, .wn { --pt: 18px; --pb: 16px; }
+  .onb .hero, .mbox.guard .hero, .wn .hero { margin-bottom: 10px; }
+  .onb .hero .polvo, .wn .hero .polvo, .mbox.guard .hero .polvo { width: 48px; height: 48px; }
+  .about-hero { margin: 0 0 12px; }
+  .about-hero .app-icon { width: 72px !important; height: 72px !important; }
+  .about-hero .app-icon .polvo { width: 58px; height: 58px; }
+  .mbox .sub { margin-bottom: 12px; }
+  .rows .row { padding: 9px 12px; }
+}

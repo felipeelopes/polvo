@@ -1,9 +1,9 @@
 /* Diálogo "Novidades" depois de atualizar. */
-.wn { width: min(620px, calc(100vw - 32px)); padding: 26px 28px 20px; }
+.wn { --px: 28px; --pt: 26px; --pb: 20px; width: min(620px, calc(100vw - 32px)); }
 .wn .hero { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
 .wn .step { font-size: 11px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--accent); margin-bottom: 4px; }
 .wn h2 { font-size: 19px; }
-.wn-body { max-height: min(56vh, 520px); overflow-y: auto; margin: 0 -6px 14px; padding: 0 6px; scrollbar-width: thin; }
+.wn-body { max-height: min(56vh, 520px, max(140px, calc(100vh - 260px))); overflow-y: auto; margin: 0 -6px 14px; padding: 0 6px; scrollbar-width: thin; }
 .wn-body section + section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
 .wn-v { display: inline-block; font: 600 11px var(--mono); color: var(--accent); background: rgba(138, 162, 255, 0.14); padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; }
 .wn ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }

@@ -12,6 +12,7 @@ import { openNewSession } from "./ui/new-session";
 import { openOnboarding } from "./ui/onboarding";
 import { startUpdateChecks } from "./ui/updater";
 import { initZoom } from "./ui/zoom";
+import { installModalFit } from "./ui/modal-fit";
 import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
 import { showWhatsNew } from "./ui/whatsnew";
@@ -42,6 +43,7 @@ async function boot(): Promise<void> {
   store.recentDirs = snapshot.recentDirs;
   document.body.classList.toggle("no-mica", !display.mica);
   initZoom();
+  installModalFit();
   installCloseGuard();
 
   // Em desenvolvimento, `__polvo.store` fica acessível no DevTools para depuração.
