@@ -9,6 +9,21 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.2",
+    notes: {
+      pt: ["**Meu trabalho com os estados reais do Azure DevOps**: work items mostram o estado e o tipo como no Boards (Committed, Approved, Product Backlog Item…), com as cores de lá. Filtros, pendentes, grupos e sprint seguem a categoria oficial de cada estado, inclusive em processos customizados."],
+      en: ["**My work with real Azure DevOps states**: work items show their state and type as in Boards (Committed, Approved, Product Backlog Item…), in Boards colors. Filters, pending items, groups and the sprint follow each state's official category, including in custom processes."],
+      es: ["**Mi trabajo con los estados reales de Azure DevOps**: los work items muestran el estado y el tipo como en Boards (Committed, Approved, Product Backlog Item…), con sus colores. Filtros, pendientes, grupos y sprint siguen la categoría oficial de cada estado, también en procesos personalizados."],
+      fr: ["**Mon travail avec les vrais états d'Azure DevOps** : les work items affichent leur état et leur type comme dans Boards (Committed, Approved, Product Backlog Item…), avec leurs couleurs. Filtres, éléments en attente, groupes et sprint suivent la catégorie officielle de chaque état, y compris dans les processus personnalisés."],
+      de: ["**Meine Arbeit mit den echten Azure-DevOps-Zuständen**: Work Items zeigen Zustand und Typ wie in Boards (Committed, Approved, Product Backlog Item …) in den dortigen Farben. Filter, offene Einträge, Gruppen und Sprint folgen der offiziellen Kategorie jedes Zustands, auch in angepassten Prozessen."],
+      it: ["**Il mio lavoro con gli stati reali di Azure DevOps**: i work item mostrano stato e tipo come in Boards (Committed, Approved, Product Backlog Item…), con i loro colori. Filtri, elementi in sospeso, gruppi e sprint seguono la categoria ufficiale di ogni stato, anche nei processi personalizzati."],
+      ja: ["**マイワークで Azure DevOps の実際の状態を表示**：作業項目の状態と種類を Boards と同じ名前と色で表示します（Committed、Approved、Product Backlog Item など）。フィルター、未完了、グループ、スプリントは各状態の公式カテゴリに従い、カスタムプロセスにも対応します。"],
+      zh: ["**我的工作显示 Azure DevOps 的真实状态**：工作项按 Boards 中的名称和颜色显示状态与类型（Committed、Approved、Product Backlog Item 等）。筛选、待处理、分组和冲刺都遵循每个状态的官方类别，也支持自定义流程。"],
+      ko: ["**내 작업에 Azure DevOps의 실제 상태 표시**: 작업 항목의 상태와 유형을 Boards와 같은 이름과 색으로 보여 줍니다(Committed, Approved, Product Backlog Item 등). 필터, 대기 항목, 그룹, 스프린트는 각 상태의 공식 범주를 따르며 사용자 지정 프로세스도 지원합니다."],
+      ru: ["**Моя работа с реальными состояниями Azure DevOps**: рабочие элементы показывают состояние и тип как в Boards (Committed, Approved, Product Backlog Item…), в тех же цветах. Фильтры, незавершённое, группы и спринт следуют официальной категории каждого состояния, в том числе в настраиваемых процессах."],
+    },
+  },
+  {
     version: "0.3.1",
     notes: {
       pt: ["**Meu trabalho**: o Polvo não fecha mais ao abrir “Configurar” e procurar suas contas do GitHub e do Azure DevOps."],

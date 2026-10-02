@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.2
+
+- **Meu trabalho com os estados reais do Azure DevOps**: work items mostram o estado e o tipo como no Boards (Committed, Approved, Product Backlog Item…), com as cores de lá. Filtros, pendentes, grupos e sprint seguem a categoria oficial de cada estado, inclusive em processos customizados.
+
 ## 0.3.1
 
 - **Meu trabalho**: o Polvo não fecha mais ao abrir “Configurar” e procurar suas contas do GitHub e do Azure DevOps.

@@ -1,6 +1,6 @@
 [package]
 name = "polvo"
-version = "0.3.1"
+version = "0.3.2"
 description = "Polvo — run Claude Code, Codex, OpenCode and shells side by side on Windows"
 authors = ["Polvo contributors"]
 license = "MIT"
