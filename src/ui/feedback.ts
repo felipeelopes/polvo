@@ -30,8 +30,8 @@ let popEl: HTMLDivElement | null = null;
 let popKey: string | null = null;
 let popClose: (() => void) | null = null;
 
-/** Abre um popover abaixo de `anchor`. Clicar de novo na mesma chave fecha. */
-export function popover(key: string, anchor: HTMLElement, render: (el: HTMLDivElement) => void, cls = "", onClose?: () => void): void {
+/** Abre um popover abaixo de `anchor` (ou à direita, rente ao topo). Clicar de novo na mesma chave fecha. */
+export function popover(key: string, anchor: HTMLElement, render: (el: HTMLDivElement) => void, cls = "", onClose?: () => void, side: "below" | "right" = "below"): void {
   if (popKey === key) return closePopover();
   closePopover();
   popEl = h("div", `pop ${cls}`);
@@ -43,9 +43,10 @@ export function popover(key: string, anchor: HTMLElement, render: (el: HTMLDivEl
   // Abre para cima quando não cabe abaixo; nunca sai da janela.
   const hgt = popEl.offsetHeight;
   const below = r.bottom + 8;
-  const top = below + hgt <= innerHeight - 12 ? below : r.top - 8 - hgt;
+  const top = side === "right" ? r.top : below + hgt <= innerHeight - 12 ? below : r.top - 8 - hgt;
+  const left = side === "right" ? r.right + 8 : r.right - popEl.offsetWidth;
   popEl.style.top = `${Math.max(12, Math.min(innerHeight - hgt - 12, top))}px`;
-  popEl.style.left = `${Math.max(12, Math.min(innerWidth - popEl.offsetWidth - 12, r.right - popEl.offsetWidth))}px`;
+  popEl.style.left = `${Math.max(12, Math.min(innerWidth - popEl.offsetWidth - 12, left))}px`;
 }
 
 export function refreshPopover(key: string, render: (el: HTMLDivElement) => void): void {

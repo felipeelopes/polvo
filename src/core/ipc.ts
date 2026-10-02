@@ -62,6 +62,9 @@ export const ipc = {
     invoke<ProjectRecord>("project_create", { parent, name, gitInit }),
   projectClone: (url: string, parent: string) => invoke<ProjectRecord>("project_clone", { url, parent }),
   projectRemove: (path: string) => invoke<void>("project_remove", { path }),
+  /** Cor e ícone do projeto (null volta ao padrão); adiciona o projeto se preciso. */
+  projectStyle: (path: string, color: string | null, icon: string | null) =>
+    invoke<ProjectRecord>("project_style", { path, color, icon }),
   /** Versões instalada/publicada de cada CLI. */
   toolsVersions: () => invoke<Partial<Record<ToolKind, ToolVersion>>>("tools_versions"),
   /** Pasta pedida pelo "Abrir no Polvo" ao iniciar o app (uma vez só). */

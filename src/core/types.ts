@@ -103,6 +103,10 @@ export interface ProjectRecord {
   path: string;
   name: string;
   addedAt: number;
+  /** Cor do projeto (nome do `/color` ou #hex); as sessões sem cor própria herdam. */
+  color?: string | null;
+  /** Ícone do projeto (id de `PROJECT_ICONS`); sem ícone, usa a pasta. */
+  icon?: string | null;
 }
 
 export interface Snapshot {

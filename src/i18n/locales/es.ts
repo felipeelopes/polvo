@@ -258,6 +258,13 @@ const messages: Messages = {
       cloning: "Clonando…",
       cloned: "“{name}” clonado",
     },
+    style: {
+      title: "Color e icono (opcional)",
+      color: "Color",
+      icon: "Icono",
+      auto: "Predeterminado",
+      hint: "Las sesiones sin color propio (/color) usan el color del proyecto.",
+    },
   },
   usage: {
     source: {

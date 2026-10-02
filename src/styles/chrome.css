@@ -130,3 +130,6 @@
 
 /* Branch/worktree sem sessões. */
 .wt-none { font-size: 11px; color: var(--faint); padding: 2px 8px 6px 42px; }
+
+/* Projeto com cor: o ícone do cabeçalho na cor do projeto. */
+.pg-h.styled > svg { color: var(--pc); opacity: 1; }

@@ -134,6 +134,7 @@ pub fn run() {
             projects::project_create,
             projects::project_clone,
             projects::project_remove,
+            projects::project_style,
             versions::tools_versions,
             files::file_read,
             files::file_write,

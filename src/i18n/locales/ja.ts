@@ -258,6 +258,13 @@ const messages: Messages = {
       cloning: "クローン中…",
       cloned: "「{name}」をクローンしました",
     },
+    style: {
+      title: "色とアイコン（任意）",
+      color: "色",
+      icon: "アイコン",
+      auto: "デフォルト",
+      hint: "独自の色（/color）がないセッションはプロジェクトの色を使います。",
+    },
   },
   usage: {
     source: {

@@ -1,10 +1,12 @@
 // Barra lateral: sessões agrupadas por projeto (repositório), com os worktrees
 // de cada um. Recolhida, vira o trilho de ícones.
+import { colorValue } from "../core/appearance";
 import { normPath, store } from "../core/store";
 import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
-import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
+import { ICON, projectIcon, sessionColor, TOOLS, toolIcon } from "./icons";
 import { statusPill } from "./pane";
+import { openProjectStyle } from "./project-style";
 import { t, tn } from "../i18n";
 import "../styles/git-badges.css";
 
@@ -146,6 +148,7 @@ export class Sidebar {
     this.el.append(this.body, foot);
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("click", (e) => this.onClick(e));
+    this.el.addEventListener("contextmenu", (e) => this.onMenu(e));
     this.el.addEventListener("pointerover", (e) => this.onOver(e));
     this.el.addEventListener("pointerleave", hideTip);
     this.applyCollapsed();
@@ -182,8 +185,10 @@ export class Sidebar {
             const out = !!store.project && !focused;
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
-            const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
+            const rec = store.projectRecord(g.key);
+            const pc = colorValue(rec?.color);
+            const head = `<div class="pg-h${closed ? " closed" : ""}${pc ? " styled" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}"${pc ? ` style="--pc:${pc}"` : ""}>
+                <span class="chev">${ICON.chevron}</span>${projectIcon(rec?.icon)}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
                 <span class="pg-acts">${tools(g.path)}${tree ? gitBtn(g.path) : ""}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">${ICON.plusSm}</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
@@ -252,6 +257,15 @@ export class Sidebar {
       localStorage.setItem(CLOSED_KEY, JSON.stringify([...this.closed]));
       this.render();
     }
+  }
+
+  /** Clique direito num projeto: cor e ícone. */
+  private onMenu(e: MouseEvent): void {
+    const key = (e.target as Element).closest<HTMLElement>("[data-group]")?.dataset.group;
+    const g = key ? groupSessions(store.mine).find((x) => x.key === key) : undefined;
+    if (!g) return;
+    hideTip();
+    openProjectStyle(e, g.key, g.path, g.name);
   }
 
   private onOver(e: PointerEvent): void {

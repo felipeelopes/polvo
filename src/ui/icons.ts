@@ -1,5 +1,7 @@
 // Ícones (SVG inline) e metadados visuais das ferramentas.
-import type { ToolKind } from "../core/types";
+import { resolveColor } from "../core/appearance";
+import { store } from "../core/store";
+import type { Session, ToolKind } from "../core/types";
 import { t } from "../i18n";
 
 export const TOOLS: Record<ToolKind, { name: string; short: string; color: string; vendor: string }> = {
@@ -9,24 +11,9 @@ export const TOOLS: Record<ToolKind, { name: string; short: string; color: strin
   shell: { name: "PowerShell", short: "Shell", color: "#A78BFA", get vendor() { return t("tools.shell.vendor"); } },
 };
 
-/** Cores aceitas pelo `/color` do Claude Code (e do Polvo). */
-export const SESSION_COLORS: Record<string, string> = {
-  red: "#F07178",
-  orange: "#F78C6C",
-  yellow: "#E5C07B",
-  green: "#3FB27F",
-  cyan: "#56C7D9",
-  blue: "#7C9CFF",
-  purple: "#C792EA",
-  pink: "#FF7AB2",
-};
-
-/** Cor de destaque da sessão: a do `/color`, ou a da ferramenta. */
-export function sessionColor(s: { tool: ToolKind; color?: string | null }): string {
-  const c = s.color?.trim().toLowerCase();
-  if (c && SESSION_COLORS[c]) return SESSION_COLORS[c];
-  if (c && /^#[0-9a-f]{3,8}$/i.test(c)) return c;
-  return TOOLS[s.tool].color;
+/** Cor de destaque da sessão: a do `/color`, senão a do projeto, senão a da ferramenta. */
+export function sessionColor(s: Session): string {
+  return resolveColor(s.color, store.projectOf(s)?.color, TOOLS[s.tool].color);
 }
 
 const TOOL_PATHS: Record<ToolKind, string> = {
@@ -81,3 +68,26 @@ export const ICON = {
   winRestore: '<svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor"><rect x=".5" y="2.5" width="7" height="7"/><path d="M2.5 2.5v-2h7v7h-2"/></svg>',
   winClose: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 0l10 10M10 0L0 10" stroke="currentColor"/></svg>',
 };
+
+/** Ícones que o usuário pode dar a um projeto (a ordem é a da grade de escolha). */
+const PROJECT_ICONS: Record<string, string> = {
+  folder: '<path d="M1.5 4.5a1 1 0 011-1h3.2l1.5 1.5h6.3a1 1 0 011 1v6.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/>',
+  code: '<path d="M5.5 4.5L2 8l3.5 3.5M10.5 4.5L14 8l-3.5 3.5M9.2 2.8l-2.4 10.4"/>',
+  globe: '<circle cx="8" cy="8" r="6.5"/><path d="M1.5 8h13M8 1.5c1.8 1.8 2.7 4 2.7 6.5S9.8 12.7 8 14.5M8 1.5C6.2 3.3 5.3 5.5 5.3 8s.9 4.7 2.7 6.5"/>',
+  mobile: '<rect x="4" y="1.5" width="8" height="13" rx="1.8"/><path d="M7 12.2h2"/>',
+  database: '<ellipse cx="8" cy="3.8" rx="5.5" ry="2.3"/><path d="M2.5 3.8v8.4c0 1.27 2.46 2.3 5.5 2.3s5.5-1.03 5.5-2.3V3.8M2.5 8c0 1.27 2.46 2.3 5.5 2.3s5.5-1.03 5.5-2.3"/>',
+  cart: '<path d="M1.5 2h1.8l1.7 8.2h7.4l1.6-5.7H4"/><circle cx="6" cy="13.2" r="1"/><circle cx="11.6" cy="13.2" r="1"/>',
+  card: '<rect x="1.5" y="3.5" width="13" height="9" rx="1.8"/><path d="M1.5 6.5h13M4 10h3"/>',
+  book: '<path d="M8 4c-1.4-1.3-3.5-1.8-6-1.5v10c2.5-.3 4.6.2 6 1.5 1.4-1.3 3.5-1.8 6-1.5v-10c-2.5-.3-4.6.2-6 1.5zM8 4v10"/>',
+  box: '<path d="M8 1.5l6 3v7l-6 3-6-3v-7z"/><path d="M2 4.5l6 3 6-3M8 7.5v7"/>',
+  bolt: '<path d="M9.2 1.5L3.2 9h4.3l-.7 5.5 6-7.5H8.5z"/>',
+  star: '<path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/>',
+  flask: '<path d="M6 1.5h4M6.6 1.5v4.4L2.7 12.5a1.3 1.3 0 001.1 2h8.4a1.3 1.3 0 001.1-2L9.4 5.9V1.5M4.4 10h7.2"/>',
+};
+
+export const PROJECT_ICON_IDS = Object.keys(PROJECT_ICONS);
+
+/** Ícone de um projeto; id desconhecido (ou nenhum) vira a pasta. */
+export function projectIcon(id: string | null | undefined, size = 14): string {
+  return svg(PROJECT_ICONS[id ?? ""] ?? PROJECT_ICONS.folder, size);
+}

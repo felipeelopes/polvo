@@ -258,6 +258,13 @@ const messages: Messages = {
       cloning: "正在克隆…",
       cloned: "已克隆“{name}”",
     },
+    style: {
+      title: "颜色和图标（可选）",
+      color: "颜色",
+      icon: "图标",
+      auto: "默认",
+      hint: "没有自定义颜色（/color）的会话使用项目颜色。",
+    },
   },
   usage: {
     source: {
