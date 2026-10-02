@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- **Telas menores**: Ajustes e os demais diálogos (onboarding, Sobre, nova sessão, projetos, Git, novidades) rolam por dentro, com o rodapé de botões sempre à vista. Popovers não passam mais da borda da tela, e as grades viram uma ou duas colunas em janelas estreitas.
+
 ## 0.2.1
 
 - **Cor e ícone por projeto**: clique com o botão direito num projeto da barra lateral (ou escolha ao criar e clonar). As sessões sem cor própria herdam a cor do projeto, e o `/color` da sessão continua valendo acima dela. ([#5](https://github.com/felipeelopes/polvo/pull/5))

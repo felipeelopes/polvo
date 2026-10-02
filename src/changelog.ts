@@ -9,6 +9,21 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.2.2",
+    notes: {
+      pt: ["**Telas menores**: Ajustes e os demais diálogos rolam por dentro, com os botões sempre à vista; popovers e grades se ajustam a janelas estreitas ou baixas."],
+      en: ["**Smaller screens**: Settings and the other dialogs scroll inside, with their buttons always in view; popovers and grids adapt to narrow or short windows."],
+      es: ["**Pantallas más pequeñas**: Ajustes y los demás diálogos se desplazan por dentro, con los botones siempre visibles; los popovers y las cuadrículas se adaptan a ventanas estrechas o bajas."],
+      fr: ["**Petits écrans** : les Réglages et les autres boîtes de dialogue défilent à l’intérieur, avec les boutons toujours visibles ; popovers et grilles s’adaptent aux fenêtres étroites ou basses."],
+      de: ["**Kleinere Bildschirme**: Einstellungen und die anderen Dialoge scrollen innen, die Schaltflächen bleiben immer sichtbar; Popover und Raster passen sich schmalen oder niedrigen Fenstern an."],
+      it: ["**Schermi più piccoli**: Impostazioni e le altre finestre di dialogo scorrono all’interno, con i pulsanti sempre visibili; popover e griglie si adattano a finestre strette o basse."],
+      ja: ["**小さな画面に対応**: 設定などのダイアログは内側でスクロールし、ボタンは常に表示されます。ポップオーバーやグリッドも狭い・低いウィンドウに合わせて調整されます。"],
+      zh: ["**适配小屏幕**：设置等对话框在内部滚动，按钮始终可见；弹出框和网格会适应窄或矮的窗口。"],
+      ko: ["**작은 화면 지원**: 설정과 다른 대화 상자가 내부에서 스크롤되며 버튼은 항상 보입니다. 팝오버와 그리드도 좁거나 낮은 창에 맞춰집니다."],
+      ru: ["**Небольшие экраны**: настройки и другие диалоги прокручиваются внутри, кнопки всегда на виду; всплывающие окна и сетки подстраиваются под узкие и низкие окна."],
+    },
+  },
+  {
     version: "0.2.1",
     notes: {
       pt: [
