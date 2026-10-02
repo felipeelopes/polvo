@@ -27,6 +27,8 @@ const item = (p: Partial<Item>): Item => ({
   kind: "issue",
   state: "todo",
   rawState: "open",
+  stateColor: null,
+  typeName: null,
   priority: null,
   tags: [],
   project: "polvo",
@@ -148,6 +150,28 @@ describe("Azure DevOps", () => {
     expect(fromAdoItem("nox", w, "other", null).assigned).toBe(false);
   });
 
+  it("usa os estados reais (nome, cor e categoria) do Azure DevOps", () => {
+    const defs = [
+      { name: "New", color: "b2b2b2", category: "Proposed" },
+      { name: "Approved", color: "b2b2b2", category: "Proposed" },
+      { name: "Committed", color: "007acc", category: "Proposed" },
+      { name: "Testing", color: "ff9d00", category: "InProgress" },
+      { name: "Done", color: "339933", category: "Completed" },
+    ];
+    const w = (state: string) => ({ id: 1, fields: { "System.State": state, "System.WorkItemType": "Product Backlog Item", "System.TeamProject": "P" } });
+    const committed = fromAdoItem("o", w("Committed"), null, null, () => defs);
+    // Processo customizado: "Committed" é "Proposed" aqui, não "em andamento".
+    expect([committed.state, committed.rawState, committed.stateColor, committed.typeName]).toEqual(["todo", "Committed", "#007acc", "Product Backlog Item"]);
+    expect(fromAdoItem("o", w("Testing"), null, null, () => defs).state).toBe("doing");
+    // Sem as definições, cai na heurística pelo nome.
+    expect(fromAdoItem("o", w("Committed"), null, null).state).toBe("doing");
+    const g = group([committed, fromAdoItem("o", { ...w("Testing"), id: 2 }, null, null, () => defs)], "state");
+    expect(g.map((x) => [x.title, x.literal, x.color])).toEqual([
+      ["Testing", true, "#ff9d00"],
+      ["Committed", true, "#007acc"],
+    ]);
+  });
+
   it("calcula progresso e burndown da sprint", () => {
     const s: AdoSprint = {
       org: "nox",
@@ -166,7 +190,11 @@ describe("Azure DevOps", () => {
     const st = sprintStats(s, Date.parse("2026-10-01T12:00:00Z"))!;
     expect(st.unit).toBe("points");
     expect([st.total, st.done]).toEqual([10, 5]);
-    expect(st.byState).toMatchObject({ done: 5, doing: 3, todo: 2 });
+    expect(st.byState.map((x) => [x.name, x.value])).toEqual([
+      ["Active", 3],
+      ["New", 2],
+      ["Closed", 5],
+    ]);
     expect(st.burndown[0]).toBe(10);
     expect(st.burndown.at(-1)).toBe(5);
   });

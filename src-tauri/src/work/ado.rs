@@ -126,6 +126,9 @@ pub struct OrgResult {
     touched: Vec<i64>,
     prs: Vec<Value>,
     sprint: Option<Value>,
+    /// Estados reais de cada tipo de work item, por "projeto|tipo" (minúsculas):
+    /// nome, cor e categoria (Proposed, InProgress, Resolved, Completed, Removed).
+    states: BTreeMap<String, Value>,
 }
 
 #[tauri::command]
@@ -287,6 +290,46 @@ async fn fetch(org: &Org, hints: Vec<String>) -> AppResult<OrgResult> {
             }
         }
     }
+    // Estados de verdade (nome, cor e categoria) de cada tipo usado, inclusive
+    // em processos customizados. Uma chamada por par projeto × tipo.
+    let mut pairs: BTreeSet<(String, String)> = BTreeSet::new();
+    for it in &items {
+        if let (Some(p), Some(t)) = (
+            field(it, "System.TeamProject").and_then(Value::as_str),
+            field(it, "System.WorkItemType").and_then(Value::as_str),
+        ) {
+            pairs.insert((p.to_string(), t.to_string()));
+        }
+    }
+    if let Some(s) = &sprint {
+        let p = s.get("project").and_then(Value::as_str).unwrap_or_default();
+        for it in s
+            .get("items")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+        {
+            if let Some(t) = it.get("type").and_then(Value::as_str) {
+                pairs.insert((p.to_string(), t.to_string()));
+            }
+        }
+    }
+    let mut states = BTreeMap::new();
+    for (p, t) in pairs.into_iter().take(40) {
+        let url = format!(
+            "{base}/{}/_apis/wit/workitemtypes/{}/states?{V}",
+            enc(&p),
+            enc(&t)
+        );
+        if let Ok(v) = org.call(Method::GET, &url, None).await {
+            if let Some(list) = v.get("value") {
+                states.insert(
+                    format!("{}|{}", p.to_lowercase(), t.to_lowercase()),
+                    list.clone(),
+                );
+            }
+        }
+    }
     Ok(OrgResult {
         org: org.name.clone(),
         error: None,
@@ -295,6 +338,7 @@ async fn fetch(org: &Org, hints: Vec<String>) -> AppResult<OrgResult> {
         touched,
         prs,
         sprint,
+        states,
     })
 }
 

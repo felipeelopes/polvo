@@ -572,7 +572,7 @@ export class WorkView {
       if (!g.items.length) continue;
       const closed = this.ui.closed.includes(g.key);
       if (g.title) {
-        html += `<div class="wk-gh${closed ? " closed" : ""}${g.urgent ? " urgent" : ""}" data-gk="${esc(g.key)}">${ICON.chevron}<span>${g.literal ? esc(g.title) : t(`work.${g.title}`)}</span><em>${g.items.length}</em>${g.hint ? `<small>${t(`work.${g.hint}`)}</small>` : ""}</div>`;
+        html += `<div class="wk-gh${closed ? " closed" : ""}${g.urgent ? " urgent" : ""}" data-gk="${esc(g.key)}">${ICON.chevron}${g.color ? `<i class="dot" style="background:${esc(g.color)}"></i>` : ""}<span>${g.literal ? esc(g.title) : t(`work.${g.title}`)}</span><em>${g.items.length}</em>${g.hint ? `<small>${t(`work.${g.hint}`)}</small>` : ""}</div>`;
       }
       if (closed) continue;
       total += g.items.length;
@@ -610,7 +610,7 @@ export class WorkView {
       <div class="cb" data-sel title="${t("work.todo.select")}"></div>
       <div class="ic">${KIND_ICON(i)}</div>
       <div class="t" title="${esc(why || t("work.reason.none"))}"><b>${esc(i.title)}</b>
-        <div class="m">${I[i.src]}<span class="ref">${esc(i.ref)}</span><span>${esc(i.project)}</span>${tags}${cm}<span>${ago(i.updated)}</span></div>
+        <div class="m">${I[i.src]}<span class="ref">${esc(i.ref)}</span>${i.src === "ado" && i.typeName ? `<span class="wk-type">${esc(i.typeName)}</span>` : ""}<span>${esc(i.project)}</span>${tags}${cm}<span>${ago(i.updated)}</span></div>
       </div>
       <div class="r">
         <div class="acts">
@@ -618,9 +618,19 @@ export class WorkView {
           <button class="ibtn xs" data-do="comments" title="${t("work.todo.comments")}">${I.comment}</button>
           <button class="ibtn xs" data-do="open" title="${t("work.todo.open")}">${I.ext}</button>
         </div>
-        <span class="wk-st ${i.state}" title="${esc(i.rawState)}">${t(`work.state.${i.state}`)}</span>
+        ${this.statePill(i)}
       </div>
     </div>`;
+  }
+
+  /** Estado como na origem: no Azure DevOps, o nome e a cor reais. */
+  private statePill(i: Item): string {
+    if (i.src === "ado" && i.rawState) {
+      const style = i.stateColor ? ` style="--sc:${esc(i.stateColor)}"` : "";
+      const blocked = i.state === "blocked" ? ` · ${t("work.state.blocked")}` : "";
+      return `<span class="wk-st real${i.stateColor ? "" : ` ${i.state}`}"${style} title="${esc(t(`work.state.${i.state}`))}">${esc(i.rawState)}${blocked}</span>`;
+    }
+    return `<span class="wk-st ${i.state}">${t(`work.state.${i.state}`)}</span>`;
   }
 
   private resetList(): void {
@@ -733,13 +743,8 @@ export class WorkView {
     }
     const fmt = (d: number) => new Date(d).toLocaleDateString(localeTag(), { day: "numeric", month: "short" });
     const unit = t(sp.unit === "points" ? "work.sprint.unitPoints" : "work.sprint.unitItems");
-    const parts: [string, number, string][] = [
-      ["done", sp.byState.done, "var(--ok)"],
-      ["doing", sp.byState.doing, "#5cc8e0"],
-      ["review", sp.byState.review, "#b48aff"],
-      ["blocked", sp.byState.blocked, "var(--bad)"],
-      ["todo", sp.byState.todo, "rgba(255,255,255,.18)"],
-    ];
+    const fallback: Record<string, string> = { done: "var(--ok)", doing: "#5cc8e0", review: "#b48aff", blocked: "var(--bad)", todo: "rgba(255,255,255,.18)" };
+    const parts: [string, number, string][] = sp.byState.map((s) => [esc(s.name), s.value, s.color ? esc(s.color) : fallback[s.state]]);
     const tot = Math.max(1, sp.total);
     const W = 220;
     const H = 72;
@@ -753,8 +758,8 @@ export class WorkView {
         <div>
           <div class="big">${left}</div>
           <div class="wk-faint">${fmt(sp.start)} → ${fmt(sp.finish)} · ${t("work.sprint.progress", { done: sp.done, total: sp.total, unit })}</div>
-          <div class="wk-dist">${parts.filter((p) => p[1] > 0).map((p) => `<span style="flex:${p[1]};background:${p[2]}" title="${t(`work.state.${p[0]}`)}: ${p[1]}"></span>`).join("")}</div>
-          <div class="wk-legend">${parts.filter((p) => p[1] > 0).map((p) => `<span><i style="background:${p[2]}"></i>${t(`work.state.${p[0]}`)}<b>${p[1]}</b></span>`).join("")}</div>
+          <div class="wk-dist">${parts.filter((p) => p[1] > 0).map((p) => `<span style="flex:${p[1]};background:${p[2]}" title="${p[0]}: ${p[1]}"></span>`).join("")}</div>
+          <div class="wk-legend">${parts.filter((p) => p[1] > 0).map((p) => `<span><i style="background:${p[2]}"></i>${p[0]}<b>${p[1]}</b></span>`).join("")}</div>
         </div>
         <div>
           <svg class="wk-burn" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
@@ -1161,7 +1166,7 @@ export class WorkView {
     const lines = [
       t(`work.prompt.${mode === "wt" ? "impl" : mode}`, { ref: i.ref, source: srcName(i.src), title: i.title }),
       t("work.prompt.link", { url: i.url }),
-      [t("work.prompt.meta", { kind: t(`work.kind.${i.kind}`), state: i.rawState }), i.priority ? t("work.prompt.priority", { p: i.priority }) : ""].filter(Boolean).join(" · "),
+      [t("work.prompt.meta", { kind: i.typeName ?? t(`work.kind.${i.kind}`), state: i.rawState }), i.priority ? t("work.prompt.priority", { p: i.priority }) : ""].filter(Boolean).join(" · "),
     ];
     if (th?.body) lines.push("", t("work.prompt.description"), clip(htmlToText(th.body), 5000));
     const cms = (th?.comments ?? []).filter((c) => c.html).slice(-12);
@@ -1237,7 +1242,7 @@ export class WorkView {
       <div class="wk-dh">
         <div class="top">${I[i.src]}<span class="ref">${esc(i.ref)}</span><span>·</span><span>${esc(i.project)}</span><div class="sp"></div><button class="ibtn sm" data-dclose title="${t("work.drawer.close")}">${ICON.close}</button></div>
         <h2>${esc(i.title)}</h2>
-        <div class="row"><span class="wk-st ${i.state}">${t(`work.state.${i.state}`)}</span>${i.priority ? `<span class="wk-tag p${i.priority}">P${i.priority}</span>` : ""}${i.tags.map((x) => `<span class="wk-tag">${esc(x)}</span>`).join("")}<span class="wk-faint">${t("work.drawer.updated", { ago: ago(i.updated) })}</span></div>
+        <div class="row">${i.typeName ? `<span class="wk-tag">${esc(i.typeName)}</span>` : ""}${this.statePill(i)}${i.priority ? `<span class="wk-tag p${i.priority}">P${i.priority}</span>` : ""}${i.tags.map((x) => `<span class="wk-tag">${esc(x)}</span>`).join("")}<span class="wk-faint">${t("work.drawer.updated", { ago: ago(i.updated) })}</span></div>
         <div class="wk-why"><b>${t("work.reason.why")}</b>${why.length ? why.join("") : `<span>${t("work.reason.none")}</span>`}</div>
         <div class="btns">
           <span class="split"><button class="primary sm" data-dimpl>${I.bot}${esc(t("work.todo.implementWith", { agent: this.agentPick ? TOOLS[this.agentPick].short : "" }).replace(/ \(A\)$/, ""))}</button><button class="primary sm caret" data-dmenu>${I.caret}</button></span>

@@ -129,6 +129,10 @@ svg.src.ado { color: #4c9bf0; }
 .wk-st.review { color: #d6b8ff; border-color: rgba(180, 138, 255, 0.35); background: rgba(180, 138, 255, 0.08); }
 .wk-st.blocked { color: #ff8b84; border-color: rgba(229, 83, 75, 0.35); background: rgba(229, 83, 75, 0.08); }
 .wk-st.done { color: #7fd6b0; border-color: rgba(63, 178, 127, 0.3); }
+/* Estado real do Azure DevOps, na cor definida lá (clareada para o fundo escuro). */
+.wk-st.real[style] { color: color-mix(in srgb, var(--sc) 62%, white); border-color: color-mix(in srgb, var(--sc) 55%, transparent); background: color-mix(in srgb, var(--sc) 14%, transparent); }
+.wk-type { font-size: 10.5px; color: var(--muted); }
+.wk-gh .dot { width: 8px; height: 8px; border-radius: 3px; flex: none; }
 .wk-checks { font-size: 11px; white-space: nowrap; }
 .wk-checks.ok { color: var(--ok); }
 .wk-checks.bad { color: var(--bad); }

@@ -140,6 +140,15 @@ export interface AdoSprint {
   items: { id: number; type: string; state: string; points: number | null; closed: string | null }[];
 }
 
+/** Estado de um tipo de work item como o Azure DevOps define (inclusive processos customizados). */
+export interface AdoStateDef {
+  name: string;
+  /** Hex sem "#". */
+  color: string;
+  /** Proposed | InProgress | Resolved | Completed | Removed */
+  category: string;
+}
+
 export interface AdoResult {
   org: string;
   error: string | null;
@@ -148,6 +157,8 @@ export interface AdoResult {
   touched: number[];
   prs: AdoPr[];
   sprint: AdoSprint | null;
+  /** Por "projeto|tipo" em minúsculas. */
+  states?: Record<string, AdoStateDef[]>;
 }
 
 export interface ThreadComment {

@@ -1,6 +1,6 @@
 // Modelo do "Meu trabalho": junta GitHub, Azure DevOps e git local num formato
 // só, classifica (bug? pendente? prioridade?) e ordena. Sem DOM: testável.
-import type { AdoPr, AdoResult, AdoSprint, AdoWorkItem, GhData, GhIssue, GhPr, LocalCommit, LocalRepo } from "./api";
+import type { AdoPr, AdoResult, AdoSprint, AdoStateDef, AdoWorkItem, GhData, GhIssue, GhPr, LocalCommit, LocalRepo } from "./api";
 
 export type Src = "gh" | "ado";
 export type ItemState = "todo" | "doing" | "review" | "blocked" | "done";
@@ -14,8 +14,14 @@ export interface Item {
   num: number;
   title: string;
   kind: Kind;
+  /** Categoria do estado (para filtros e agrupamento). */
   state: ItemState;
+  /** Nome real do estado na origem ("Committed", "Approved", "open"…). */
   rawState: string;
+  /** Cor do estado no Azure DevOps (#hex) ou null. */
+  stateColor: string | null;
+  /** Nome real do tipo ("Product Backlog Item", "Bug"…), quando a origem tem. */
+  typeName: string | null;
   /** 1 (mais alta) a 4; null sem prioridade. */
   priority: number | null;
   tags: string[];
@@ -60,6 +66,9 @@ export interface Pr {
   org?: string;
   adoProject?: string;
 }
+
+/** Ordem das categorias de estado nas listas e grupos. */
+const STATE_ORDER: ItemState[] = ["doing", "blocked", "todo", "review", "done"];
 
 const ms = (s: string | null | undefined): number => (s ? Date.parse(s) || 0 : 0);
 const str = (v: unknown): string => (typeof v === "string" ? v : typeof v === "number" ? String(v) : "");
@@ -152,6 +161,8 @@ export function fromGithubIssue(issue: GhIssue): Item {
     kind: ghKind(issue, labels),
     state: closed ? "done" : (labelState ?? "todo"),
     rawState: closed ? "closed" : "open",
+    stateColor: null,
+    typeName: issue.issueType?.name ?? null,
     priority: PRIORITY_LABEL.find(([re]) => labels.some((l) => re.test(l)))?.[1] ?? null,
     tags: labels.filter((l) => !PRIORITY_LABEL.some(([re]) => re.test(l))),
     project: repo.split("/")[1] ?? repo,
@@ -199,6 +210,25 @@ export function fromGithubPr(pr: GhPr, role: Pr["role"]): Pr {
 
 // ------------------------------------------------------------ Azure DevOps
 
+/** Categorias oficiais de estado do Azure DevOps. */
+const CATEGORY: Record<string, ItemState> = {
+  proposed: "todo",
+  inprogress: "doing",
+  resolved: "review",
+  completed: "done",
+  removed: "done",
+};
+
+/** Definição real do estado (nome, cor, categoria) para um tipo. */
+export type StatesFor = (project: string, type: string) => AdoStateDef[] | undefined;
+
+export function adoState(raw: string, defs: AdoStateDef[] | undefined): { state: ItemState; color: string | null } {
+  const def = defs?.find((d) => d.name.toLowerCase() === raw.toLowerCase());
+  const cat = def ? CATEGORY[def.category.toLowerCase()] : undefined;
+  // Sem a definição (API indisponível), cai na heurística pelo nome.
+  return { state: cat ?? mapState(raw), color: def?.color ? `#${def.color.replace(/^#/, "")}` : null };
+}
+
 const ADO_KIND: Record<string, Kind> = {
   bug: "bug",
   issue: "issue",
@@ -211,7 +241,7 @@ const ADO_KIND: Record<string, Kind> = {
   epic: "epic",
 };
 
-export function fromAdoItem(org: string, w: AdoWorkItem, meId: string | null, sprintPath: string | null): Item {
+export function fromAdoItem(org: string, w: AdoWorkItem, meId: string | null, sprintPath: string | null, statesFor: StatesFor = () => undefined): Item {
   const f = w.fields;
   const type = str(f["System.WorkItemType"]);
   const raw = str(f["System.State"]);
@@ -227,7 +257,7 @@ export function fromAdoItem(org: string, w: AdoWorkItem, meId: string | null, sp
   let priority = num(f["Microsoft.VSTS.Common.Priority"]);
   // Severidade crítica sobe a prioridade de um bug.
   if (/^1\b|critical/i.test(severity)) priority = 1;
-  const state = mapState(raw);
+  const { state, color } = adoState(raw, statesFor(project, type));
   return {
     key: `ado:${org.toLowerCase()}:${w.id}`,
     src: "ado",
@@ -237,6 +267,8 @@ export function fromAdoItem(org: string, w: AdoWorkItem, meId: string | null, sp
     kind: ADO_KIND[type.toLowerCase()] ?? "task",
     state: blocked && state !== "done" ? "blocked" : state,
     rawState: raw,
+    stateColor: color,
+    typeName: type || null,
     priority,
     tags,
     project,
@@ -294,7 +326,8 @@ export interface SprintStats {
   unit: "points" | "items";
   total: number;
   done: number;
-  byState: Record<ItemState, number>;
+  /** Soma por estado real, na ordem das categorias (com a cor do Azure DevOps). */
+  byState: { name: string; color: string | null; state: ItemState; value: number }[];
   /** Restante ao fim de cada dia, do início até hoje (ou o fim). */
   burndown: number[];
   days: number;
@@ -314,22 +347,27 @@ export function businessDaysBetween(from: number, to: number): number {
   return n;
 }
 
-export function sprintStats(s: AdoSprint, now = Date.now()): SprintStats | null {
+export function sprintStats(s: AdoSprint, now = Date.now(), statesFor: StatesFor = () => undefined): SprintStats | null {
   const start = ms(s.start);
   const finish = ms(s.finish);
   if (!start || !finish) return null;
   const pts = s.items.map((i) => i.points ?? 0);
   const unit = pts.some((p) => p > 0) ? "points" : "items";
   const weight = (i: AdoSprint["items"][number]) => (unit === "points" ? (i.points ?? 0) : 1);
-  const byState: Record<ItemState, number> = { todo: 0, doing: 0, review: 0, blocked: 0, done: 0 };
+  const states = new Map<string, { name: string; color: string | null; state: ItemState; value: number }>();
+  const cat = (i: AdoSprint["items"][number]) => adoState(i.state, statesFor(s.project, i.type));
   let total = 0;
   let done = 0;
   for (const i of s.items) {
-    const st = mapState(i.state);
-    byState[st] += weight(i);
+    const st = cat(i);
+    const key = i.state.toLowerCase();
+    const row = states.get(key) ?? { name: i.state, color: st.color, state: st.state, value: 0 };
+    row.value += weight(i);
+    states.set(key, row);
     total += weight(i);
-    if (st === "done") done += weight(i);
+    if (st.state === "done") done += weight(i);
   }
+  const byState = [...states.values()].sort((a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state) || b.value - a.value);
   const day = 86_400_000;
   const days = Math.max(1, Math.round((finish - start) / day) + 1);
   const today = Math.min(Math.floor((Math.min(now, finish) - start) / day), days - 1);
@@ -337,7 +375,7 @@ export function sprintStats(s: AdoSprint, now = Date.now()): SprintStats | null 
   for (let d = 0; d <= Math.max(0, today); d++) {
     const end = start + (d + 1) * day;
     const closed = s.items
-      .filter((i) => mapState(i.state) === "done")
+      .filter((i) => cat(i).state === "done")
       .reduce((a, i) => a + ((i.closed ? ms(i.closed) : now) < end ? weight(i) : 0), 0);
     burndown.push(Math.max(0, total - closed));
   }
@@ -396,11 +434,12 @@ export function build(raw: Raw, now = Date.now()): Model {
   }
   let sprint: SprintStats | null = null;
   for (const o of raw.ado) {
-    if (o.sprint && !sprint) sprint = sprintStats(o.sprint, now);
+    const statesFor: StatesFor = (project, type) => o.states?.[`${project}|${type}`.toLowerCase()];
+    if (o.sprint && !sprint) sprint = sprintStats(o.sprint, now, statesFor);
     const path = o.sprint?.path ?? null;
     const touchedIds = new Set(o.touched);
     for (const w of o.items) {
-      const it = fromAdoItem(o.org, w, o.me?.id ?? null, path);
+      const it = fromAdoItem(o.org, w, o.me?.id ?? null, path, statesFor);
       if (it.assigned) items.push(it);
       if (touchedIds.has(w.id)) touched.push(it);
     }
@@ -436,10 +475,10 @@ export interface Group {
   literal?: boolean;
   hint?: string;
   urgent?: boolean;
+  /** Cor do estado (agrupamento por status no Azure DevOps). */
+  color?: string | null;
   items: Item[];
 }
-
-const STATE_ORDER: ItemState[] = ["doing", "blocked", "todo", "review", "done"];
 
 const urgentBug = (i: Item) => isBug(i) && (i.priority === 1 || i.state === "blocked" || i.state === "doing");
 
@@ -450,7 +489,22 @@ export function group(items: Item[], by: GroupBy, newComments: (i: Item) => numb
     const keys = [...new Set(sorted.map((i) => i.project))].sort((a, b) => a.localeCompare(b));
     return keys.map((k) => ({ key: `p:${k}`, title: k, literal: true, items: sorted.filter((i) => i.project === k) }));
   }
-  if (by === "state") return STATE_ORDER.map((s) => ({ key: s, title: `state.${s}`, items: sorted.filter((i) => i.state === s) }));
+  if (by === "state") {
+    // Estados reais: no Azure DevOps cada estado vira um grupo ("Committed",
+    // "Approved"…), na ordem das categorias; no GitHub, a categoria.
+    const groups = new Map<string, Group & { order: number }>();
+    for (const i of sorted) {
+      const real = i.src === "ado" && !!i.rawState;
+      const key = real ? `s:${i.rawState.toLowerCase()}` : i.state;
+      let g = groups.get(key);
+      if (!g) {
+        g = { key, title: real ? i.rawState : `state.${i.state}`, literal: real, color: i.stateColor, items: [], order: STATE_ORDER.indexOf(i.state) };
+        groups.set(key, g);
+      }
+      g.items.push(i);
+    }
+    return [...groups.values()].sort((a, b) => a.order - b.order || b.items.length - a.items.length).map(({ order: _o, ...g }) => g);
+  }
   const open = sorted.filter((i) => i.state !== "review" && i.state !== "done");
   return [
     { key: "urgent", title: "groups.urgent", hint: "groups.urgentHint", urgent: true, items: open.filter(urgentBug) },
