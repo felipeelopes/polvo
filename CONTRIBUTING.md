@@ -69,4 +69,6 @@ Para adicionar um idioma: crie `src/i18n/locales/<código>.ts` e `src-tauri/i18n
 2. Descreva o que mudou e como testou; inclua prints para mudanças visuais.
 3. Uma pessoa mantenedora revisa e faz o merge.
 
+Quem tem commits entra na lista de colaboradores da tela **Sobre** e dos READMEs, gerada do histórico do git por `scripts/contributors.mjs`. Para aparecer uma vez só e com o link do seu perfil, o `.mailmap` liga os e-mails dos seus commits ao e-mail "noreply" do GitHub (`id+login@users.noreply.github.com`, em *Settings → Emails*). Se você usa outro e-mail, inclua uma linha para ele no `.mailmap` no seu PR.
+
 Ao contribuir, você concorda em licenciar sua contribuição sob a [licença MIT](LICENSE).

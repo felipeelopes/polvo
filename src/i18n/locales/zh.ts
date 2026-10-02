@@ -104,10 +104,6 @@ const messages: Messages = {
     },
   },
   about: {
-    commits: {
-      one: "{n} 次提交",
-      other: "{n} 次提交",
-    },
     version: "版本 {version}",
     tagline: "让你的 AI 智能体并排工作。每个智能体一条触手。",
     reportIssue: "报告问题",

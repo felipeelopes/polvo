@@ -104,10 +104,6 @@ const messages: Messages = {
     },
   },
   about: {
-    commits: {
-      one: "{n} commit",
-      other: "{n} commits",
-    },
     version: "Version {version}",
     tagline: "Your AI agents, side by side. One arm for each agent.",
     reportIssue: "Report an issue",

@@ -104,10 +104,6 @@ const messages: Messages = {
     },
   },
   about: {
-    commits: {
-      one: "{n} commit",
-      other: "{n} commit",
-    },
     version: "Versione {version}",
     tagline: "I tuoi agenti IA fianco a fianco. Un braccio per ogni agente.",
     reportIssue: "Segnala un problema",

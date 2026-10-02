@@ -1,7 +1,7 @@
 // Tela "Sobre": versão, links, colaboradores (gerados do git) e atualizações.
 import contributors from "../generated/contributors.json";
 import { ipc } from "../core/ipc";
-import { t, tn } from "../i18n";
+import { t } from "../i18n";
 import { esc, h } from "./dom";
 import { appIcon } from "./logo";
 import { checkForUpdates } from "./updater";
@@ -10,7 +10,8 @@ const REPO = "https://github.com/felipeelopes/polvo";
 
 interface Contributor {
   name: string;
-  commits: number;
+  /** Login do GitHub (do e-mail "noreply" canônico do .mailmap), para o link do perfil. */
+  login?: string;
 }
 
 const initials = (name: string) =>
@@ -33,10 +34,12 @@ export function openAbout(): void {
   const box = h("div", "mbox about");
   modal.append(box);
   const people = (contributors as Contributor[])
-    .map(
-      (c) =>
-        `<li title="${esc(tn("about.commits", c.commits))}"><span class="av" style="--h:${hue(c.name)}">${esc(initials(c.name))}</span>${esc(c.name)}</li>`,
-    )
+    .map((c) => {
+      const body = `<span class="av" style="--h:${hue(c.name)}">${esc(initials(c.name))}</span><span>${esc(c.name)}</span>`;
+      return c.login
+        ? `<li><button class="person" data-url="https://github.com/${esc(c.login)}" title="github.com/${esc(c.login)}">${body}<small>@${esc(c.login)}</small></button></li>`
+        : `<li><span class="person">${body}</span></li>`;
+    })
     .join("");
   box.innerHTML = `
     <div class="bubbles"><i></i><i></i><i></i><i></i><i></i></div>

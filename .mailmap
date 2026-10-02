@@ -1,0 +1,6 @@
+# Uma identidade por pessoa: "Nome <e-mail canônico> <e-mail usado no commit>".
+# O e-mail canônico "noreply" do GitHub (id+login@users.noreply.github.com) dá o
+# link do perfil na tela Sobre e nos READMEs (scripts/contributors.mjs).
+Felipe Lopes <38408465+felipeelopes@users.noreply.github.com> <felipe_lopes@outlook.com>
+Felipe Lopes <38408465+felipeelopes@users.noreply.github.com> <38408465+felipeelopes@users.noreply.github.com>
+Gabriel Franciscon <45524564+GabrielFranciscon@users.noreply.github.com> <gabriel.franciscon@nox.com.br>

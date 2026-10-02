@@ -113,7 +113,9 @@
 .mfoot .hk { min-width: 0; }
 .about-links .ghost { border: 1px solid var(--line); }
 .people { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
-.people li { display: flex; align-items: center; gap: 8px; padding: 5px 12px 5px 5px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 12.5px; }
+.people li { display: flex; }
+.people .person { display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px 0 5px; border-radius: 99px; background: rgba(255, 255, 255, 0.05); border: 1px solid var(--line); font-size: 12.5px; white-space: nowrap; }
+button.person:hover { border-color: var(--line2); background: var(--hover); }
 .people .av { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 10.5px; font-weight: 700; color: #fff; background: hsl(var(--h) 55% 45%); }
 .people small { color: var(--faint); }
 .update .uhead { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }

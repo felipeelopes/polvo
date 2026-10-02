@@ -1,9 +1,5 @@
 // Textos de origem (pt-BR) do namespace "about".
 export default {
-  commits: {
-    one: "{n} commit",
-    other: "{n} commits",
-  },
   version: "Versão {version}",
   tagline: "Seus agentes de IA lado a lado. Um braço para cada agente.",
   reportIssue: "Reportar problema",

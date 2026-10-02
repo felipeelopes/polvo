@@ -158,6 +158,14 @@ pnpm release      # compila, firma e pubblica la release su GitHub (vedi docs/RE
 
 I contributi sono benvenutissimi: leggi il [CONTRIBUTING.md](CONTRIBUTING.md) (in portoghese).
 
+### Contributori
+
+<!-- contributors:start (gerado por scripts/contributors.mjs) -->
+<table>
+  <tr><td align="center"><a href="https://github.com/felipeelopes"><img src="https://github.com/felipeelopes.png?size=120" width="60" height="60" alt="@felipeelopes"><br><sub><b>Felipe Lopes</b></sub></a></td><td align="center"><a href="https://github.com/GabrielFranciscon"><img src="https://github.com/GabrielFranciscon.png?size=120" width="60" height="60" alt="@GabrielFranciscon"><br><sub><b>Gabriel Franciscon</b></sub></a></td></tr>
+</table>
+<!-- contributors:end -->
+
 ## Roadmap
 
 - [ ] Trascinare una sessione direttamente da una finestra all'altra

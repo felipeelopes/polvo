@@ -156,6 +156,14 @@ pnpm release      # compila, assina e publica a release no GitHub (veja docs/REL
 
 Contribuições são muito bem-vindas: leia o [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Contribuidores
+
+<!-- contributors:start (gerado por scripts/contributors.mjs) -->
+<table>
+  <tr><td align="center"><a href="https://github.com/felipeelopes"><img src="https://github.com/felipeelopes.png?size=120" width="60" height="60" alt="@felipeelopes"><br><sub><b>Felipe Lopes</b></sub></a></td><td align="center"><a href="https://github.com/GabrielFranciscon"><img src="https://github.com/GabrielFranciscon.png?size=120" width="60" height="60" alt="@GabrielFranciscon"><br><sub><b>Gabriel Franciscon</b></sub></a></td></tr>
+</table>
+<!-- contributors:end -->
+
 ## Roadmap
 
 - [ ] Arrastar uma sessão diretamente de uma janela para outra

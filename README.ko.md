@@ -160,6 +160,14 @@ pnpm release      # 빌드, 서명 후 GitHub에 릴리스 게시 (docs/RELEASIN
 
 기여를 언제나 환영합니다: [CONTRIBUTING.md](CONTRIBUTING.md) (포르투갈어)를 읽어 주세요.
 
+### 기여자
+
+<!-- contributors:start (gerado por scripts/contributors.mjs) -->
+<table>
+  <tr><td align="center"><a href="https://github.com/felipeelopes"><img src="https://github.com/felipeelopes.png?size=120" width="60" height="60" alt="@felipeelopes"><br><sub><b>Felipe Lopes</b></sub></a></td><td align="center"><a href="https://github.com/GabrielFranciscon"><img src="https://github.com/GabrielFranciscon.png?size=120" width="60" height="60" alt="@GabrielFranciscon"><br><sub><b>Gabriel Franciscon</b></sub></a></td></tr>
+</table>
+<!-- contributors:end -->
+
 ## 로드맵
 
 - [ ] 세션을 한 창에서 다른 창으로 바로 드래그하기

@@ -104,10 +104,6 @@ const messages: Messages = {
     },
   },
   about: {
-    commits: {
-      one: "커밋 {n}개",
-      other: "커밋 {n}개",
-    },
     version: "버전 {version}",
     tagline: "AI 에이전트를 나란히. 에이전트마다 팔 하나씩.",
     reportIssue: "문제 신고",

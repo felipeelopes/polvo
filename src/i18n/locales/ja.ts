@@ -104,10 +104,6 @@ const messages: Messages = {
     },
   },
   about: {
-    commits: {
-      one: "{n} コミット",
-      other: "{n} コミット",
-    },
     version: "バージョン {version}",
     tagline: "AI エージェントを横に並べて。エージェントごとに 1 本の腕を。",
     reportIssue: "問題を報告",
