@@ -1,10 +1,13 @@
 // Barra lateral: sessões agrupadas por projeto (repositório), com os worktrees
-// de cada um. Recolhida, vira o trilho de ícones.
+// de cada um. Recolhida, vira o trilho de projetos.
+import { colorValue, initials, urgentStatus } from "../core/appearance";
 import { normPath, store } from "../core/store";
 import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
-import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
+import { closePopover, popover, popoverOpen, refreshPopover } from "./feedback";
+import { ICON, projectIcon, sessionColor, TOOLS, toolIcon } from "./icons";
 import { statusPill } from "./pane";
+import { openProjectStyle } from "./project-style";
 import { t, tn } from "../i18n";
 import "../styles/git-badges.css";
 
@@ -139,6 +142,8 @@ export class Sidebar {
   private body = h("div", "sb-body");
   private collapsed = readJson<boolean>(COLLAPSED_KEY, false);
   private closed = new Set(readJson<string[]>(CLOSED_KEY, []));
+  /** Popover de sessões aberto a partir do trilho (atualiza junto com a barra). */
+  private railPop: { key: string; render: (el: HTMLDivElement) => void } | null = null;
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
@@ -146,6 +151,7 @@ export class Sidebar {
     this.el.append(this.body, foot);
     this.el.addEventListener("pointerdown", (e) => this.onDown(e));
     this.el.addEventListener("click", (e) => this.onClick(e));
+    this.el.addEventListener("contextmenu", (e) => this.onMenu(e));
     this.el.addEventListener("pointerover", (e) => this.onOver(e));
     this.el.addEventListener("pointerleave", hideTip);
     this.applyCollapsed();
@@ -154,15 +160,54 @@ export class Sidebar {
   render(): void {
     const mine = store.mine;
     this.body.innerHTML = this.collapsed ? this.renderIcons(mine) : this.renderGroups(mine);
+    if (this.railPop && popoverOpen(this.railPop.key)) refreshPopover(this.railPop.key, this.railPop.render);
   }
 
+  /** Trilho recolhido: um item por projeto (ícone ou iniciais na cor do projeto). */
   private renderIcons(mine: Session[]): string {
-    return `<div class="ritems">${mine
-      .map(
-        (s) =>
-          `<div class="ri${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}${store.inProject(s) ? "" : " out"}" data-id="${s.id}" style="--acc:${sessionColor(s)}">${toolIcon(s.tool, 19)}<i class="sd ${s.runtime.status}"></i></div>`,
-      )
+    return `<div class="ritems">${groupSessions(mine)
+      .map((g) => {
+        const all = g.worktrees.flatMap((w) => w.sessions);
+        const rec = store.projectRecord(g.key);
+        const pc = colorValue(rec?.color);
+        const st = urgentStatus(all.map((s) => s.runtime.status));
+        const on = all.some((s) => s.id === store.active);
+        const out = !!store.project && store.project !== g.key;
+        const face = rec?.icon ? projectIcon(rec.icon, 19) : `<span class="rp-ini">${esc(initials(g.name))}</span>`;
+        return `<div class="rp${on ? " on" : ""}${pc ? "" : " plain"}${all.length ? "" : " none"}${out ? " out" : ""}" data-project="${esc(g.key)}" data-pop style="--pc:${pc ?? "var(--muted)"};--acc:${pc ?? "var(--accent)"}">${face}${all.length ? `<span class="rp-n">${all.length}</span>` : ""}${st ? `<i class="sd ${st}"></i>` : ""}</div>`;
+      })
       .join("")}</div>`;
+  }
+
+  /** Clique num projeto do trilho: as sessões dele (clicar ou arrastar) e "nova sessão". */
+  private openRailProject(item: HTMLElement, key: string): void {
+    hideTip();
+    const render = (el: HTMLDivElement) => {
+      const g = groupSessions(store.mine).find((x) => x.key === key);
+      if (!g) return closePopover();
+      const all = g.worktrees.flatMap((w) => w.sessions);
+      const tool = lastTool(all);
+      const rows = all
+        .map((s) => `<div class="si${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}" data-sid="${s.id}" style="--acc:${sessionColor(s)}">${toolIcon(s.tool, 14)}<span class="si-t">${esc(s.title)}</span><i class="sd ${s.runtime.status}"></i></div>`)
+        .join("");
+      el.innerHTML = `<div class="mh">${esc(g.name)}</div>${rows || `<div class="rp-empty">${t("sidebar.noSessions")}</div>`}<hr><button data-add="${esc(g.path)}" data-tool="${tool}">${ICON.plusSm}<span>${t("sidebar.newInProject", { tool: TOOLS[tool].short })}</span></button>`;
+      el.onpointerdown = (e) => {
+        const row = (e.target as Element).closest<HTMLElement>("[data-sid]");
+        if (!row || e.button !== 0) return;
+        closePopover();
+        this.host.sessionDown(e, row.dataset.sid!);
+      };
+      el.onclick = (e) => {
+        const add = (e.target as Element).closest<HTMLElement>("[data-add]");
+        if (!add) return;
+        closePopover();
+        this.host.newIn(add.dataset.add!, add.dataset.tool as ToolKind);
+      };
+    };
+    const popKey = `rail:${key}`;
+    this.railPop = { key: popKey, render };
+    // Trocar de projeto fecha o popover anterior: só limpa se ainda for este.
+    popover(popKey, item, render, "menu rpop", () => this.railPop?.key === popKey && (this.railPop = null), "right");
   }
 
   private renderGroups(mine: Session[]): string {
@@ -182,8 +227,10 @@ export class Sidebar {
             const out = !!store.project && !focused;
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
-            const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
-                <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
+            const rec = store.projectRecord(g.key);
+            const pc = colorValue(rec?.color);
+            const head = `<div class="pg-h${closed ? " closed" : ""}${pc ? " styled" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}"${pc ? ` style="--pc:${pc}"` : ""}>
+                <span class="chev">${ICON.chevron}</span>${projectIcon(rec?.icon)}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
                 <span class="pg-acts">${tools(g.path)}${tree ? gitBtn(g.path) : ""}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">${ICON.plusSm}</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
@@ -209,7 +256,7 @@ export class Sidebar {
   }
 
   private onDown(e: PointerEvent): void {
-    const item = (e.target as Element).closest<HTMLElement>(".si,.ri");
+    const item = (e.target as Element).closest<HTMLElement>(".si");
     if (!item || (e.target as Element).closest("button")) return;
     hideTip();
     this.host.sessionDown(e, item.dataset.id!);
@@ -238,6 +285,8 @@ export class Sidebar {
       e.stopPropagation();
       return this.host.removeProject(remove);
     }
+    const railItem = t.closest<HTMLElement>("[data-project]");
+    if (railItem) return this.openRailProject(railItem, railItem.dataset.project!);
     if (t.closest("[data-toggle]")) {
       this.collapsed = !this.collapsed;
       localStorage.setItem(COLLAPSED_KEY, JSON.stringify(this.collapsed));
@@ -254,8 +303,27 @@ export class Sidebar {
     }
   }
 
+  /** Clique direito num projeto (barra ou trilho): cor e ícone. */
+  private onMenu(e: MouseEvent): void {
+    const item = (e.target as Element).closest<HTMLElement>("[data-group],[data-project]");
+    const key = item?.dataset.group ?? item?.dataset.project;
+    const g = key ? groupSessions(store.mine).find((x) => x.key === key) : undefined;
+    if (!g) return;
+    hideTip();
+    openProjectStyle(e, g.key, g.path, g.name);
+  }
+
   private onOver(e: PointerEvent): void {
-    const item = (e.target as Element).closest<HTMLElement>(".si,.ri");
+    const rail = (e.target as Element).closest<HTMLElement>("[data-project]");
+    if (rail) {
+      if (popoverOpen()) return;
+      const g = groupSessions(store.mine).find((x) => x.key === rail.dataset.project);
+      const st = g && urgentStatus(g.worktrees.flatMap((w) => w.sessions).map((s) => s.runtime.status));
+      const acc = colorValue(store.projectRecord(rail.dataset.project!)?.color) ?? "var(--accent)";
+      if (g) showTip(rail, `<b>${esc(g.name)}</b> <span>· ${esc(g.path)}</span>${st ? `<div class="st ${st}" style="margin-top:6px;--acc:${acc}">${statusPill(st)}</div>` : ""}`);
+      return;
+    }
+    const item = (e.target as Element).closest<HTMLElement>(".si");
     const s = store.session(item?.dataset.id ?? null);
     if (!item || !s) return;
     showTip(

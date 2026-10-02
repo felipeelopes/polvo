@@ -93,6 +93,17 @@ class Store {
     return normPath(this.git[s.cwd]?.project ?? s.cwd);
   }
 
+  /** Projeto salvo de uma chave de projeto (o da própria pasta tem preferência a um worktree). */
+  projectRecord(key: string): ProjectRecord | undefined {
+    const matches = this.projects.filter((p) => normPath(this.git[p.path]?.project ?? p.path) === key);
+    return matches.find((p) => normPath(p.path) === key) ?? matches[0];
+  }
+
+  /** Projeto salvo ao qual a sessão pertence (para herdar cor e ícone). */
+  projectOf(s: Session): ProjectRecord | undefined {
+    return this.projects.length ? this.projectRecord(this.projectKey(s)) : undefined;
+  }
+
   /** A sessão passa pelo filtro de projeto desta janela? */
   inProject(s: Session): boolean {
     return !this.project || this.projectKey(s) === this.project;

@@ -19,6 +19,12 @@ pub struct ProjectRecord {
     pub name: String,
     #[serde(default)]
     pub added_at: i64,
+    /// Cor do projeto (nome do `/color` ou #hex): as sessões sem cor própria usam esta.
+    #[serde(default)]
+    pub color: Option<String>,
+    /// Ícone do projeto na barra lateral (id da lista do frontend).
+    #[serde(default)]
+    pub icon: Option<String>,
 }
 
 fn name_of(path: &Path) -> String {
@@ -134,6 +140,32 @@ pub async fn project_clone(
         .await
         .map_err(|e| AppError::msg(e.to_string()))??;
     Ok(reg.add_project(&app, &dir.to_string_lossy(), &name))
+}
+
+/// Valor curto e sem espaços nas pontas; vazio vira `None` (volta ao padrão).
+fn style_value(v: Option<String>) -> Option<String> {
+    v.map(|s| s.trim().chars().take(32).collect::<String>())
+        .filter(|s| !s.is_empty())
+}
+
+/// Define a cor e o ícone do projeto (`None` volta ao padrão). Uma pasta que
+/// ainda não é projeto salvo passa a ser, para guardar a aparência.
+#[tauri::command]
+pub fn project_style(
+    app: AppHandle,
+    reg: State<Registry>,
+    path: String,
+    color: Option<String>,
+    icon: Option<String>,
+) -> ProjectRecord {
+    let p = PathBuf::from(path.trim());
+    reg.set_project_style(
+        &app,
+        &p.to_string_lossy(),
+        &name_of(&p),
+        style_value(color),
+        style_value(icon),
+    )
 }
 
 /// Tira o projeto da barra lateral (não apaga nada do disco).

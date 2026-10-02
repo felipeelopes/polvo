@@ -413,6 +413,8 @@ export class App {
       case "git":
         this.rail.render();
         this.titlebar.render();
+        // Sessões em worktree/subpasta só acham o projeto (e a cor dele) com o git.
+        this.tiles.updatePanes();
         if (store.project) {
           this.tiles.reconcile();
           this.board.render();
@@ -421,6 +423,9 @@ export class App {
       case "projects":
         void this.refreshGit();
         this.rail.render();
+        // A cor do projeto chega às sessões que não têm cor própria.
+        this.tiles.updatePanes();
+        this.board.render();
         break;
       case "project":
         this.tiles.reconcile();

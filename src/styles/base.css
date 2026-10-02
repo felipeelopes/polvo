@@ -71,7 +71,7 @@ kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: 5px; border: 1px 
 .ibtn:hover { background: var(--hover); color: #fff; }
 
 /* Fluidez: todo controle responde com a mesma curva e duração. */
-button, .si, .pg-h, .wt-h, .kc, .ri, .prov, .rows .row, .txt, .lang-sel {
+button, .si, .pg-h, .wt-h, .kc, .prov, .rows .row, .txt, .lang-sel {
   transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease),
     box-shadow var(--fast) var(--ease), opacity var(--fast) var(--ease), transform var(--fast) var(--ease), filter var(--fast) var(--ease);
 }

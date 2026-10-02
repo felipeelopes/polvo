@@ -521,11 +521,51 @@ impl Registry {
                 path: path.to_string(),
                 name: name.to_string(),
                 added_at: paths::now_ms(),
+                color: None,
+                icon: None,
             };
             inner.ws.projects.push(rec.clone());
             inner.ws.recent_dirs.retain(|d| !paths::same_path(d, path));
             inner.ws.recent_dirs.insert(0, path.to_string());
             inner.ws.recent_dirs.truncate(12);
+            Self::save(&inner);
+            rec
+        };
+        let _ = app.emit(EVT_PROJECTS, self.projects());
+        rec
+    }
+
+    /// Grava a cor e o ícone do projeto (adiciona o projeto se ainda não existir).
+    pub fn set_project_style(
+        &self,
+        app: &AppHandle,
+        path: &str,
+        name: &str,
+        color: Option<String>,
+        icon: Option<String>,
+    ) -> crate::projects::ProjectRecord {
+        let rec = {
+            let mut inner = self.inner.lock();
+            let projects = &mut inner.ws.projects;
+            let i = match projects
+                .iter()
+                .position(|p| paths::same_path(&p.path, path))
+            {
+                Some(i) => i,
+                None => {
+                    projects.push(crate::projects::ProjectRecord {
+                        path: path.to_string(),
+                        name: name.to_string(),
+                        added_at: paths::now_ms(),
+                        color: None,
+                        icon: None,
+                    });
+                    projects.len() - 1
+                }
+            };
+            projects[i].color = color;
+            projects[i].icon = icon;
+            let rec = projects[i].clone();
             Self::save(&inner);
             rec
         };

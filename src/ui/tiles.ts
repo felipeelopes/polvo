@@ -27,7 +27,7 @@ import type { LayoutNode, Rect, Side } from "../core/types";
 import type { Terminals } from "../terminal/terminals";
 import { h, inside } from "./dom";
 import { toast } from "./feedback";
-import { ICON, TOOLS, toolIcon } from "./icons";
+import { ICON, sessionColor, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { Pane, type PaneHandlers } from "./pane";
 import { t, tn } from "../i18n";
@@ -342,7 +342,7 @@ export class TilesView {
         this.layout();
       }
       const s = store.session(d.id)!;
-      this.ghost.style.setProperty("--acc", TOOLS[s.tool].color);
+      this.ghost.style.setProperty("--acc", sessionColor(s));
       this.ghost.innerHTML = `${toolIcon(s.tool, 15)}<b></b>`;
       this.ghost.querySelector("b")!.textContent = s.title;
       this.ghost.hidden = false;

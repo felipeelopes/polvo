@@ -258,6 +258,13 @@ const messages: Messages = {
       cloning: "Wird geklont…",
       cloned: "„{name}“ geklont",
     },
+    style: {
+      title: "Farbe und Symbol (optional)",
+      color: "Farbe",
+      icon: "Symbol",
+      auto: "Standard",
+      hint: "Sitzungen ohne eigene Farbe (/color) verwenden die Projektfarbe.",
+    },
   },
   usage: {
     source: {

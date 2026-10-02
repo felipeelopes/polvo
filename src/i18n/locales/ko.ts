@@ -258,6 +258,13 @@ const messages: Messages = {
       cloning: "복제 중…",
       cloned: "“{name}” 복제 완료",
     },
+    style: {
+      title: "색상과 아이콘 (선택)",
+      color: "색상",
+      icon: "아이콘",
+      auto: "기본값",
+      hint: "자체 색상(/color)이 없는 세션은 프로젝트 색상을 사용합니다.",
+    },
   },
   usage: {
     source: {

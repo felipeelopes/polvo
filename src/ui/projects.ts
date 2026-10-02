@@ -7,6 +7,7 @@ import type { ToolKind } from "../core/types";
 import { basename, esc, h } from "./dom";
 import { closePopover, popover, toast } from "./feedback";
 import { ICON, TOOLS, toolIcon } from "./icons";
+import { pickStyle, styleFields, type ProjectStyle } from "./project-style";
 import { t } from "../i18n";
 
 export interface ProjectHost {
@@ -75,6 +76,19 @@ function toolPicker(selected: ToolKind): string {
     .join("")}</div>`;
 }
 
+/** Seção "Cor e ícone" dos diálogos; `style` muda conforme os cliques. */
+const styleSection = (style: ProjectStyle) => `<span class="lbl">${t("projects.style.title")}</span><div data-style>${styleFields(style)}</div>`;
+
+/** Trata um clique na seção de aparência (redesenha a escolha). */
+function onStyleClick(box: HTMLElement, target: Element, style: ProjectStyle): void {
+  if (pickStyle(target, style)) box.querySelector<HTMLElement>("[data-style]")!.innerHTML = styleFields(style);
+}
+
+/** Grava a aparência escolhida no projeto recém-criado (se houver). */
+async function applyStyle(path: string, style: ProjectStyle): Promise<void> {
+  if (style.color || style.icon) await ipc.projectStyle(path, style.color, style.icon).catch((e) => toast(String(e)));
+}
+
 function dialog(build: (box: HTMLElement, close: () => void) => void): void {
   const modal = h("div", "modal");
   const box = h("div", "mbox");
@@ -94,6 +108,7 @@ function dialog(build: (box: HTMLElement, close: () => void) => void): void {
 /** Cria uma pasta nova (com git opcional) e inicia uma sessão nela. */
 export function newProjectDialog(host: ProjectHost): void {
   let tool = defaultTool();
+  const style: ProjectStyle = { color: null, icon: null };
   dialog((box, close) => {
     const render = () => {
       const name = box.querySelector<HTMLInputElement>("[data-name]")?.value ?? "";
@@ -103,6 +118,7 @@ export function newProjectDialog(host: ProjectHost): void {
         <span class="lbl">${t("projects.newDialog.parent")}</span><div class="path"><input class="txt" data-parent value="${esc(parent)}" spellcheck="false"><button class="ghost" data-browse>${t("projects.browse")}</button></div>
         <label class="chk"><input type="checkbox" data-git checked> ${t("projects.newDialog.git")}</label>
         <span class="lbl">${t("projects.startWith")}</span>${toolPicker(tool)}
+        ${styleSection(style)}
         <div class="err"></div>
         <div class="mfoot"><span class="hk">${t("projects.newDialog.hint")}</span><button class="ghost" data-cancel>${t("projects.cancel")}</button><button class="primary" data-create>${t("projects.newDialog.create")}</button></div>`;
     };
@@ -112,6 +128,7 @@ export function newProjectDialog(host: ProjectHost): void {
       const git = box.querySelector<HTMLInputElement>("[data-git]")!.checked;
       try {
         const p = await ipc.projectCreate(parent, name, git);
+        await applyStyle(p.path, style);
         close();
         host.start(p.path, tool);
       } catch (e) {
@@ -125,6 +142,7 @@ export function newProjectDialog(host: ProjectHost): void {
         tool = tb.dataset.t as ToolKind;
         box.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === tb));
       }
+      onStyleClick(box, target, style);
       if (target.closest("[data-browse]")) {
         const picked = await open({ directory: true, title: t("projects.newDialog.parentPicker") });
         if (typeof picked === "string") box.querySelector<HTMLInputElement>("[data-parent]")!.value = picked;
@@ -145,11 +163,13 @@ export function newProjectDialog(host: ProjectHost): void {
 /** Clona um repositório git e inicia uma sessão nele. */
 export function cloneDialog(host: ProjectHost): void {
   let tool = defaultTool();
+  const style: ProjectStyle = { color: null, icon: null };
   dialog((box, close) => {
     box.innerHTML = `<h2>${t("projects.cloneDialog.title")}</h2><div class="sub">${t("projects.cloneDialog.sub")}</div>
       <span class="lbl">${t("projects.cloneDialog.url")}</span><input class="txt" data-url placeholder="${esc(t("projects.cloneDialog.urlPlaceholder"))}" autocomplete="off" spellcheck="false">
       <span class="lbl">${t("projects.cloneDialog.parent")}</span><div class="path"><input class="txt" data-parent value="${esc(suggestedParent())}" spellcheck="false"><button class="ghost" data-browse>${t("projects.browse")}</button></div>
       <span class="lbl">${t("projects.startWith")}</span>${toolPicker(tool)}
+      ${styleSection(style)}
       <div class="err"></div>
       <div class="mfoot"><span class="hk">${t("projects.cloneDialog.hint")}</span><button class="ghost" data-cancel>${t("projects.cancel")}</button><button class="primary" data-create>${t("projects.cloneDialog.create")}</button></div>`;
     const create = async () => {
@@ -160,6 +180,7 @@ export function cloneDialog(host: ProjectHost): void {
       btn.textContent = t("projects.cloneDialog.cloning");
       try {
         const p = await ipc.projectClone(url, parent);
+        await applyStyle(p.path, style);
         close();
         toast(t("projects.cloneDialog.cloned", { name: basename(p.path) }));
         host.start(p.path, tool);
@@ -176,6 +197,7 @@ export function cloneDialog(host: ProjectHost): void {
         tool = tb.dataset.t as ToolKind;
         box.querySelectorAll(".tool").forEach((x) => x.classList.toggle("on", x === tb));
       }
+      onStyleClick(box, target, style);
       if (target.closest("[data-browse]")) {
         const picked = await open({ directory: true, title: t("projects.cloneDialog.parentPicker") });
         if (typeof picked === "string") box.querySelector<HTMLInputElement>("[data-parent]")!.value = picked;

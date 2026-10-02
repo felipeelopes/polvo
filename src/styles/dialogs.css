@@ -159,3 +159,21 @@
 .lang-sel { flex: 1; max-width: 280px; height: var(--ctl); padding: 0 10px; border-radius: var(--r-sm); border: 1px solid var(--line); background: rgba(0, 0, 0, 0.25); color: var(--text); font: inherit; font-size: 12.5px; outline: 0; }
 .lang-sel:focus { border-color: var(--accent); }
 .lang-sel option { background: #1c1e2b; color: var(--text); }
+
+/* Aparência do projeto: cor e ícone (clique direito na barra lateral e diálogos). */
+.pop-at { position: fixed; width: 1px; height: 1px; pointer-events: none; }
+.pop.menu.pstyle { min-width: 0; width: 276px; padding: 6px 6px 8px; }
+.ps { display: flex; flex-direction: column; gap: 7px; padding: 0 6px; }
+.ps-l { font-size: 11.5px; color: var(--muted); margin-top: 2px; }
+.ps-row { display: flex; flex-wrap: wrap; gap: 7px; }
+.ps .ps-sw, .ps .ps-sw:hover { position: relative; width: 22px; min-height: 0; height: 22px; padding: 0; border-radius: 50%; background: var(--c); box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14); }
+.ps .ps-sw:hover { transform: scale(1.12); }
+.ps .ps-sw.on { outline: 2px solid var(--c); outline-offset: 2px; }
+.ps .ps-sw.auto { box-shadow: inset 0 0 0 1.5px var(--line2); }
+.ps .ps-sw.auto::after { content: ""; position: absolute; left: 50%; top: 4px; bottom: 4px; width: 1.5px; background: var(--line2); transform: translateX(-50%) rotate(45deg); }
+.ps .ps-sw.auto.on { outline-color: var(--muted); }
+.ps .ps-ic { width: 30px; min-height: 0; height: 30px; padding: 0; display: grid; place-items: center; border-radius: var(--r-xs); color: var(--pc); background: rgba(255, 255, 255, 0.04); }
+.ps .ps-ic:hover { background: var(--hover2); }
+.ps .ps-ic.on { background: color-mix(in srgb, var(--pc) 20%, transparent); box-shadow: inset 0 0 0 1.5px var(--pc); }
+.ps-hint { padding: 10px 6px 0; font-size: 11.5px; line-height: 1.45; color: var(--faint); white-space: normal; }
+.mbox .ps { padding: 0; margin-bottom: 6px; }

@@ -38,4 +38,11 @@ export default {
     cloning: "Clonando…",
     cloned: "“{name}” clonado",
   },
+  style: {
+    title: "Cor e ícone (opcional)",
+    color: "Cor",
+    icon: "Ícone",
+    auto: "Padrão",
+    hint: "As sessões sem cor própria (/color) usam a cor do projeto.",
+  },
 };
