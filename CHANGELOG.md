@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- **Meu trabalho**: o Polvo não fecha mais ao abrir “Configurar” e procurar suas contas do GitHub e do Azure DevOps.
+
 ## 0.3.0
 
 - **Meu trabalho** (Ctrl+Shift+3): uma nova tela com seus commits, issues e PRs do GitHub e work items, sprint e PRs do Azure DevOps, num lugar só. A lista “Para fazer” traz os bugs urgentes primeiro, filtra pendentes e só bugs, e aguenta backlogs grandes com busca, grupos e atalhos de teclado.

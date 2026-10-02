@@ -9,6 +9,21 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.1",
+    notes: {
+      pt: ["**Meu trabalho**: o Polvo não fecha mais ao abrir “Configurar” e procurar suas contas do GitHub e do Azure DevOps."],
+      en: ["**My work**: Polvo no longer closes when you open “Set up” and it looks for your GitHub and Azure DevOps accounts."],
+      es: ["**Mi trabajo**: Polvo ya no se cierra al abrir “Configurar” y buscar tus cuentas de GitHub y Azure DevOps."],
+      fr: ["**Mon travail** : Polvo ne se ferme plus quand vous ouvrez « Configurer » et qu'il recherche vos comptes GitHub et Azure DevOps."],
+      de: ["**Meine Arbeit**: Polvo schließt sich nicht mehr, wenn du „Einrichten“ öffnest und es deine GitHub- und Azure-DevOps-Konten sucht."],
+      it: ["**Il mio lavoro**: Polvo non si chiude più quando apri “Configura” e cerca i tuoi account GitHub e Azure DevOps."],
+      ja: ["**マイワーク**：「設定」を開いて GitHub と Azure DevOps のアカウントを検出するときに Polvo が終了してしまう問題を修正しました。"],
+      zh: ["**我的工作**：打开“设置”并查找你的 GitHub 和 Azure DevOps 账户时，Polvo 不会再意外关闭。"],
+      ko: ["**내 작업**: “설정”을 열어 GitHub와 Azure DevOps 계정을 찾을 때 Polvo가 종료되던 문제를 고쳤습니다."],
+      ru: ["**Моя работа**: Polvo больше не закрывается, когда вы открываете «Настроить» и он ищет ваши аккаунты GitHub и Azure DevOps."],
+    },
+  },
+  {
     version: "0.3.0",
     notes: {
       pt: [
