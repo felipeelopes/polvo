@@ -37,12 +37,14 @@ const TOOL_PATHS: Record<ToolKind, string> = {
 };
 
 export function toolIcon(tool: ToolKind, size = 16, color = TOOLS[tool].color): string {
-  const w = tool === "claude" ? 2.4 : 2;
+  // Traço compensado pelo tamanho: o mesmo peso visual (~1,5px) de 13px a 19px.
+  const w = Math.max(2, ((tool === "claude" ? 1.7 : 1.5) * 24) / size).toFixed(2);
   return `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="${color}" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${TOOL_PATHS[tool].replace(/CC/g, color)}</svg>`;
 }
 
+// O traço acompanha o tamanho para que ícones de 12px e 16px tenham a mesma espessura na tela (1,5px).
 const svg = (body: string, size = 16) =>
-  `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
+  `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${+(24 / size).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 export const ICON = {
   tiles: svg('<rect x="1.5" y="1.5" width="13" height="13" rx="2.5"/><path d="M8 1.5v13M8 8h6.5"/>', 14),
@@ -65,10 +67,13 @@ export const ICON = {
   window: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M1.5 5.5h13M10 9.5h3M11.5 8v3"/>'),
   monitor: svg('<rect x="1.5" y="2" width="13" height="9" rx="1.5"/><path d="M6 14h4M8 11v3"/>'),
   chevron: svg('<path d="M6 4l4 4-4 4"/>', 12),
-  branch: svg('<circle cx="4.5" cy="3.5" r="1.6"/><circle cx="4.5" cy="12.5" r="1.6"/><circle cx="11.5" cy="5.5" r="1.6"/><path d="M4.5 5.1v5.8M11.5 7.1c0 2.4-2.3 3-7 3.6"/>', 13),
+  branch: svg('<circle cx="4.5" cy="3.5" r="1.6"/><circle cx="4.5" cy="12.5" r="1.6"/><circle cx="11.5" cy="5.5" r="1.6"/><path d="M4.5 5.1v5.8M11.5 7.1c0 2.4-2.3 3-7 3.6"/>', 14),
   update: svg('<path d="M8 12.5V3.5M4.5 7L8 3.5 11.5 7"/><path d="M3 13.5h10"/>', 13),
   terminal: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M4.5 6.5l2 1.75-2 1.75M8.5 10.5h3"/>', 14),
   plus: svg('<path d="M8 3v10M3 8h10"/>', 14),
+  plusSm: svg('<path d="M8 3v10M3 8h10"/>', 12),
+  sidebarClose: svg('<rect x="1.5" y="2" width="13" height="12" rx="2.5"/><path d="M6 2v12M11 6l-2 2 2 2"/>', 15),
+  sidebarOpen: svg('<rect x="1.5" y="2" width="13" height="12" rx="2.5"/><path d="M6 2v12M9 6l2 2-2 2"/>', 15),
   focus: svg('<path d="M2 5V2.5a.5.5 0 01.5-.5H5M11 2h2.5a.5.5 0 01.5.5V5M14 11v2.5a.5.5 0 01-.5.5H11M5 14H2.5a.5.5 0 01-.5-.5V11"/><circle cx="8" cy="8" r="2"/>', 13),
   folder: svg('<path d="M1.5 4.5a1 1 0 011-1h3.2l1.5 1.5h6.3a1 1 0 011 1v6.5a1 1 0 01-1 1h-11a1 1 0 01-1-1z"/>', 14),
   winMin: '<svg width="10" height="10" viewBox="0 0 10 10"><path d="M0 5h10" stroke="currentColor"/></svg>',

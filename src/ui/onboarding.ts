@@ -46,7 +46,7 @@ export function openOnboarding(onFinish: () => void): void {
     const s = STEPS[step];
     let body = "";
     if (s === "welcome") {
-      body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>${t("onboarding.welcome.title")}</h2><div class="sub" style="margin:0">${t("onboarding.welcome.tagline")}</div></div></div>
+      body = `${bubbles}<div class="hero">${logo(76, "wave", { look: true })}<div><h2>${t("onboarding.welcome.title")}</h2><div class="sub" style="margin:0">${t("onboarding.welcome.tagline")}</div></div></div>
         <div class="lang-row"><span class="lbl">${t("onboarding.language")}</span>${languageSelect(store.settings.language)}</div>
         <span class="lbl">${t("onboarding.welcome.providers")}</span>
         <div class="detected">${providerToggles(draft)}</div>

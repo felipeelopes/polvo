@@ -5,6 +5,24 @@
   --faint: #6b7086;
   --line: rgba(255, 255, 255, 0.08);
   --line2: rgba(255, 255, 255, 0.16);
+  --line-soft: rgba(255, 255, 255, 0.055); /* divisórias internas (cabeçalhos, barras) */
+  --hover: rgba(255, 255, 255, 0.07);
+  --hover2: rgba(255, 255, 255, 0.11);
+  --sel: rgba(255, 255, 255, 0.13);
+  --thumb: rgba(255, 255, 255, 0.13);
+  /* Escala de cantos: controles pequenos, controles, superfícies, cartões, janelas flutuantes. */
+  --r-xs: 6px;
+  --r-sm: 8px;
+  --r-md: 10px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  /* Altura única de controles e de cabeçalhos: tudo cai na mesma linha. */
+  --ctl: 32px;
+  --ctl-sm: 28px;
+  --head: 40px;
+  --gap: 10px;
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --fast: 0.14s;
   --tint: rgba(18, 20, 30, 0.55);
   --pane: rgba(12, 13, 20, 0.78);
   --glass: rgba(24, 26, 40, 0.94);
@@ -38,22 +56,36 @@ input { font: inherit; }
 kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line2); color: var(--faint); }
 
 .app { position: fixed; inset: 0; display: flex; flex-direction: column; }
-.main { flex: 1; display: flex; min-height: 0; padding: 0 10px 10px 0; }
+.main { flex: 1; display: flex; min-height: 0; padding: 0 var(--gap) var(--gap) 0; }
 .content { flex: 1; position: relative; min-width: 0; }
 
-.primary { height: 32px; padding: 0 14px; border-radius: 8px; background: var(--accent); color: #0b1020; font-weight: 600; font-size: 12.5px; }
+.primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 14px; border-radius: var(--r-sm); background: var(--accent); color: #0b1020; font-weight: 600; font-size: 12.5px; }
 .primary:hover { filter: brightness(1.08); }
+.primary:active:not(:disabled) { transform: scale(0.97); }
+/* Rótulos de botão nunca quebram linha; quem precisa de espaço é o contêiner (que pode quebrar). */
+.primary, .ghost, .danger { white-space: nowrap; flex: none; }
 .primary:disabled { opacity: 0.5; cursor: default; }
-.ghost { height: 32px; padding: 0 12px; border-radius: 8px; color: var(--muted); }
-.ghost:hover { background: rgba(255, 255, 255, 0.07); color: #fff; }
-.ibtn { width: 32px; height: 32px; border-radius: 8px; display: grid; place-items: center; color: var(--muted); }
-.ibtn:hover { background: rgba(255, 255, 255, 0.08); color: #fff; }
+.ghost { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 12px; border-radius: var(--r-sm); color: var(--muted); }
+.ghost:hover { background: var(--hover); color: #fff; }
+.ibtn { width: var(--ctl); height: var(--ctl); border-radius: var(--r-sm); display: grid; place-items: center; color: var(--muted); }
+.ibtn:hover { background: var(--hover); color: #fff; }
 
-.bar { display: block; height: 4px; border-radius: 3px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
-.bar i { display: block; height: 100%; border-radius: 3px; }
+/* Fluidez: todo controle responde com a mesma curva e duração. */
+button, .si, .pg-h, .wt-h, .kc, .ri, .prov, .rows .row, .txt, .lang-sel {
+  transition: background-color var(--fast) var(--ease), color var(--fast) var(--ease), border-color var(--fast) var(--ease),
+    box-shadow var(--fast) var(--ease), opacity var(--fast) var(--ease), transform var(--fast) var(--ease), filter var(--fast) var(--ease);
+}
+.ibtn:active, .tg button:active, .pacts button:active, .sb-tool:active, .sb-add:active, .sb-toggle:active, .dtab-add:active,
+.mmd-bar button:active, .kmin:active, .ghost:active { transform: scale(0.93); }
+/* Foco por teclado sempre visível, no azul do destaque. */
+:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent); outline-offset: 1px; }
+.txt:focus-visible, .lang-sel:focus-visible { outline: 0; }
 
-.st { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; padding: 3px 9px; border-radius: 99px; white-space: nowrap; flex: none; color: var(--faint); }
-.st i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+.bar { display: block; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: inherit; transition: width 0.4s var(--ease); }
+
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; height: 22px; padding: 0 9px; border-radius: 99px; white-space: nowrap; flex: none; color: var(--faint); }
+.st i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
 .st.working { color: var(--acc); background: color-mix(in srgb, var(--acc) 15%, transparent); }
 .st.working i { width: 9px; height: 9px; background: none; border: 1.6px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
 .st.waiting { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
@@ -65,3 +97,8 @@ kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: 5px; border: 1px 
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes flash { 0% { box-shadow: 0 0 0 0 var(--acc); } 100% { box-shadow: 0 0 0 16px transparent; } }
 @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition-duration: 0.01ms !important; }
+}

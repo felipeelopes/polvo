@@ -6,6 +6,7 @@ import type { ToolKind, View } from "../core/types";
 import { t } from "../i18n";
 import { esc, h } from "./dom";
 import { ICON } from "./icons";
+import { mountBrand } from "./brand";
 import { logo } from "./logo";
 import { availableUpdate, onUpdateAvailable, showUpdate } from "./updater";
 import { openUsage, renderRings } from "./usage";
@@ -53,7 +54,7 @@ export class Titlebar {
       <button class="ibtn" data-pop data-x="help" title="${t("titlebar.help")}">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="${t("titlebar.settings")}">${ICON.gear}</button>
       <button class="upd-pill" data-x="update" hidden></button>
-      <button class="primary new-btn" data-x="projects" title="${t("titlebar.projects")}">+<span class="lbl-n"> ${t("titlebar.projectBtn")}</span></button>
+      <button class="primary new-btn" data-x="projects" title="${t("titlebar.projects")}">${ICON.plus}<span class="lbl-n">${t("titlebar.projectBtn")}</span></button>
       <div class="wc">
         <button data-w="min" title="${t("titlebar.minimize")}">${ICON.winMin}</button>
         <button data-w="max" title="${t("titlebar.maximize")}">${ICON.winMax}</button>
@@ -63,6 +64,7 @@ export class Titlebar {
     this.tools = this.el.querySelector(".layout-tools")!;
     this.rings = this.el.querySelector(".rings")!;
     this.maxBtn = this.el.querySelector('[data-w="max"]')!;
+    mountBrand(this.el.querySelector(".brand")!);
 
     this.el.addEventListener("click", (e) => {
       const tg = e.target as Element;

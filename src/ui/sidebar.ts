@@ -162,7 +162,7 @@ export class Sidebar {
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
             const head = `<div class="pg-h${closed ? " closed" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}">
                 <span class="chev">${ICON.chevron}</span>${ICON.folder}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}<span class="cnt">${all.length}</span>
-                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">+</button></span></div>`;
+                <span class="pg-acts">${tools(g.path)}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">${ICON.plusSm}</button></span></div>`;
             const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
             if (closed) return `<div class="${cls}">${head}</div>`;
             // Repositório: branch principal primeiro, depois os worktrees, todos sempre visíveis.
@@ -173,7 +173,7 @@ export class Sidebar {
                 if (!tree) return rows;
                 const tool = lastTool(w.sessions.length ? w.sessions : all);
                 return `<div class="wt"><div class="wt-h" title="${esc(w.path)}">${ICON.branch}<span>${esc(w.label)}</span>${w.main ? "" : `<em>${t("sidebar.worktree")}</em>`}
-                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="${t("sidebar.newInWorktree", { tool: TOOLS[tool].short, branch: esc(w.label) })}">+</button></span></div>${rows || `<div class="wt-none">${t("sidebar.noSessions")}</div>`}</div>`;
+                  <span class="pg-acts">${tools(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="${t("sidebar.newInWorktree", { tool: TOOLS[tool].short, branch: esc(w.label) })}">${ICON.plusSm}</button></span></div>${rows || `<div class="wt-none">${t("sidebar.noSessions")}</div>`}</div>`;
               })
               .join("");
             return `<div class="${cls}">${head}${body || (all.length ? "" : `<div class="pg-none">${t("sidebar.noSessionsHint")}</div>`)}</div>`;
@@ -239,7 +239,7 @@ export class Sidebar {
 
   private applyCollapsed(): void {
     this.el.classList.toggle("collapsed", this.collapsed);
-    this.el.querySelector<HTMLElement>("[data-toggle]")!.innerHTML = this.collapsed ? "»" : "«";
+    this.el.querySelector<HTMLElement>("[data-toggle]")!.innerHTML = this.collapsed ? ICON.sidebarOpen : ICON.sidebarClose;
     this.render();
   }
 }

@@ -27,7 +27,7 @@ import type { LayoutNode, Rect, Side } from "../core/types";
 import type { Terminals } from "../terminal/terminals";
 import { h, inside } from "./dom";
 import { toast } from "./feedback";
-import { TOOLS, toolIcon } from "./icons";
+import { ICON, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { Pane, type PaneHandlers } from "./pane";
 import { t, tn } from "../i18n";
@@ -68,7 +68,7 @@ export class TilesView {
   private drag: { id: string; fromRail: boolean; sx: number; sy: number; moved: boolean; target: DropTarget | null } | null = null;
 
   constructor(private host: TilesHost) {
-    this.empty.innerHTML = `<div>${logo(88, "idle")}<h3>${t("tiles.empty.title")}</h3>${t("tiles.empty.hint")}<br><button class="primary" data-new>+ ${t("tiles.empty.newSession")}</button></div>`;
+    this.empty.innerHTML = `<div>${logo(88, "idle", { look: true })}<h3>${t("tiles.empty.title")}</h3>${t("tiles.empty.hint")}<br><button class="primary" data-new>${ICON.plus}${t("tiles.empty.newSession")}</button></div>`;
     this.compass.hidden = true;
     this.badge.hidden = true;
     this.ghost.hidden = true;
