@@ -8,6 +8,11 @@ import {
   fromGithubIssue,
   group,
   heat,
+  stateKey,
+  stateOptions,
+  branchesFor,
+  daily,
+  previousWorkday,
   htmlToText,
   isPending,
   mapState,
@@ -172,6 +177,23 @@ describe("Azure DevOps", () => {
     ]);
   });
 
+  it("lista os estados reais para o filtro", () => {
+    const list = [
+      item({ src: "ado", rawState: "New", state: "todo", stateColor: "#b2b2b2" }),
+      item({ src: "ado", rawState: "New", state: "todo" }),
+      item({ src: "ado", rawState: "Committed", state: "todo", stateColor: "#007acc" }),
+      item({ src: "ado", rawState: "Active", state: "doing" }),
+      item({ src: "gh", rawState: "open", state: "todo" }),
+    ];
+    expect(stateOptions(list).map((o) => [o.key, o.count])).toEqual([
+      ["s:active", 1],
+      ["s:new", 2],
+      ["s:committed", 1],
+      ["c:todo", 1],
+    ]);
+    expect(stateKey(list[0])).toBe("s:new");
+  });
+
   it("calcula progresso e burndown da sprint", () => {
     const s: AdoSprint = {
       org: "nox",
@@ -202,6 +224,38 @@ describe("Azure DevOps", () => {
   it("conta dias úteis", () => {
     // sexta 2026-10-02 → segunda 2026-10-05: sexta + segunda.
     expect(businessDaysBetween(Date.parse("2026-10-02T12:00:00"), Date.parse("2026-10-05T12:00:00"))).toBe(2);
+  });
+});
+
+describe("facilidades do dia a dia", () => {
+  it("acha a branch local pelo número do item", () => {
+    const b = ["main", "fix/1832-login", "feat/18320-outra", "AB#1832", "feature/42-x", "release-1832.1"];
+    expect(branchesFor(1832, b)).toEqual(["fix/1832-login", "AB#1832", "release-1832.1"]);
+  });
+
+  it("último dia útil pula o fim de semana", () => {
+    // segunda 2026-10-05 → sexta 2026-10-02
+    expect(new Date(previousWorkday(Date.parse("2026-10-05T10:00:00"))).getDate()).toBe(2);
+    expect(new Date(previousWorkday(Date.parse("2026-10-02T10:00:00"))).getDate()).toBe(1);
+  });
+
+  it("monta a daily com ontem, hoje e impedimentos", () => {
+    const now = Date.parse("2026-10-02T10:00:00");
+    const y = Date.parse("2026-10-01T15:00:00");
+    const c = (repo: string, subject: string, date = y) => ({ repo, sha: subject, date, subject, add: 1, del: 0 });
+    const d = daily(
+      {
+        commits: [c("r1", "a"), c("r1", "b"), c("r2", "x"), c("r1", "hoje", now)],
+        items: [item({ key: "1", state: "doing" }), item({ key: "2", state: "blocked" }), item({ key: "3", state: "done", closed: y })],
+        prs: [],
+      },
+      now,
+    );
+    expect(d.commits).toEqual([
+      { repo: "r1", n: 2, subjects: ["a", "b"] },
+      { repo: "r2", n: 1, subjects: ["x"] },
+    ]);
+    expect([d.doing.length, d.blocked.length, d.done.length]).toEqual([1, 1, 1]);
   });
 });
 

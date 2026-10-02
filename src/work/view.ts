@@ -13,8 +13,12 @@ import { ICON, TOOLS } from "../ui/icons";
 import { localeTag, t, tn } from "../i18n";
 import { work, type AdoOrg, type Detect, type Thread, type WorkConfig } from "./api";
 import {
+  adoState,
+  branchesFor,
   branchName,
   bugKind,
+  daily,
+  previousWorkday,
   build,
   clip,
   commitsSince,
@@ -29,6 +33,8 @@ import {
   startOfDay,
   startOfWeek,
   STATE_FILTERS,
+  stateKey,
+  stateOptions,
   type GroupBy,
   type Item,
   type Model,
@@ -46,6 +52,10 @@ export interface WorkHost {
   /** Mostra a sessão nos Painéis. */
   openSession(id: string): void;
   openBoard(): void;
+  /** Nova sessão do agente padrão na pasta. */
+  newSession(cwd: string): void;
+  /** Terminal (PowerShell) na pasta. */
+  openTerminal(cwd: string): void;
 }
 
 type Range = "day" | "week" | "sprint";
@@ -90,6 +100,8 @@ const I = {
   ext: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h4.5V7M13.5 2.5 7.5 8.5M12 9.5v3.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5H7"/></svg>',
   caret: '<svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m4 6 4 4 4-4"/></svg>',
   search: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>',
+  daily: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="2.5" width="10" height="11.5" rx="1.8"/><path d="M6 2.5V1.8h4v.7M5.5 7h5M5.5 10h3.5"/></svg>',
+  dots: '<svg width="13" height="13" viewBox="0 0 16 16" fill="currentColor"><circle cx="3.5" cy="8" r="1.4"/><circle cx="8" cy="8" r="1.4"/><circle cx="12.5" cy="8" r="1.4"/></svg>',
   refresh: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.6-3.9M13.5 2.5v3h-3"/></svg>',
 };
 
@@ -117,6 +129,8 @@ export class WorkView {
     stateF: "pending" as StateFilter,
     groupBy: "smart" as GroupBy,
     onlyBugs: false,
+    /** Estados reais escolhidos no filtro "Estado" (vazio = todos). */
+    states: [] as string[],
     src: "all" as "all" | "gh" | "ado",
     prTab: "mine" as "mine" | "review" | "merged",
     closed: ["done", "review"] as string[],
@@ -497,8 +511,59 @@ export class WorkView {
 
   // ------------------------------------------------------------ Para fazer
 
-  private baseList(): Item[] {
-    return this.items().filter((i) => (this.ui.src === "all" || i.src === this.ui.src) && matches(i, this.query));
+  /** Itens da fonte e busca atuais; com `withStates`, também do filtro de estados reais. */
+  private baseList(withStates = true): Item[] {
+    const states = withStates && this.ui.states.length ? new Set(this.ui.states) : null;
+    return this.items().filter((i) => (this.ui.src === "all" || i.src === this.ui.src) && matches(i, this.query) && (!states || states.has(stateKey(i))));
+  }
+
+  /** Rótulo do botão "Estado": os nomes escolhidos (até dois) ou a quantidade. */
+  private stateLabel(keys: string[]): string {
+    if (!keys.length) return esc(t("work.todo.stateFilter"));
+    const opts = stateOptions(this.baseList(false));
+    const names = keys.map((k) => opts.find((o) => o.key === k)).filter(Boolean).map((o) => (o!.category ? t(`work.state.${o!.name}`) : o!.name));
+    return `${esc(t("work.todo.stateFilter"))}: <b>${esc(names.length <= 2 ? names.join(", ") : t("work.todo.stateCount", { n: names.length }))}</b>`;
+  }
+
+  /** Filtro por estado real, com seleção múltipla. */
+  private statesMenu(anchor: HTMLElement): void {
+    const render = (el: HTMLDivElement) => {
+      const opts = stateOptions(this.baseList(false));
+      const sel = new Set(this.ui.states);
+      el.innerHTML = `<div class="mh">${t("work.todo.stateFilterTitle")}</div>${
+        opts.length
+          ? opts
+              .map(
+                (o) => `<button data-st="${esc(o.key)}" class="wk-stopt${sel.has(o.key) ? " on" : ""}"><span class="box">${sel.has(o.key) ? "✓" : ""}</span><i class="dot" style="background:${o.color ? esc(o.color) : "var(--faint)"}"></i><span class="wk-ml">${esc(
+                  o.category ? t(`work.state.${o.name}`) : o.name,
+                )}</span><small>${o.count}</small></button>`,
+              )
+              .join("")
+          : `<div class="wk-mfoot">${t("work.todo.empty")}</div>`
+      }${sel.size ? `<hr><button data-stclear>${t("work.todo.stateClear")}</button>` : ""}`;
+    };
+    popover(
+      "work-states",
+      anchor,
+      (el) => {
+        render(el);
+        el.onclick = (ev) => {
+          const target = ev.target as Element;
+          if (target.closest("[data-stclear]")) this.ui.states = [];
+          else {
+            const k = target.closest<HTMLElement>("[data-st]")?.dataset.st;
+            if (!k) return;
+            this.ui.states = this.ui.states.includes(k) ? this.ui.states.filter((x) => x !== k) : [...this.ui.states, k];
+            // Estado escolhido de outra categoria não pode sumir pelo chip ("Pendentes" esconderia "Done").
+            if (this.ui.states.length) this.ui.stateF = "all";
+          }
+          this.saveUi();
+          this.resetList();
+          render(el);
+        };
+      },
+      "menu wk-menu wk-states",
+    );
   }
 
   private renderTodo(): void {
@@ -512,6 +577,7 @@ export class WorkView {
           <label class="wk-search">${I.search}<input data-q placeholder="${esc(t("work.todo.search"))}" spellcheck="false"><kbd>/</kbd></label>
           <div class="wk-chips" data-chips></div>
           <button class="wk-chip bug" data-bugs title="${t("work.todo.onlyBugsHint")}">🐞 ${t("work.todo.onlyBugs")}<em data-bugcnt></em></button>
+          <button class="wk-chip st" data-states data-pop title="${t("work.todo.stateFilterHint")}"><span data-stlbl></span>${I.caret}</button>
           <div class="sp"></div>
           <div class="wk-grp">${t("work.todo.group")}
             <div class="seg sm" data-groups>
@@ -531,7 +597,7 @@ export class WorkView {
           <span><kbd>↑</kbd><kbd>↓</kbd> ${t("work.keys.nav")}</span><span><kbd>A</kbd> ${t("work.keys.implement")}</span>
           <span><kbd>⇧A</kbd> ${t("work.keys.more")}</span><span><kbd>C</kbd> ${t("work.keys.comments")}</span>
           <span><kbd>O</kbd> ${t("work.keys.open")}</span><span><kbd>X</kbd> ${t("work.keys.select")}</span>
-          <span><kbd>P</kbd> ${t("work.keys.pending")}</span><span><kbd>B</kbd> ${t("work.keys.bugs")}</span><span><kbd>/</kbd> ${t("work.keys.search")}</span>
+          <span><kbd>P</kbd> ${t("work.keys.pending")}</span><span><kbd>B</kbd> ${t("work.keys.bugs")}</span><span><kbd>E</kbd> ${t("work.keys.state")}</span><span><kbd>S</kbd> ${t("work.keys.stateChange")}</span><span><kbd>.</kbd> ${t("work.keys.quick")}</span><span><kbd>/</kbd> ${t("work.keys.search")}</span>
         </div>`;
     }
     const base = this.baseList();
@@ -546,6 +612,12 @@ export class WorkView {
       .join("");
     el.querySelector("[data-bugs]")!.classList.toggle("on", this.ui.onlyBugs);
     el.querySelector("[data-bugcnt]")!.textContent = String(base.filter((i) => sf(i) && isBug(i)).length);
+    // Estados escolhidos que sumiram da lista (item fechado, fonte trocada) não contam.
+    const present = new Set(this.baseList(false).map(stateKey));
+    const states = this.ui.states.filter((k) => present.has(k));
+    const stBtn = el.querySelector<HTMLElement>("[data-states]")!;
+    stBtn.classList.toggle("on", states.length > 0);
+    stBtn.querySelector("[data-stlbl]")!.innerHTML = this.stateLabel(states);
     const list = base.filter((i) => sf(i) && (!this.ui.onlyBugs || isBug(i)));
     el.querySelector("[data-cnt]")!.textContent = String(list.length);
     this.renderList(list);
@@ -605,17 +677,20 @@ export class WorkView {
       ...i.tags.slice(0, 3).map((x) => `<span class="wk-tag">${esc(x)}</span>`),
     ].join("");
     const cm = i.comments ? `<span class="wk-cm${nc ? " new" : ""}">${I.comment}${i.comments}${nc ? ` · ${tn("work.todo.newComments", nc)}` : ""}</span>` : "";
+    const br = this.localBranches(i);
+    const brTag = br.length ? `<span class="wk-br" title="${esc(t("work.branches.badgeHint", { names: br.map((b) => b.branch).join(", ") }))}">${ICON.branch}${esc(br[0].branch)}${br.length > 1 ? ` +${br.length - 1}` : ""}</span>` : "";
     const agent = this.agentPick ? TOOLS[this.agentPick].short : "";
     return `<div class="wk-it${idx === this.cur ? " cur" : ""}${this.sel.has(i.key) ? " sel" : ""}${i.state === "done" ? " done" : ""}" data-i="${idx}">
       <div class="cb" data-sel title="${t("work.todo.select")}"></div>
       <div class="ic">${KIND_ICON(i)}</div>
       <div class="t" title="${esc(why || t("work.reason.none"))}"><b>${esc(i.title)}</b>
-        <div class="m">${I[i.src]}<span class="ref">${esc(i.ref)}</span>${i.src === "ado" && i.typeName ? `<span class="wk-type">${esc(i.typeName)}</span>` : ""}<span>${esc(i.project)}</span>${tags}${cm}<span>${ago(i.updated)}</span></div>
+        <div class="m">${I[i.src]}<span class="ref">${esc(i.ref)}</span>${i.src === "ado" && i.typeName ? `<span class="wk-type">${esc(i.typeName)}</span>` : ""}<span>${esc(i.project)}</span>${brTag}${tags}${cm}<span>${ago(i.updated)}</span></div>
       </div>
       <div class="r">
         <div class="acts">
           <span class="split"><button class="primary xs" data-do="impl" title="${esc(t("work.todo.implementWith", { agent }))}">${I.bot}${t("work.todo.implement")}</button><button class="primary xs caret" data-do="menu" title="${t("work.todo.moreOptions")}">${I.caret}</button></span>
           <button class="ibtn xs" data-do="comments" title="${t("work.todo.comments")}">${I.comment}</button>
+          <button class="ibtn xs" data-do="quick" title="${t("work.quick.more")}">${I.dots}</button>
           <button class="ibtn xs" data-do="open" title="${t("work.todo.open")}">${I.ext}</button>
         </div>
         ${this.statePill(i)}
@@ -688,6 +763,8 @@ export class WorkView {
           <div class="ic">${p.role === "merged" ? I.merged : I.pr}</div>
           <div class="t"><b>${esc(p.title)}</b>
             <div class="m">${I[p.src]}<span class="ref">${esc(p.ref)}</span><span>${esc(p.repo.split("/").pop() ?? p.repo)}</span>${p.author && p.role === "review" ? `<span>@${esc(p.author)}</span>` : ""}<span>${ago(p.merged ?? p.updated)}</span>${
+              p.role === "review" && Date.now() - p.created > 86_400_000 ? `<span class="wk-stale">${esc(t("work.prs.stale", { ago: ago(p.created) }))}</span>` : ""
+            }${
               p.add !== null ? `<span><span class="add">+${p.add}</span> <span class="del">−${p.del}</span></span>` : ""
             }</div>
           </div>
@@ -808,7 +885,7 @@ export class WorkView {
     }
     evs.sort((a, b) => b.at - a.at);
     const time = (d: number) => new Date(d).toLocaleTimeString(localeTag(), { hour: "2-digit", minute: "2-digit" });
-    el.innerHTML = `<div class="wk-ch"><h3>${t("work.timeline.title")}</h3></div>
+    el.innerHTML = `<div class="wk-ch"><h3>${t("work.timeline.title")}</h3><div class="sp"></div><button class="ghost sm" data-daily title="${esc(t("work.daily.hint"))}">${I.daily}${t("work.daily.button")}</button></div>
       <div class="wk-tlist">${
         evs.length
           ? evs
@@ -895,6 +972,7 @@ export class WorkView {
       return;
     }
     if (d("[data-board]")) return this.host.openBoard();
+    if (d("[data-daily]")) return this.openDaily();
     const url = d("[data-url]");
     if (url) return void ipc.openUrl(url.dataset.url!);
     const sf = d("[data-sf]");
@@ -912,6 +990,8 @@ export class WorkView {
       return this.resetList();
     }
     if (d("[data-bugs]")) return this.toggleBugs();
+    const stb = d("[data-states]");
+    if (stb) return this.statesMenu(stb);
     const grp = d("[data-group]");
     if (grp) {
       this.ui.groupBy = grp.dataset.group as GroupBy;
@@ -963,6 +1043,8 @@ export class WorkView {
           return void this.toAgent(item, "impl", act);
         case "menu":
           return this.agentMenu(item, act);
+        case "quick":
+          return this.quickMenu(item, act);
         case "open":
           return void ipc.openUrl(item.url);
         default:
@@ -999,6 +1081,8 @@ export class WorkView {
       }
       if (k === "a") return void (e.shiftKey ? this.agentMenu(this.drawerItem, this.drawer.querySelector<HTMLElement>("[data-dmenu]")!) : this.toAgent(this.drawerItem, "impl"));
       if (k === "o") return void ipc.openUrl(this.drawerItem.url);
+      if (k === "s") return this.stateMenu(this.drawerItem, this.drawer.querySelector<HTMLElement>("[data-dstate]")!);
+      if (k === ".") return this.quickMenu(this.drawerItem, this.drawer.querySelector<HTMLElement>("[data-dquick]")!);
       if (k === "r") {
         e.preventDefault();
         this.drawer.querySelector("textarea")?.focus();
@@ -1038,6 +1122,13 @@ export class WorkView {
       case "O":
         if (item) void ipc.openUrl(item.url);
         break;
+      case ".":
+        if (item) this.quickMenu(item, rowBtn("[data-do=quick]") ?? this.scroll);
+        break;
+      case "s":
+      case "S":
+        if (item) this.stateMenu(item, rowBtn(".wk-st") ?? this.scroll);
+        break;
       case "x":
       case "X":
         if (item) this.toggleSel(item);
@@ -1048,6 +1139,12 @@ export class WorkView {
         this.saveUi();
         this.resetList();
         break;
+      case "e":
+      case "E": {
+        const b = this.scroll.querySelector<HTMLElement>("[data-states]");
+        if (b) this.statesMenu(b);
+        break;
+      }
       case "b":
       case "B":
         this.toggleBugs();
@@ -1231,6 +1328,226 @@ export class WorkView {
     await this.host.askAgent(repo, t("work.prompt.review", { ref: p.ref, url: p.url, title: p.title }), this.agentPick ?? undefined);
   }
 
+  // ------------------------------------------------------------ facilidades do dia a dia
+
+  /** Branches locais do item (pelo número), com a worktree onde estão, se houver. */
+  private localBranches(i: Item): { repo: string; branch: string; worktree: string | null }[] {
+    const path = this.repoPath(i);
+    if (!path) return [];
+    const repo = this.model?.repos.find((r) => normPath(r.path) === normPath(path));
+    const names = branchesFor(i.num, repo?.branches ?? []);
+    const wts = Object.values(store.git).find((g) => g && normPath(g.project) === normPath(path))?.worktrees ?? [];
+    return names.map((b) => ({ repo: path, branch: b, worktree: wts.find((w) => w.branch === b)?.path ?? null }));
+  }
+
+  private branchesHtml(i: Item): string {
+    const list = this.localBranches(i);
+    if (!list.length) return "";
+    return `<div class="wk-brs"><b>${t("work.branches.title")}</b>${list
+      .map(
+        (b, k) => `<div class="wk-brrow">${ICON.branch}<code>${esc(b.branch)}</code>${b.worktree ? `<em>${t("work.branches.worktree")}</em>` : ""}<div class="sp"></div>
+          <button class="ghost xs" data-brgo="${k}">${b.worktree ? t("work.branches.open") : t("work.branches.checkout")}</button></div>`,
+      )
+      .join("")}</div>`;
+  }
+
+  /** Abre uma sessão na branch: na worktree dela ou fazendo checkout no repositório. */
+  private async openBranch(b: { repo: string; branch: string; worktree: string | null } | undefined): Promise<void> {
+    if (!b) return;
+    if (b.worktree) return this.host.newSession(b.worktree);
+    try {
+      await gitApi.action(b.repo, "checkout", [b.branch]);
+      toast(t("work.branches.checkedOut", { branch: b.branch }));
+      this.host.newSession(b.repo);
+    } catch (e) {
+      toast(String(e));
+    }
+  }
+
+  private async copy(text: string): Promise<void> {
+    await navigator.clipboard.writeText(text).catch(() => {});
+    toast(t("work.quick.copied", { text }));
+  }
+
+  /** Ações rápidas do item: copiar ID/link/branch, criar branch, terminal, estado. */
+  private quickMenu(i: Item, anchor: HTMLElement): void {
+    const branches = this.localBranches(i);
+    const suggested = branchName(i);
+    const acts: [string, string, string, string][] = [
+      ["id", t("work.quick.copyId", { ref: i.ref }), t("work.quick.copyIdText"), "I"],
+      ["link", t("work.quick.copyLink"), "", "L"],
+      ["branch", t("work.quick.copyBranch"), suggested, "B"],
+      ...(branches.length ? [] : ([["create", t("work.quick.createBranch"), suggested, "N"]] as [string, string, string, string][])),
+      ...branches.map((b, k): [string, string, string, string] => [`br:${k}`, b.worktree ? t("work.branches.openIn", { branch: b.branch }) : t("work.branches.checkoutIn", { branch: b.branch }), "", ""]),
+      ["terminal", t("work.quick.terminal"), "", "T"],
+      ["state", t("work.quick.state"), "", "S"],
+    ];
+    popover(
+      `work-quick:${i.key}`,
+      anchor,
+      (el) => {
+        el.innerHTML = `<div class="mh">${t("work.quick.title")} · ${esc(i.ref)}</div>${acts
+          .map(([k, l, d, kb]) => `<button data-qa="${k}"><span class="wk-ml">${esc(l)}${d ? `<em>${esc(d)}</em>` : ""}</span>${kb ? `<small><kbd>${kb}</kbd></small>` : ""}</button>`)
+          .join("")}`;
+        el.onclick = (ev) => {
+          const k = (ev.target as Element).closest<HTMLElement>("[data-qa]")?.dataset.qa;
+          if (!k) return;
+          closePopover();
+          void this.quickAction(i, k, anchor);
+        };
+        const keys = (ev: KeyboardEvent) => {
+          if (!el.isConnected) return removeEventListener("keydown", keys, true);
+          const k = ({ i: "id", l: "link", b: "branch", n: "create", t: "terminal", s: "state" } as Record<string, string>)[ev.key.toLowerCase()];
+          if (!k || !el.querySelector(`[data-qa="${k}"]`)) return;
+          ev.preventDefault();
+          ev.stopPropagation();
+          removeEventListener("keydown", keys, true);
+          el.querySelector<HTMLElement>(`[data-qa="${k}"]`)!.click();
+        };
+        addEventListener("keydown", keys, true);
+      },
+      "menu wk-menu",
+    );
+  }
+
+  private async quickAction(i: Item, k: string, anchor: HTMLElement): Promise<void> {
+    if (k === "id") return this.copy(i.ref);
+    if (k === "link") return this.copy(i.url);
+    if (k === "branch") return this.copy(branchName(i));
+    if (k === "state") return this.stateMenu(i, anchor);
+    if (k.startsWith("br:")) return this.openBranch(this.localBranches(i)[Number(k.slice(3))]);
+    const repo = await this.resolveRepo(i, anchor);
+    if (!repo) return;
+    if (k === "terminal") return this.host.openTerminal(repo);
+    if (k === "create") {
+      const branch = branchName(i);
+      try {
+        await gitApi.action(repo, "create", [branch, ""]);
+        toast(t("work.quick.branchCreated", { branch, project: basename(repo) }), { label: t("work.quick.openSession"), run: () => this.host.newSession(repo) });
+        void this.refresh();
+      } catch (e) {
+        toast(String(e));
+      }
+    }
+  }
+
+  /** Estados possíveis do item: os reais do tipo (Azure DevOps) ou abrir/fechar (GitHub). */
+  private stateMenu(i: Item, anchor: HTMLElement): void {
+    type Opt = { value: string; label: string; color: string | null };
+    let opts: Opt[];
+    if (i.src === "ado") {
+      const defs = this.raw.ado.find((o) => o.org.toLowerCase() === (i.org ?? "").toLowerCase())?.states?.[`${i.adoProject}|${i.typeName}`.toLowerCase()] ?? [];
+      opts = defs
+        .filter((d) => d.name.toLowerCase() !== i.rawState.toLowerCase())
+        .map((d) => ({ value: d.name, label: d.name, color: d.color ? `#${d.color}` : null }));
+    } else {
+      opts =
+        i.state === "done"
+          ? [{ value: "open", label: t("work.stateMenu.ghReopen"), color: "#3fb27f" }]
+          : [
+              { value: "completed", label: t("work.stateMenu.ghClose"), color: "#b48aff" },
+              { value: "not_planned", label: t("work.stateMenu.ghNotPlanned"), color: "#8b949e" },
+            ];
+    }
+    popover(
+      `work-state:${i.key}`,
+      anchor,
+      (el) => {
+        el.innerHTML = `<div class="mh">${t("work.stateMenu.title")} · ${esc(i.ref)}</div>${
+          opts.length
+            ? opts.map((o) => `<button data-sv="${esc(o.value)}"><i class="dot" style="background:${o.color ? esc(o.color) : "var(--faint)"}"></i><span class="wk-ml">${esc(o.label)}</span></button>`).join("")
+            : `<div class="wk-mfoot">${t("work.stateMenu.none")}</div>`
+        }`;
+        el.onclick = (ev) => {
+          const v = (ev.target as Element).closest<HTMLElement>("[data-sv]")?.dataset.sv;
+          if (!v) return;
+          closePopover();
+          void this.setState(i, v, opts.find((o) => o.value === v)!.label);
+        };
+      },
+      "menu wk-menu wk-states",
+    );
+  }
+
+  private async setState(i: Item, value: string, label: string): Promise<void> {
+    try {
+      if (i.src === "ado") {
+        await work.adoSetState(this.orgCfg(i.org!), i.adoProject!, i.num, value);
+        const defs = this.raw.ado.find((o) => o.org.toLowerCase() === (i.org ?? "").toLowerCase())?.states?.[`${i.adoProject}|${i.typeName}`.toLowerCase()];
+        const s = adoState(value, defs);
+        Object.assign(i, { rawState: value, state: s.state, stateColor: s.color });
+      } else {
+        await work.githubSetState(i.repo!, i.num, value as "open" | "completed" | "not_planned");
+        Object.assign(i, value === "open" ? { state: "todo", rawState: "open", closed: null } : { state: "done", rawState: "closed", closed: Date.now() });
+      }
+      toast(t("work.stateMenu.changed", { ref: i.ref, state: label }));
+      this.renderTodo();
+      this.renderKpis();
+      if (this.drawerItem === i) void this.openDrawer(i);
+      // Confirma com a origem daqui a pouco (automações podem mudar outros campos).
+      window.setTimeout(() => void this.refresh(), 4000);
+    } catch (e) {
+      toast(String(e));
+    }
+  }
+
+  /** Resumo para a daily: último dia útil, hoje e impedimentos, pronto para colar. */
+  private openDaily(): void {
+    const m = { items: this.items(), prs: this.prs(), commits: this.commits() };
+    const d = daily(m);
+    const prev = previousWorkday();
+    const yesterday = prev === startOfDay() - 86_400_000;
+    const dayName = new Date(prev).toLocaleDateString(localeTag(), { weekday: "long" });
+    const title = (s: string) => `**${s}**`;
+    const lines: string[] = [title(yesterday ? t("work.daily.yesterday") : dayName.charAt(0).toUpperCase() + dayName.slice(1))];
+    const before = lines.length;
+    for (const c of d.commits) lines.push(`- ${tn("work.daily.commits", c.n, { repo: basename(c.repo) })}: ${c.subjects.join("; ")}${c.n > c.subjects.length ? "…" : ""}`);
+    for (const p of d.prOpened) lines.push(`- ${t("work.daily.prOpened", { ref: p.ref, title: p.title })}`);
+    for (const p of d.prMerged) lines.push(`- ${t("work.daily.prMerged", { ref: p.ref, title: p.title })}`);
+    for (const i of d.done) lines.push(`- ${t("work.daily.done", { ref: i.ref, title: i.title })}`);
+    if (lines.length === before) lines.push(`- ${t("work.daily.none")}`);
+    lines.push("", title(t("work.daily.today")));
+    const before2 = lines.length;
+    for (const i of d.doing) lines.push(`- ${i.ref}: ${i.title}`);
+    if (d.reviews.length) lines.push(`- ${tn("work.daily.reviews", d.reviews.length)}`);
+    if (lines.length === before2) lines.push(`- ${t("work.daily.none")}`);
+    lines.push("", title(t("work.daily.blockers")));
+    const before3 = lines.length;
+    for (const i of d.blocked) lines.push(`- ${t("work.daily.blocked", { ref: i.ref, title: i.title })}`);
+    for (const p of d.changes) lines.push(`- ${t("work.daily.changes", { ref: p.ref, title: p.title })}`);
+    for (const p of d.failing) lines.push(`- ${t("work.daily.failing", { ref: p.ref, title: p.title })}`);
+    if (lines.length === before3) lines.push(`- ${t("work.daily.none")}`);
+    const text = lines.join("\n");
+
+    const modal = h("div", "modal");
+    const box = h("div", "mbox wk-daily");
+    modal.append(box);
+    box.innerHTML = `<h2>${t("work.daily.title")}</h2><div class="sub">${t("work.daily.sub")}</div>
+      <textarea spellcheck="false"></textarea>
+      <div class="mfoot" style="margin-top:14px"><span class="hk"></span><div class="sp" style="flex:1"></div><button class="ghost" data-close>${t("work.daily.close")}</button><button class="primary" data-copy>${t("work.daily.copy")}</button></div>`;
+    const ta = box.querySelector("textarea")!;
+    ta.value = text;
+    const close = () => modal.remove();
+    box.addEventListener("click", (e) => {
+      const target = e.target as Element;
+      if (target.closest("[data-close]")) close();
+      if (target.closest("[data-copy]")) {
+        void navigator.clipboard.writeText(ta.value).then(() => {
+          toast(t("work.daily.copied"));
+          close();
+        });
+      }
+    });
+    modal.addEventListener("pointerdown", (e) => {
+      if (e.target === modal) close();
+    });
+    modal.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") close();
+    });
+    document.body.append(modal);
+    ta.focus();
+  }
+
   // ------------------------------------------------------------ gaveta (detalhes + comentários)
 
   private async openDrawer(i: Item): Promise<void> {
@@ -1246,8 +1563,11 @@ export class WorkView {
         <div class="wk-why"><b>${t("work.reason.why")}</b>${why.length ? why.join("") : `<span>${t("work.reason.none")}</span>`}</div>
         <div class="btns">
           <span class="split"><button class="primary sm" data-dimpl>${I.bot}${esc(t("work.todo.implementWith", { agent: this.agentPick ? TOOLS[this.agentPick].short : "" }).replace(/ \(A\)$/, ""))}</button><button class="primary sm caret" data-dmenu>${I.caret}</button></span>
+          <button class="ghost sm" data-dstate title="${esc(t("work.stateMenu.hint"))}">${t("work.stateMenu.button")}${I.caret}</button>
           <button class="ghost sm" data-dopen>${I.ext}${t("work.drawer.openIn", { source })}</button>
+          <button class="ibtn sm" data-dquick title="${t("work.quick.more")}">${I.dots}</button>
         </div>
+        ${this.branchesHtml(i)}
       </div>
       <div class="wk-db"><div class="wk-loading">${t("work.drawer.loading")}</div></div>
       <div class="wk-df">
@@ -1305,6 +1625,12 @@ export class WorkView {
     const menu = target.closest<HTMLElement>("[data-dmenu]");
     if (menu) return this.agentMenu(i, menu);
     if (target.closest("[data-dopen]")) return void ipc.openUrl(i.url);
+    const st = target.closest<HTMLElement>("[data-dstate]");
+    if (st) return this.stateMenu(i, st);
+    const qk = target.closest<HTMLElement>("[data-dquick]");
+    if (qk) return this.quickMenu(i, qk);
+    const bg = target.closest<HTMLElement>("[data-brgo]");
+    if (bg) return void this.openBranch(this.localBranches(i)[Number(bg.dataset.brgo)]);
     if (target.closest("[data-send]")) void this.sendComment();
   }
 

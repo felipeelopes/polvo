@@ -80,12 +80,19 @@ async fn request(
     url: &str,
     body: Option<Value>,
 ) -> AppResult<Value> {
+    let patch = method == Method::PATCH;
     let mut req = http()?
         .request(method, url)
         .header("Authorization", auth)
         .header("Accept", "application/json");
     if let Some(b) = body {
-        req = req.json(&b);
+        // Atualizar work items usa JSON Patch, com content-type próprio.
+        req = if patch {
+            req.header("Content-Type", "application/json-patch+json")
+                .body(b.to_string())
+        } else {
+            req.json(&b)
+        };
     }
     let res = req.send().await.map_err(net)?;
     let status = res.status();
@@ -511,6 +518,29 @@ pub async fn work_ado_comment(
             enc(&project)
         ),
         Some(json!({ "text": html })),
+    )
+    .await
+    .map(|_| ())
+}
+
+/// Muda o estado de um work item (o nome real, ex.: "Committed").
+#[tauri::command]
+pub async fn work_ado_set_state(
+    org: String,
+    auth: String,
+    project: String,
+    id: i64,
+    state: String,
+) -> AppResult<()> {
+    let o = org_of(&org, &auth);
+    o.call(
+        Method::PATCH,
+        &format!(
+            "{}/{}/_apis/wit/workitems/{id}?{V}",
+            o.base(),
+            enc(&project)
+        ),
+        Some(json!([{ "op": "add", "path": "/fields/System.State", "value": state }])),
     )
     .await
     .map(|_| ())

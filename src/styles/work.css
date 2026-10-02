@@ -87,6 +87,12 @@ svg.src.ado { color: #4c9bf0; }
 .wk-chip.on em { color: #c6d2ff; }
 .wk-chip.bug.on { background: rgba(229, 83, 75, 0.16); border-color: rgba(229, 83, 75, 0.5); }
 .wk-chip.bug.on em { color: #ffb3ae; }
+.wk-chip.st svg { opacity: 0.7; }
+.wk-chip.st b { font-weight: 600; color: #fff; max-width: 220px; overflow: hidden; text-overflow: ellipsis; }
+.wk-states .wk-stopt { gap: 9px; }
+.wk-states .wk-stopt .box { width: 16px; height: 16px; flex: none; border-radius: 5px; border: 1.5px solid var(--line2); display: grid; place-items: center; font-size: 11px; font-weight: 700; color: #0b1020; }
+.wk-states .wk-stopt.on .box { background: var(--accent); border-color: var(--accent); }
+.wk-states .dot { width: 8px; height: 8px; border-radius: 3px; flex: none; }
 .wk-grp { display: flex; align-items: center; gap: 8px; color: var(--faint); font-size: 11.5px; }
 .wk-bulk { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: rgba(138, 162, 255, 0.1); border-bottom: 1px solid rgba(138, 162, 255, 0.25); font-size: 12px; animation: fade-in 0.15s; }
 .wk-bulk[hidden] { display: none; }
@@ -132,6 +138,19 @@ svg.src.ado { color: #4c9bf0; }
 /* Estado real do Azure DevOps, na cor definida lá (clareada para o fundo escuro). */
 .wk-st.real[style] { color: color-mix(in srgb, var(--sc) 62%, white); border-color: color-mix(in srgb, var(--sc) 55%, transparent); background: color-mix(in srgb, var(--sc) 14%, transparent); }
 .wk-type { font-size: 10.5px; color: var(--muted); }
+/* Branch local do item e revisões paradas. */
+.wk-br { display: inline-flex; align-items: center; gap: 4px; font: 10.5px var(--mono); color: #7fd6b0; padding: 1px 6px; border-radius: 5px; background: rgba(63, 178, 127, 0.1); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
+.wk-br svg { width: 11px; height: 11px; flex: none; }
+.wk-stale { font-size: 10.5px; padding: 1px 6px; border-radius: 5px; color: #f2bd6a; background: rgba(229, 163, 58, 0.14); }
+.wk-brs { display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 10px 12px; border-radius: var(--r-md); background: rgba(63, 178, 127, 0.06); border: 1px solid rgba(63, 178, 127, 0.2); }
+.wk-brs > b { font-size: 11px; color: var(--faint); font-weight: 500; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; }
+.wk-brrow { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #7fd6b0; }
+.wk-brrow code { font-family: var(--mono); font-size: 11.5px; color: var(--text); user-select: text; }
+.wk-brrow em { font-style: normal; font-size: 10.5px; color: var(--faint); }
+.wk-brrow .sp { flex: 1; }
+.wk-daily { width: min(620px, calc(100vw - 32px)); }
+.wk-daily textarea { width: 100%; min-height: 300px; resize: vertical; border-radius: 10px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.25); color: var(--text); font: 12.5px/1.55 var(--mono); padding: 12px 14px; outline: none; }
+.wk-daily textarea:focus { border-color: rgba(138, 162, 255, 0.5); }
 .wk-gh .dot { width: 8px; height: 8px; border-radius: 3px; flex: none; }
 .wk-checks { font-size: 11px; white-space: nowrap; }
 .wk-checks.ok { color: var(--ok); }

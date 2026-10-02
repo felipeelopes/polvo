@@ -41,6 +41,8 @@ export interface LocalRepo {
   remote: Remote | null;
   user: string;
   email: string;
+  /** Branches locais (ausente em cache antigo). */
+  branches?: string[];
 }
 
 export interface LocalCommit {
@@ -202,6 +204,10 @@ export const work = {
     return { body: r.body.html, comments: r.comments };
   },
   githubComment: (repo: string, number: number, body: string) => invoke<void>("work_github_comment", { repo, number, body }),
+  /** "open" reabre; "completed" ou "not_planned" fecha. */
+  githubSetState: (repo: string, number: number, state: "open" | "completed" | "not_planned") => invoke<void>("work_github_set_state", { repo, number, state }),
+  adoSetState: (org: AdoOrg, project: string, id: number, state: string) =>
+    invoke<void>("work_ado_set_state", { org: org.name, auth: org.auth, project, id, state }),
   adoThread: async (org: AdoOrg, project: string, id: number): Promise<Thread> => {
     const r = await invoke<{ description: string | null; repro: string | null; acceptance: string | null; comments: ThreadComment[] }>("work_ado_thread", {
       org: org.name,

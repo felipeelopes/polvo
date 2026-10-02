@@ -37,6 +37,8 @@ pub struct RepoInfo {
     pub remote: Option<Remote>,
     pub user: String,
     pub email: String,
+    /// Branches locais (para achar a branch de um item pelo número).
+    pub branches: Vec<String>,
 }
 
 #[derive(Serialize, Default)]
@@ -211,11 +213,25 @@ fn scan(repo: &str, since_ms: i64) -> (RepoInfo, Vec<LocalCommit>) {
     let remote = git(repo, &["remote", "get-url", "origin"])
         .map(|u| parse_remote(&u))
         .filter(|r| !r.slug.is_empty());
+    let branches = git(
+        repo,
+        &["for-each-ref", "--format=%(refname:short)", "refs/heads"],
+    )
+    .map(|out| {
+        out.lines()
+            .map(str::trim)
+            .filter(|l| !l.is_empty())
+            .take(500)
+            .map(str::to_string)
+            .collect()
+    })
+    .unwrap_or_default();
     let info = RepoInfo {
         path: repo.to_string(),
         remote,
         user: user.clone(),
         email: email.clone(),
+        branches,
     };
     let author = if email.is_empty() { user } else { email };
     if author.is_empty() {

@@ -203,6 +203,24 @@ pub async fn work_github_comment(repo: String, number: u64, body: String) -> App
     .map(|_| ())
 }
 
+/// Fecha (como concluída ou não planejada) ou reabre uma issue.
+#[tauri::command]
+pub async fn work_github_set_state(repo: String, number: u64, state: String) -> AppResult<()> {
+    check_repo(&repo)?;
+    let body = match state.as_str() {
+        "open" => json!({ "state": "open" }),
+        "not_planned" => json!({ "state": "closed", "state_reason": "not_planned" }),
+        _ => json!({ "state": "closed", "state_reason": "completed" }),
+    };
+    rest(
+        Method::PATCH,
+        &format!("/repos/{repo}/issues/{number}"),
+        Some(body),
+    )
+    .await
+    .map(|_| ())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

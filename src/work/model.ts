@@ -516,6 +516,31 @@ export function group(items: Item[], by: GroupBy, newComments: (i: Item) => numb
   ];
 }
 
+/** Chave do estado como o usuário vê: o nome real no Azure DevOps, a categoria no GitHub. */
+export const stateKey = (i: Item): string => (i.src === "ado" && i.rawState ? `s:${i.rawState.toLowerCase()}` : `c:${i.state}`);
+
+export interface StateOption {
+  key: string;
+  /** Nome real (Azure DevOps) ou, com `category`, a categoria a traduzir. */
+  name: string;
+  category: boolean;
+  color: string | null;
+  state: ItemState;
+  count: number;
+}
+
+/** Estados presentes na lista, na ordem das categorias e depois por quantidade. */
+export function stateOptions(items: Item[]): StateOption[] {
+  const map = new Map<string, StateOption>();
+  for (const i of items) {
+    const key = stateKey(i);
+    const o = map.get(key) ?? { key, name: key.startsWith("s:") ? i.rawState : i.state, category: !key.startsWith("s:"), color: i.stateColor, state: i.state, count: 0 };
+    o.count++;
+    map.set(key, o);
+  }
+  return [...map.values()].sort((a, b) => STATE_ORDER.indexOf(a.state) - STATE_ORDER.indexOf(b.state) || b.count - a.count || a.name.localeCompare(b.name));
+}
+
 export function matches(i: Item, q: string): boolean {
   const s = q.trim().toLowerCase();
   if (!s) return true;
@@ -554,6 +579,64 @@ export function htmlToText(html: string): string {
 }
 
 export const clip = (s: string, n: number): string => (s.length > n ? `${s.slice(0, n - 1)}…` : s);
+
+/** Branches locais que citam o número do item ("fix/1832-login", "AB#1832", "feature/1832"). */
+export function branchesFor(num: number, branches: string[]): string[] {
+  const re = new RegExp(`(^|[^0-9])${num}([^0-9]|$)`);
+  return branches.filter((b) => re.test(b));
+}
+
+// ------------------------------------------------------------ daily
+
+/** Início do último dia útil antes de hoje (segunda → sexta). */
+export function previousWorkday(now = Date.now()): number {
+  const d = new Date(startOfDay(now));
+  do d.setDate(d.getDate() - 1);
+  while (d.getDay() === 0 || d.getDay() === 6);
+  return d.getTime();
+}
+
+export interface Daily {
+  since: number;
+  until: number;
+  commits: { repo: string; n: number; subjects: string[] }[];
+  prOpened: Pr[];
+  prMerged: Pr[];
+  done: Item[];
+  doing: Item[];
+  reviews: Pr[];
+  blocked: Item[];
+  changes: Pr[];
+  failing: Pr[];
+}
+
+/** O que contar na daily: o último dia útil, o que está em andamento e o que trava. */
+export function daily(m: Pick<Model, "items" | "prs" | "commits">, now = Date.now()): Daily {
+  const since = previousWorkday(now);
+  const until = startOfDay(now);
+  const inDay = (t: number | null) => !!t && t >= since && t < until;
+  const byRepo = new Map<string, { repo: string; n: number; subjects: string[] }>();
+  for (const c of m.commits.filter((c) => inDay(c.date))) {
+    const r = byRepo.get(c.repo) ?? { repo: c.repo, n: 0, subjects: [] };
+    r.n++;
+    if (r.subjects.length < 3) r.subjects.push(c.subject);
+    byRepo.set(c.repo, r);
+  }
+  const mine = m.prs.filter((p) => p.role === "mine");
+  return {
+    since,
+    until,
+    commits: [...byRepo.values()].sort((a, b) => b.n - a.n),
+    prOpened: mine.filter((p) => inDay(p.created)),
+    prMerged: m.prs.filter((p) => p.role === "merged" && inDay(p.merged)),
+    done: m.items.filter((i) => i.state === "done" && inDay(i.closed ?? i.updated)),
+    doing: m.items.filter((i) => i.state === "doing").sort((a, b) => score(b) - score(a)).slice(0, 6),
+    reviews: m.prs.filter((p) => p.role === "review"),
+    blocked: m.items.filter((i) => i.state === "blocked"),
+    changes: mine.filter((p) => p.review === "changes"),
+    failing: mine.filter((p) => p.checks === "bad"),
+  };
+}
 
 // ------------------------------------------------------------ atividade
 

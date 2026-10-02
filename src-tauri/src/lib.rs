@@ -154,6 +154,8 @@ pub fn run() {
             work::github::work_github,
             work::github::work_github_thread,
             work::github::work_github_comment,
+            work::github::work_github_set_state,
+            work::ado::work_ado_set_state,
             work::ado::work_ado,
             work::ado::work_ado_thread,
             work::ado::work_ado_comment,

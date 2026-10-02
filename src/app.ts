@@ -143,6 +143,8 @@ export class App {
         askAgent: (cwd, prompt, tool) => this.askAgent(cwd, prompt, tool),
         openSession: (id) => this.openInTiles(id),
         openBoard: () => this.setView("board"),
+        newSession: (cwd) => void this.newIn(cwd, defaultTool()),
+        openTerminal: (cwd) => void this.newIn(cwd, "shell"),
       });
       view.el.hidden = true;
       this.content.append(view.el);
