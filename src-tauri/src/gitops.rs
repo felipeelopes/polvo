@@ -981,6 +981,48 @@ pub async fn git_action(req: GitAction) -> AppResult<String> {
                 }
             }
             "pr-checkout" => gh(r, &["pr", "checkout", arg(a, 0)]),
+            // Troca a mensagem do último commit sem incluir o que está no índice.
+            "reword" => write(
+                r,
+                &[
+                    "commit",
+                    "--amend",
+                    "--only",
+                    "--cleanup=strip",
+                    "-m",
+                    arg(a, 0),
+                ],
+            ),
+            // Junta o último commit ao anterior (os dois ainda não enviados).
+            "squash-head" => {
+                let lock = repo_lock(r);
+                let _g = lock.lock();
+                let msg = run(r, &["log", "-2", "--reverse", "--format=%B%x1e"])?;
+                let parts: Vec<&str> = msg
+                    .split('\x1e')
+                    .map(str::trim)
+                    .filter(|m| !m.is_empty())
+                    .collect();
+                run(r, &["reset", "--soft", "HEAD~2"])?;
+                let joined = parts.join("\n\n");
+                run_with(
+                    r,
+                    &["commit", "--cleanup=strip", "-F", "-"],
+                    Some(joined.as_bytes()),
+                    &[],
+                )
+            }
+            "set-remote" => {
+                if read(r, &["remote", "get-url", "origin"]).is_ok() {
+                    write(r, &["remote", "set-url", "origin", arg(a, 0)])
+                } else {
+                    write(r, &["remote", "add", "origin", arg(a, 0)])
+                }
+            }
+            "set-identity" => {
+                write(r, &["config", "--local", "user.name", arg(a, 0)])?;
+                write(r, &["config", "--local", "user.email", arg(a, 1)])
+            }
             other => Err(AppError::msg(format!("ação desconhecida: {other}"))),
         }
     })
@@ -1241,6 +1283,48 @@ pub fn editor_available() -> bool {
     crate::tools::resolve("code").is_some()
 }
 
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct RepoConfig {
+    remote: Option<String>,
+    name: String,
+    email: String,
+    default_branch: Option<String>,
+}
+
+/// Remoto, identidade e branch padrão (para configurações e "atualizar a partir de main").
+#[tauri::command]
+pub async fn git_repo_config(repo: String) -> AppResult<RepoConfig> {
+    blocking(move || {
+        let get = |args: &[&str]| {
+            read(&repo, args)
+                .ok()
+                .map(|s| s.trim().to_string())
+                .filter(|s| !s.is_empty())
+        };
+        let default_branch =
+            get(&["symbolic-ref", "--short", "refs/remotes/origin/HEAD"]).or_else(|| {
+                ["main", "master", "develop"]
+                    .iter()
+                    .find(|b| {
+                        read(
+                            &repo,
+                            &["rev-parse", "--verify", "-q", &format!("refs/heads/{b}")],
+                        )
+                        .is_ok()
+                    })
+                    .map(|b| b.to_string())
+            });
+        Ok(RepoConfig {
+            remote: get(&["remote", "get-url", "origin"]),
+            name: get(&["config", "user.name"]).unwrap_or_default(),
+            email: get(&["config", "user.email"]).unwrap_or_default(),
+            default_branch,
+        })
+    })
+    .await
+}
+
 #[tauri::command]
 pub fn gh_available() -> bool {
     crate::tools::resolve("gh").is_some()
@@ -1301,12 +1385,7 @@ mod tests {
     fn end_to_end_flow() {
         let repo = temp_repo();
         let file = Path::new(&repo).join("a.txt");
-        std::fs::write(
-            &file, "um
-dois
-",
-        )
-        .unwrap();
+        std::fs::write(&file, "um\ndois\n").unwrap();
         let st = status_of(&repo).unwrap();
         assert!(st.unborn);
         assert!(st.files[0].untracked);
@@ -1331,14 +1410,7 @@ dois
             args: vec!["feat/x".into()],
         }))
         .unwrap();
-        std::fs::write(
-            &file,
-            "um
-dois
-tres
-",
-        )
-        .unwrap();
+        std::fs::write(&file, "um\ndois\ntres\n").unwrap();
         let st = status_of(&repo).unwrap();
         assert_eq!(st.branch.as_deref(), Some("feat/x"));
         assert_eq!(st.files[0].y, "M");
@@ -1387,10 +1459,7 @@ tres
         assert_eq!(status_of(&repo).unwrap().files[0].x, "M");
         tauri::async_runtime::block_on(git_commit(CommitReq {
             repo: repo.clone(),
-            message: "segundo
-
-corpo"
-                .into(),
+            message: "segundo\n\ncorpo".into(),
             amend: false,
             no_verify: false,
             all: false,
@@ -1411,18 +1480,60 @@ corpo"
         assert!(branches.iter().any(|b| b.name == "feat/x" && b.current));
         assert!(branches.iter().any(|b| b.name == "main" && !b.current));
 
+        // Editar a mensagem e juntar os dois últimos commits.
+        tauri::async_runtime::block_on(git_action(GitAction {
+            repo: repo.clone(),
+            action: "reword".into(),
+            args: vec!["segundo editado".into()],
+        }))
+        .unwrap();
+        let log =
+            tauri::async_runtime::block_on(git_log(repo.clone(), 0, 10, None, None, None)).unwrap();
+        assert_eq!(log[0].subject, "segundo editado");
+        tauri::async_runtime::block_on(git_action(GitAction {
+            repo: repo.clone(),
+            action: "create".into(),
+            args: vec!["tmp".into()],
+        }))
+        .unwrap();
+        std::fs::write(&file, "um\ndois\ntres\nquatro\n").unwrap();
+        tauri::async_runtime::block_on(git_commit(CommitReq {
+            repo: repo.clone(),
+            message: "terceiro".into(),
+            amend: false,
+            no_verify: false,
+            all: true,
+            sign_off: false,
+        }))
+        .unwrap();
+        tauri::async_runtime::block_on(git_action(GitAction {
+            repo: repo.clone(),
+            action: "squash-head".into(),
+            args: vec![],
+        }))
+        .unwrap();
+        let log =
+            tauri::async_runtime::block_on(git_log(repo.clone(), 0, 10, None, None, None)).unwrap();
+        assert_eq!(log.len(), 2);
+        assert_eq!(log[0].subject, "segundo editado");
+        assert!(log[0].body.contains("terceiro"));
+        let cfg = tauri::async_runtime::block_on(git_repo_config(repo.clone())).unwrap();
+        assert_eq!(cfg.name, "Teste");
+        assert_eq!(cfg.default_branch.as_deref(), Some("main"));
+        tauri::async_runtime::block_on(git_action(GitAction {
+            repo: repo.clone(),
+            action: "checkout".into(),
+            args: vec!["feat/x".into(), String::new()],
+        }))
+        .unwrap();
+
         // Desfazer o último commit devolve a mensagem e mantém as alterações no índice.
         let msg = tauri::async_runtime::block_on(git_undo_commit(repo.clone())).unwrap();
         assert!(msg.starts_with("segundo"));
         assert_eq!(status_of(&repo).unwrap().files[0].x, "M");
 
         // Stash de um arquivo só (com mensagem) e branch criada a partir dele.
-        std::fs::write(
-            Path::new(&repo).join("b.txt"),
-            "novo
-",
-        )
-        .unwrap();
+        std::fs::write(Path::new(&repo).join("b.txt"), "novo\n").unwrap();
         tauri::async_runtime::block_on(git_action(GitAction {
             repo: repo.clone(),
             action: "stash-push".into(),

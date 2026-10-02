@@ -128,6 +128,7 @@ pub fn run() {
             gitops::open_in_editor,
             gitops::editor_available,
             gitops::gh_available,
+            gitops::git_repo_config,
             projects::projects_list,
             projects::project_add,
             projects::project_create,

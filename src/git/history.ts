@@ -205,7 +205,10 @@ export class HistoryPane {
       "-",
       { id: "cherry", label: t("git.history.ctx.cherry", { branch }), disabled: isHead },
       { id: "revert", label: t("git.history.ctx.revert") },
-      ...(isHead && c.unpushed ? [{ id: "undo", label: t("git.history.ctx.undo") }] : []),
+      ...(isHead && c.unpushed ? [{ id: "undo", label: t("git.history.ctx.undo") }, { id: "reword", label: t("git.history.ctx.reword") }] : []),
+      ...(isHead && c.unpushed && this.commits[1]?.unpushed && c.parents.length === 1 && this.commits[1].parents.length === 1
+        ? [{ id: "squash", label: t("git.history.ctx.squash") }]
+        : []),
       { id: "reset", label: t("git.history.ctx.reset", { branch }), disabled: isHead, danger: true },
       "-",
       ...(this.ctx.webUrl ? [{ id: "web", label: t("git.history.ctx.web") }] : []),
@@ -231,6 +234,18 @@ export class HistoryPane {
         return void this.ctx.act(() => git.action(repo, "revert", [c.sha]), t("git.history.reverted"));
       case "undo":
         return void this.ctx.act(() => git.undoCommit(repo), t("git.commit.undone"));
+      case "reword": {
+        const r = await ask({
+          title: t("git.history.rewordTitle"),
+          input: { value: c.subject, validate: (v) => (v ? null : t("git.commit.needSummary")) },
+          input2: { label: t("git.commit.description"), value: c.body },
+          confirm: { label: t("git.settings.save") },
+        });
+        if (r) await this.ctx.act(() => git.action(repo, "reword", [r.value2 ? `${r.value}\n\n${r.value2}` : r.value]), t("git.history.reworded"));
+        return;
+      }
+      case "squash":
+        return void this.ctx.act(() => git.action(repo, "squash-head"), t("git.history.squashed"));
       case "web":
         return void ipc.openUrl(`${this.ctx.webUrl}/commit/${c.sha}`).catch((e) => toast(String(e)));
       case "agent":

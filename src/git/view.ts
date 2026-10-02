@@ -27,6 +27,7 @@ export class GitView implements GitCtx {
   repo = "";
   status: GitStatus | null = null;
   webUrl: string | null = null;
+  defaultBranch: string | null = null;
   private follow = true;
   private sub: Sub = "changes";
   private top = h("div", "g-top");
@@ -160,6 +161,8 @@ export class GitView implements GitCtx {
     this.stashKey = "";
     for (const p of Object.values(this.panes)) p.reset();
     void git.webUrl(path).then((u) => (this.webUrl = u), () => {});
+    this.defaultBranch = null;
+    void git.repoConfig(path).then((c) => (this.defaultBranch = c.defaultBranch), () => {});
     if (this.visible) void this.refresh(true);
     else this.renderTop();
   }
@@ -343,6 +346,7 @@ export class GitView implements GitCtx {
       ...(this.status?.branch ? [{ id: "copy", label: t("git.head.copyBranch") }] : []),
       "-",
       { id: "review", label: t("git.review") },
+      { id: "settings", label: t("git.settings.title") },
     ], (id) => {
       if (id === "fetch") void this.sync("fetch");
       if (id === "editor") git.openInEditor(this.repo).catch((e) => toast(String(e)));
@@ -351,6 +355,7 @@ export class GitView implements GitCtx {
       if (id === "web" && this.webUrl) ipc.openUrl(this.status?.branch ? `${this.webUrl}/tree/${encodeURIComponent(this.status.branch)}` : this.webUrl).catch(() => {});
       if (id === "copy") navigator.clipboard.writeText(this.status!.branch!).then(() => toast(t("git.head.branchCopied")));
       if (id === "review") this.host.askAgent(this.repo, t("git.agentReview"));
+      if (id === "settings") void this.settings();
     });
   }
 
@@ -490,11 +495,48 @@ export class GitView implements GitCtx {
       "-",
       { id: "force-push", label: t("git.sync.forcePush"), danger: true, disabled: !st.upstream },
       { id: "push-tags", label: t("git.sync.pushTags") },
+      ...(this.defaultBranch && st.branch && this.defaultBranch.replace(/^origin\//, "") !== st.branch
+        ? ["-" as const, { id: "update", label: t("git.sync.updateFrom", { branch: this.defaultBranch.replace(/^origin\//, "") }) }]
+        : []),
       ...(this.webUrl && st.branch ? ["-" as const, { id: "pr", label: t("git.branches.createPr") }] : []),
     ], (id) => {
       if (id === "pr") void this.act(() => git.prCreate(this.repo));
+      else if (id === "update") void this.updateFromDefault();
       else void this.sync(id as RemoteOp);
     });
+  }
+
+  /** "Atualizar a partir de main": busca e mescla a branch padrão na atual (como o GitHub Desktop). */
+  private async updateFromDefault(): Promise<void> {
+    const def = this.defaultBranch;
+    if (!def) return;
+    const repo = this.repo;
+    if (this.status?.upstream) await this.sync("fetch", true);
+    await this.act(() => git.action(repo, "merge", [def]), t("git.branches.merged", { branch: def }));
+  }
+
+  /** Remoto e identidade (nome/e-mail) do repositório. */
+  private async settings(): Promise<void> {
+    const repo = this.repo;
+    const cfg = await git.repoConfig(repo).catch(() => null);
+    if (!cfg) return;
+    const r = await ask({
+      title: t("git.settings.title"),
+      sub: repo,
+      fields: [
+        { id: "remote", label: t("git.settings.remote"), value: cfg.remote ?? "", placeholder: "https://github.com/usuario/repositorio.git", mono: true },
+        { id: "name", label: t("git.settings.name"), value: cfg.name },
+        { id: "email", label: t("git.settings.email"), value: cfg.email },
+      ],
+      html: `<div class="g-row-acts"><button class="gbtn" data-gi>${esc(t("git.settings.gitignore"))}</button></div>`,
+      onExtra: () => void git.openInEditor(`${repo.replace(/[\\/]+$/, "")}\\.gitignore`).catch((e) => toast(String(e))),
+      confirm: { label: t("git.settings.save") },
+    });
+    if (!r) return;
+    const f = r.fields;
+    if (f.remote && f.remote !== (cfg.remote ?? "")) await this.act(() => git.action(repo, "set-remote", [f.remote]));
+    if ((f.name && f.name !== cfg.name) || (f.email && f.email !== cfg.email)) await this.act(() => git.action(repo, "set-identity", [f.name, f.email]), t("git.settings.saved"));
+    void git.webUrl(repo).then((u) => (this.webUrl = u), () => {});
   }
 
   async sync(op: RemoteOp, silent = false): Promise<void> {

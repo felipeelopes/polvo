@@ -154,7 +154,7 @@ export class App {
   openGit(path?: string, toggle = false): void {
     this.docsPanel()
       .then((p) => {
-        if (path) this.gitView?.setRepo(path, true);
+        if (path) this.gitView?.setRepo(path);
         if (toggle && !path) p.toggleTool();
         else p.showTool();
       })
@@ -549,6 +549,12 @@ export class App {
         const r = this.tiles.geo.leaves.get(id);
         const side: Side = r && r.w >= r.h ? "right" : "bottom";
         this.newSession({ id, side });
+        break;
+      }
+      case "git": {
+        const s = store.session(id);
+        store.setActive(id);
+        if (s) this.openGit(store.git[s.cwd]?.root ?? s.cwd);
         break;
       }
       case "terminal":

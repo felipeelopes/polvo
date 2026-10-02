@@ -15,4 +15,7 @@
 .gchip i { font-style: normal; font-size: 11px; }
 .gchip.bad { border-color: rgba(229, 83, 75, 0.5); }
 @media (max-width: 1240px) { .gchip .gchip-b { max-width: 90px; } }
-@media (max-width: 1000px) { .gchip { display: none; } }
+@media (max-width: 1000px) { .gchip .gchip-b, .gchip i { display: none; } .gchip { padding: 0 8px; } }
+
+/* Botão do Git no cabeçalho das sessões: some primeiro em painéis estreitos. */
+@container (max-width: 460px) { .pacts button[data-a="git"] { display: none; } }

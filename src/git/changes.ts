@@ -34,6 +34,7 @@ export class ChangesPane {
   readonly el = h("div", "gp gp-changes");
   private list = h("div", "gc-list");
   private head = h("div", "gc-head");
+  private find = h("div", "gc-find");
   private stashEl = h("div", "gc-stash");
   private box = h("div", "gc-commit");
   private dHead = h("div", "gd-head");
@@ -54,6 +55,7 @@ export class ChangesPane {
   private known = new Set<string>();
   private busy = false;
   private lastKey = "";
+  private nextKey = "";
 
   constructor(private ctx: GitCtx) {
     this.uView = new DiffView({
@@ -77,17 +79,28 @@ export class ChangesPane {
 
     const col = h("div", "gc-col");
     this.list.tabIndex = 0;
-    col.append(this.head, this.list, this.stashEl, this.box);
+    col.append(this.head, this.find, this.list, this.stashEl, this.box);
     const diff = h("div", "gc-diff");
     this.selBar.hidden = true;
     diff.append(this.dHead, this.dScroll, this.selBar);
     this.el.append(col, diff);
 
-    this.head.innerHTML = `<span class="cb" data-all title="${esc(t("git.changes.selectAll"))}"></span><span class="gc-count"></span><input class="gc-filter" placeholder="${esc(t("git.changes.filter"))}" spellcheck="false"><button class="ibtn sm" data-stash title="${esc(t("git.changes.stashNew"))}">${GI.stash}</button><button class="ibtn sm" data-lm title="${esc(t("git.head.more"))}">${GI.more}</button>`;
+    this.head.innerHTML = `<span class="cb" data-all title="${esc(t("git.changes.selectAll"))}"></span><span class="gc-count"></span><span class="sp"></span>
+      <button class="ibtn sm" data-find title="${esc(t("git.changes.filter"))} (Ctrl+F)">${GI.search}</button><button class="ibtn sm" data-stash title="${esc(t("git.changes.stashNew"))}">${GI.stash}</button><button class="ibtn sm" data-lm title="${esc(t("git.head.more"))}">${GI.more}</button>`;
+    this.find.innerHTML = `${GI.search}<input class="gc-filter" placeholder="${esc(t("git.changes.filter"))}" spellcheck="false"><button class="ibtn sm" data-unfind title="${esc(t("git.dialog.cancel"))}">×</button>`;
+    this.find.hidden = true;
     this.head.addEventListener("click", (e) => this.onHead(e));
-    this.head.querySelector<HTMLInputElement>(".gc-filter")!.addEventListener("input", (e) => {
-      this.filter = (e.target as HTMLInputElement).value.trim().toLowerCase();
+    const findInput = this.find.querySelector<HTMLInputElement>(".gc-filter")!;
+    findInput.addEventListener("input", () => {
+      this.filter = findInput.value.trim().toLowerCase();
       this.renderList();
+    });
+    findInput.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") this.toggleFind(false);
+      if (e.key === "ArrowDown") this.list.focus();
+    });
+    this.find.addEventListener("click", (e) => {
+      if ((e.target as Element).closest("[data-unfind]")) this.toggleFind(false);
     });
     this.list.addEventListener("click", (e) => this.onListClick(e));
     this.list.addEventListener("contextmenu", (e) => this.onListMenu(e));
@@ -219,6 +232,7 @@ export class ChangesPane {
       return;
     }
     if (tg.closest("[data-stash]")) return void this.stash();
+    if (tg.closest("[data-find]")) return this.toggleFind(this.find.hidden);
     const lm = tg.closest<HTMLElement>("[data-lm]");
     if (lm) {
       menu("git-list", lm, [
@@ -304,7 +318,23 @@ export class ChangesPane {
     }
   }
 
+  private toggleFind(on: boolean): void {
+    this.find.hidden = !on;
+    const input = this.find.querySelector<HTMLInputElement>("input")!;
+    if (on) input.focus();
+    else {
+      input.value = "";
+      this.filter = "";
+      this.renderList();
+      this.list.focus();
+    }
+  }
+
   private onListKey(e: KeyboardEvent): void {
+    if (e.key.toLowerCase() === "f" && e.ctrlKey) {
+      e.preventDefault();
+      return this.toggleFind(true);
+    }
     const files = this.visible();
     const i = files.findIndex((f) => f.path === this.selected);
     const cur = files[i];
@@ -495,9 +525,19 @@ export class ChangesPane {
   private async loadDiff(force: boolean): Promise<void> {
     const f = this.file(this.selected);
     if (!f) {
-      this.dHead.innerHTML = "";
-      this.dScroll.innerHTML = `<div class="g-empty">${esc(t(this.all.length ? "git.diff.pickFile" : "git.changes.noneHint"))}</div>`;
       this.selBar.hidden = true;
+      this.raw = { u: "", s: "" };
+      if (!this.all.length) {
+        const st = this.ctx.status;
+        const key = JSON.stringify([this.repo, st?.branch, st?.upstream, st?.ahead, st?.behind, st?.stashes, this.ctx.webUrl]);
+        if (key !== this.nextKey || !this.dScroll.querySelector(".g-next")) {
+          this.nextKey = key;
+          this.renderNext();
+        }
+        return;
+      }
+      this.dHead.innerHTML = "";
+      this.dScroll.innerHTML = `<div class="g-empty">${esc(t("git.diff.pickFile"))}</div>`;
       return;
     }
     const path = f.path;
@@ -545,11 +585,11 @@ export class ChangesPane {
     const rem = (this.files.u?.removed ?? 0) + (this.files.s?.removed ?? 0);
     const L = letterOf(f);
     this.dHead.innerHTML = `<span class="gst ${L}">${L}</span><span class="gd-path" title="${esc(f.path)}"><em>${esc(dir)}</em>${esc(name)}</span>
+      ${this.ws ? `<button class="gd-flag" data-dh="ws" title="${esc(t("git.diff.ws"))}">${esc(t("git.diff.wsOn"))} ×</button>` : ""}
       <span class="gd-n"><i class="a">+${add}</i><i class="d">−${rem}</i></span>
       <div class="seg gseg"><button data-dm="unified" class="${this.mode === "unified" ? "on" : ""}">${esc(t("git.diff.unified"))}</button><button data-dm="split" class="${this.mode === "split" ? "on" : ""}">${esc(t("git.diff.split"))}</button></div>
-      <button class="ibtn sm${this.ws ? " on" : ""}" data-dh="ws" title="${esc(t("git.diff.ws"))}">␣</button>
-      <button class="ibtn sm" data-dh="less" title="${esc(t("git.diff.less"))}">−</button><button class="ibtn sm" data-dh="more" title="${esc(t("git.diff.more"))}">+</button>
-      <button class="ibtn sm" data-dh="open" title="${esc(t("git.changes.ctx.open"))}">${GI.editor}</button>`;
+      <button class="ibtn sm" data-dh="open" title="${esc(t("git.changes.ctx.open"))}">${GI.editor}</button>
+      <button class="ibtn sm" data-dh="menu" title="${esc(t("git.head.more"))}">${GI.more}</button>`;
   }
 
   private onDiffHead(e: MouseEvent): void {
@@ -569,14 +609,37 @@ export class ChangesPane {
       this.dHead.querySelectorAll<HTMLElement>("[data-dm]").forEach((b) => b.classList.toggle("on", b.dataset.dm === dm));
       return;
     }
-    const a = tg.closest<HTMLElement>("[data-dh]")?.dataset.dh;
-    if (a === "ws") {
+    const btn = tg.closest<HTMLElement>("[data-dh]");
+    const a = btn?.dataset.dh;
+    if (a === "ws") return this.diffOption("ws");
+    if (a === "open") return this.openSelected();
+    if (a === "menu" && btn) {
+      const f = this.file(this.selected);
+      const off = '<i class="g-ic"></i>';
+      menu("git-diff", btn, [
+        { id: "ws", label: t("git.diff.ws"), icon: this.ws ? GI.check : off },
+        { id: "more", label: t("git.diff.more"), hint: `${this.context}` },
+        { id: "less", label: t("git.diff.less"), disabled: this.context <= 1 },
+        "-",
+        { id: "open", label: t("git.changes.ctx.open") },
+        { id: "reveal", label: t("git.changes.ctx.reveal") },
+        { id: "copyRel", label: t("git.changes.ctx.copyRel") },
+        ...(f && !f.untracked ? [{ id: "history", label: t("git.changes.ctx.history") }] : []),
+        "-",
+        { id: "discard", label: t("git.changes.ctx.discard"), danger: true, disabled: !f || f.conflict },
+      ], (id) => {
+        if (id === "ws" || id === "more" || id === "less") return this.diffOption(id);
+        if (f) void this.fileAction(id, f);
+      });
+    }
+  }
+
+  private diffOption(id: "ws" | "more" | "less"): void {
+    if (id === "ws") {
       this.ws = !this.ws;
       setPref("ws", this.ws ? "1" : "0");
-    } else if (a === "more") this.context = Math.min(this.context * 3, 9999);
-    else if (a === "less") this.context = Math.max(1, Math.round(this.context / 3));
-    else if (a === "open") return this.openSelected();
-    else return;
+    } else if (id === "more") this.context = Math.min(this.context * 3, 9999);
+    else this.context = Math.max(1, Math.round(this.context / 3));
     void this.loadDiff(true);
   }
 
@@ -685,20 +748,24 @@ export class ChangesPane {
   private sum!: HTMLInputElement;
   private desc!: HTMLTextAreaElement;
   private btn!: HTMLButtonElement;
-  private amend!: HTMLInputElement;
+  private amending = false;
+  private coauthors: string[] = [];
 
   private buildCommitBox(): void {
-    this.box.innerHTML = `<div class="gc-sumrow"><input class="gc-sum" placeholder="${esc(t("git.commit.summary"))}" spellcheck="true"><span class="gc-len"></span></div>
-      <textarea class="gc-desc" rows="2" placeholder="${esc(t("git.commit.description"))}"></textarea>
-      <div class="gc-row"><button class="gbtn ai" data-c="ai" title="${esc(t("git.commit.aiHint"))}">${GI.spark}<span>${esc(t("git.commit.ai"))}</span></button>
-        <label class="gchk" title="${esc(t("git.commit.amendHint"))}"><input type="checkbox" data-amend> ${esc(t("git.commit.amend"))}</label><span class="sp"></span>
-        <button class="ibtn sm" data-c="opts" title="${esc(t("git.commit.options"))}">${GI.more}</button></div>
+    this.box.innerHTML = `<div class="gc-amend" hidden></div>
+      <div class="gc-msg">
+        <div class="gc-sumrow"><input class="gc-sum" placeholder="${esc(t("git.commit.summary"))}" spellcheck="true"><span class="gc-len"></span></div>
+        <textarea class="gc-desc" rows="3" placeholder="${esc(t("git.commit.description"))}"></textarea>
+        <div class="gc-co" hidden></div>
+        <div class="gc-tools"><button class="gc-ai" data-c="ai" title="${esc(t("git.commit.aiHint"))}">${GI.spark}<span>${esc(t("git.commit.ai"))}</span></button><span class="sp"></span>
+          <button class="ibtn sm" data-c="coauthor" title="${esc(t("git.commit.coauthorAdd"))}">${GI.person}</button>
+          <button class="ibtn sm" data-c="opts" title="${esc(t("git.commit.options"))}">${GI.more}</button></div>
+      </div>
       <div class="gc-prot" hidden></div>
       <button class="gc-btn" data-c="commit"></button>`;
     this.sum = this.box.querySelector(".gc-sum")!;
     this.desc = this.box.querySelector(".gc-desc")!;
     this.btn = this.box.querySelector(".gc-btn")!;
-    this.amend = this.box.querySelector("[data-amend]")!;
     const save = () => this.saveDraft();
     this.sum.addEventListener("input", () => {
       save();
@@ -706,8 +773,7 @@ export class ChangesPane {
     });
     this.desc.addEventListener("input", () => {
       save();
-      this.desc.style.height = "auto";
-      this.desc.style.height = `${Math.min(160, this.desc.scrollHeight)}px`;
+      this.fitDesc();
     });
     for (const el of [this.sum, this.desc] as HTMLElement[]) {
       el.addEventListener("keydown", (e: KeyboardEvent) => {
@@ -724,22 +790,47 @@ export class ChangesPane {
         this.desc.focus();
       }
     });
-    this.amend.addEventListener("change", () => void this.onAmend());
     this.box.addEventListener("click", (e) => {
-      const c = (e.target as Element).closest<HTMLElement>("[data-c]");
+      const tg = e.target as Element;
+      const rm = tg.closest<HTMLElement>("[data-co-rm]")?.dataset.coRm;
+      if (rm !== undefined) {
+        this.coauthors.splice(Number(rm), 1);
+        return this.renderCoauthors();
+      }
+      const c = tg.closest<HTMLElement>("[data-c]");
       if (!c) return;
-      if (c.dataset.c === "commit") void this.commit();
-      if (c.dataset.c === "ai") void this.generate(c as HTMLButtonElement);
-      if (c.dataset.c === "branch") void this.ctx.newBranch();
-      if (c.dataset.c === "opts") {
-        const nv = pref("noVerify", "0") === "1";
-        const so = pref("signOff", "0") === "1";
-        menu("git-copts", c, [
-          { id: "noVerify", label: t("git.commit.noVerify"), icon: nv ? GI.check : '<i class="g-ic"></i>' },
-          { id: "signOff", label: t("git.commit.signOff"), icon: so ? GI.check : '<i class="g-ic"></i>' },
-        ], (id) => setPref(id, pref(id, "0") === "1" ? "0" : "1"));
+      switch (c.dataset.c) {
+        case "commit":
+          return void this.commit();
+        case "ai":
+          return void this.generate(c as HTMLButtonElement);
+        case "branch":
+          return void this.ctx.newBranch();
+        case "noamend":
+          return void this.setAmend(false);
+        case "coauthor":
+          return void this.addCoauthor();
+        case "opts": {
+          const nv = pref("noVerify", "0") === "1";
+          const so = pref("signOff", "0") === "1";
+          const off = '<i class="g-ic"></i>';
+          return menu("git-copts", c, [
+            { id: "amend", label: t("git.commit.amend"), hint: t("git.commit.amendShort"), icon: this.amending ? GI.check : off },
+            "-",
+            { id: "noVerify", label: t("git.commit.noVerify"), icon: nv ? GI.check : off },
+            { id: "signOff", label: t("git.commit.signOff"), icon: so ? GI.check : off },
+          ], (id) => {
+            if (id === "amend") void this.setAmend(!this.amending);
+            else setPref(id, pref(id, "0") === "1" ? "0" : "1");
+          });
+        }
       }
     });
+  }
+
+  private fitDesc(): void {
+    this.desc.style.height = "auto";
+    this.desc.style.height = `${Math.min(180, Math.max(58, this.desc.scrollHeight))}px`;
   }
 
   private draftKey(): string {
@@ -747,18 +838,58 @@ export class ChangesPane {
   }
 
   private saveDraft(): void {
-    setPref(this.draftKey(), JSON.stringify({ s: this.sum.value, d: this.desc.value }));
+    setPref(this.draftKey(), JSON.stringify({ s: this.sum.value, d: this.desc.value, c: this.coauthors }));
   }
 
   private loadDraft(): void {
     try {
-      const d = JSON.parse(pref(this.draftKey(), "{}")) as { s?: string; d?: string };
+      const d = JSON.parse(pref(this.draftKey(), "{}")) as { s?: string; d?: string; c?: string[] };
       this.sum.value = d.s ?? "";
       this.desc.value = d.d ?? "";
+      this.coauthors = d.c ?? [];
     } catch {
       this.sum.value = this.desc.value = "";
+      this.coauthors = [];
     }
-    this.amend.checked = false;
+    this.amending = false;
+    this.renderCoauthors();
+    this.fitDesc();
+  }
+
+  private renderCoauthors(): void {
+    const el = this.box.querySelector<HTMLElement>(".gc-co")!;
+    el.hidden = !this.coauthors.length;
+    el.innerHTML = this.coauthors
+      .map((c, i) => `<span class="gc-chip" title="Co-authored-by: ${esc(c)}">${GI.person}<span>${esc(c.replace(/\s*<.*$/, ""))}</span><button data-co-rm="${i}" title="${esc(t("git.dialog.cancel"))}">×</button></span>`)
+      .join("");
+    this.saveDraft();
+  }
+
+  private async addCoauthor(): Promise<void> {
+    const recent = await git.log(this.repo, 0, 300).catch(() => []);
+    const people = [...new Set(recent.map((c) => `${c.author} <${c.email}>`))].filter((p) => !this.coauthors.includes(p));
+    const r = await ask({
+      title: t("git.commit.coauthorAdd"),
+      sub: t("git.commit.coauthorSub"),
+      input: { placeholder: t("git.commit.coauthorHint"), list: people, validate: (v) => (/^[^<>]+<[^<>@\s]+@[^<>\s]+>$/.test(v.trim()) ? null : t("git.commit.coauthorInvalid")) },
+      confirm: { label: t("git.dialog.ok") },
+    });
+    if (!r) return;
+    this.coauthors.push(r.value.trim());
+    this.renderCoauthors();
+  }
+
+  private async setAmend(on: boolean): Promise<void> {
+    this.amending = on;
+    if (on && !this.sum.value.trim()) {
+      const [last] = await git.log(this.repo, 0, 1).catch(() => []);
+      if (last) {
+        this.sum.value = last.subject;
+        this.desc.value = last.body;
+        this.fitDesc();
+      }
+    }
+    this.renderCommitState();
   }
 
   private renderCommitState(): void {
@@ -767,12 +898,15 @@ export class ChangesPane {
     const branch = st.branch ?? t("git.branch.detached");
     const staged = this.all.filter((f) => !f.untracked && f.x !== ".").length;
     const total = this.all.length;
-    const amend = this.amend.checked;
+    const amend = this.amending;
     const len = this.sum.value.length;
     const lenEl = this.box.querySelector<HTMLElement>(".gc-len")!;
     lenEl.textContent = len > 50 ? String(72 - len) : "";
     lenEl.className = `gc-len${len > 72 ? " bad" : ""}`;
     lenEl.title = len > 72 ? t("git.commit.tooLong") : "";
+    const am = this.box.querySelector<HTMLElement>(".gc-amend")!;
+    am.hidden = !amend;
+    if (amend) am.innerHTML = `${GI.refresh}<span>${esc(t("git.commit.amending"))}</span><button data-c="noamend">${esc(t("git.dialog.cancel"))}</button>`;
     let label: string;
     if (amend) label = t("git.commit.buttonAmend", { branch });
     else if (!staged && total) label = tn("git.commit.buttonAll", total, { branch });
@@ -782,20 +916,10 @@ export class ChangesPane {
     const conflicts = this.all.some((f) => f.conflict);
     this.btn.disabled = conflicts || (!total && !amend) || (!amend && !this.sum.value.trim());
     const prot = this.box.querySelector<HTMLElement>(".gc-prot")!;
-    const isProt = !!st.branch && PROTECTED.test(st.branch) && total > 0;
+    const isProt = !!st.branch && PROTECTED.test(st.branch) && total > 0 && !amend;
     prot.hidden = !isProt;
     if (isProt) prot.innerHTML = `${GI.warn}<span>${esc(t("git.commit.protected", { branch: st.branch! }))}</span><button data-c="branch">${esc(t("git.commit.createBranch"))}</button>`;
-  }
-
-  private async onAmend(): Promise<void> {
-    if (this.amend.checked && !this.sum.value.trim()) {
-      const [last] = await git.log(this.repo, 0, 1).catch(() => []);
-      if (last) {
-        this.sum.value = last.subject;
-        this.desc.value = last.body;
-      }
-    }
-    this.renderCommitState();
+    this.box.classList.toggle("empty", !total && !amend);
   }
 
   private async generate(btn: HTMLButtonElement): Promise<void> {
@@ -809,7 +933,7 @@ export class ChangesPane {
       const [first, ...rest] = msg.split("\n");
       this.sum.value = first.trim();
       this.desc.value = rest.join("\n").trim();
-      this.desc.dispatchEvent(new Event("input"));
+      this.fitDesc();
       this.saveDraft();
       this.renderCommitState();
       this.sum.focus();
@@ -825,7 +949,7 @@ export class ChangesPane {
   async commit(): Promise<void> {
     if (this.btn.disabled) {
       if (this.all.some((f) => f.conflict)) toast(t("git.commit.conflicts"));
-      else if (!this.sum.value.trim() && !this.amend.checked) {
+      else if (!this.sum.value.trim() && !this.amending) {
         toast(t("git.commit.needSummary"));
         this.sum.focus();
       }
@@ -833,17 +957,20 @@ export class ChangesPane {
     }
     const summary = this.sum.value.trim();
     const body = this.desc.value.trim();
-    const message = body ? `${summary}\n\n${body}` : summary;
+    const trailers = this.coauthors.map((c) => `Co-authored-by: ${c}`).join("\n");
+    const message = [summary, body, trailers].filter(Boolean).join("\n\n");
     const staged = this.all.some((f) => !f.untracked && f.x !== ".");
     const repo = this.repo;
     this.btn.disabled = true;
     const res = await this.ctx.act(() =>
-      git.commit({ repo, message, amend: this.amend.checked, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged }),
+      git.commit({ repo, message, amend: this.amending, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged && !this.amending }),
     );
     if (!res) return this.renderCommitState();
     this.sum.value = this.desc.value = "";
-    this.amend.checked = false;
-    this.saveDraft();
+    this.amending = false;
+    this.coauthors = [];
+    this.renderCoauthors();
+    this.fitDesc();
     this.renderCommitState();
     toast(t("git.commit.done", { sha: res.sha }), {
       label: t("git.commit.undo"),
@@ -852,7 +979,8 @@ export class ChangesPane {
           const msg = await git.undoCommit(repo);
           const [first, ...rest] = msg.split("\n");
           this.sum.value = first;
-          this.desc.value = rest.join("\n").trim();
+          this.desc.value = rest.join("\n").replace(/\n*Co-authored-by:.*$/gim, "").trim();
+          this.fitDesc();
           this.saveDraft();
           return msg;
         }, t("git.commit.undone")),
@@ -862,6 +990,36 @@ export class ChangesPane {
   /** Foco direto no resumo (atalho). */
   focusSummary(): void {
     this.sum.focus();
+  }
+
+  // ------------------------------------------------------------ sem alterações
+
+  /** Sem alterações: sugere o próximo passo (enviar, publicar, PR…), como o GitHub Desktop. */
+  private renderNext(): void {
+    const st = this.ctx.status;
+    if (!st) return;
+    const cards: { id: string; title: string; desc: string; primary?: boolean }[] = [];
+    if (st.branch && !st.upstream && !st.unborn) cards.push({ id: "publish", title: t("git.next.publish"), desc: t("git.next.publishDesc", { branch: st.branch }), primary: true });
+    if (st.behind) cards.push({ id: "pull", title: tn("git.next.pull", st.behind), desc: t("git.next.pullDesc"), primary: true });
+    if (st.ahead) cards.push({ id: "push", title: tn("git.next.push", st.ahead), desc: t("git.next.pushDesc"), primary: !st.behind });
+    if (this.ctx.webUrl && st.upstream && st.branch && !PROTECTED.test(st.branch)) cards.push({ id: "pr", title: t("git.next.pr"), desc: t("git.next.prDesc", { branch: st.branch }) });
+    if (st.stashes) cards.push({ id: "stash", title: t("git.next.stash"), desc: t("git.next.stashDesc") });
+    cards.push({ id: "editor", title: t("git.next.editor"), desc: t("git.next.editorDesc") });
+    cards.push({ id: "explorer", title: t("git.next.explorer"), desc: t("git.next.explorerDesc") });
+    if (this.ctx.webUrl) cards.push({ id: "web", title: t("git.next.web"), desc: t("git.next.webDesc") });
+    this.dHead.innerHTML = "";
+    this.dScroll.innerHTML = `<div class="g-next"><div class="g-next-h">${GI.check}<b>${esc(t("git.next.title"))}</b><span>${esc(t("git.changes.noneHint"))}</span></div>
+      <div class="g-cards">${cards.map((c) => `<button class="g-card${c.primary ? " primary" : ""}" data-next="${c.id}"><b>${esc(c.title)}</b><small>${esc(c.desc)}</small></button>`).join("")}</div></div>`;
+    this.dScroll.querySelector(".g-cards")!.addEventListener("click", (e) => {
+      const id = (e.target as Element).closest<HTMLElement>("[data-next]")?.dataset.next;
+      if (!id) return;
+      if (id === "publish" || id === "pull" || id === "push") return void this.ctx.sync(id);
+      if (id === "pr") return void this.ctx.act(() => git.prCreate(this.repo));
+      if (id === "stash") return void this.restoreLast();
+      if (id === "editor") return void git.openInEditor(this.repo).catch((err) => toast(String(err)));
+      if (id === "explorer") return void ipc.fileReveal(this.repo).catch((err) => toast(String(err)));
+      if (id === "web" && this.ctx.webUrl) return void ipc.openUrl(this.ctx.webUrl).catch(() => {});
+    });
   }
 }
 

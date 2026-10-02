@@ -21,6 +21,7 @@ import tiles from "../pt/tiles";
 import terminal from "../pt/terminal";
 import docs from "../pt/docs";
 import git from "../pt/git";
+import whatsNew from "../pt/whatsNew";
 
 export default {
   app,
@@ -45,4 +46,5 @@ export default {
   terminal,
   docs,
   git,
+  whatsNew,
 };

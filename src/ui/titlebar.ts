@@ -126,8 +126,13 @@ export class Titlebar {
     const s = store.session(store.active);
     const info = s ? store.git[s.cwd] : null;
     const sum = info ? store.gitSummary[normPath(info.root)] : undefined;
-    chip.hidden = !info;
-    if (!info) return;
+    chip.hidden = false;
+    if (!info) {
+      chip.className = "gchip";
+      chip.innerHTML = `${ICON.branch}<span class="gchip-b">Git</span>`;
+      chip.title = t("git.tabHint");
+      return;
+    }
     const branch = sum?.branch ?? info.branch ?? "HEAD";
     const parts = [sum?.changed ? `<i class="c">●${sum.changed}</i>` : "", sum?.ahead ? `<i class="a">↑${sum.ahead}</i>` : "", sum?.behind ? `<i class="b">↓${sum.behind}</i>` : ""].join("");
     chip.className = `gchip${sum?.conflicts ? " bad" : ""}`;

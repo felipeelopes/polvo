@@ -2,7 +2,7 @@
 import type { ToolKind } from "../core/types";
 import { esc, h } from "../ui/dom";
 import { closePopover, popover } from "../ui/feedback";
-import type { GitStatus } from "./api";
+import type { GitStatus, RemoteOp } from "./api";
 
 /** O que o painel Git pede ao resto do Polvo. */
 export interface GitHost {
@@ -25,6 +25,7 @@ export interface GitCtx {
   /** Roda uma ação mostrando erro/sucesso e relendo o status no fim. */
   act<T>(p: () => Promise<T>, ok?: string | ((v: T) => string)): Promise<T | undefined>;
   checkout(name: string, remote?: boolean): Promise<void>;
+  sync(op: RemoteOp): Promise<void>;
   newBranch(from?: string, worktree?: boolean): Promise<void>;
   showHistory(path?: string): void;
 }
@@ -89,6 +90,9 @@ export const GI = {
   copy: svg('<rect x="5" y="5" width="8.5" height="8.5" rx="1.5"/><path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v6A1.5 1.5 0 0 0 3.5 11H5"/>'),
   terminal: svg('<path d="m3 5 3 3-3 3M8 11.5h5"/>'),
   warn: svg('<path d="M8 2.5 14 13H2zM8 6.5v3M8 11.3v.2"/>'),
+  search: svg('<circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3 3"/>'),
+  person: svg('<circle cx="6.5" cy="5.5" r="2.5"/><path d="M2 13.5c.6-2.4 2.4-3.6 4.5-3.6s3.9 1.2 4.5 3.6M12.5 5v4M10.5 7h4"/>'),
+  gear: svg('<circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.6M8 12.6v1.6M1.8 8h1.6M12.6 8h1.6M3.6 3.6l1.1 1.1M11.3 11.3l1.1 1.1M3.6 12.4l1.1-1.1M11.3 4.7l1.1-1.1"/>'),
 };
 
 /** Letra de status de um arquivo para a lista (A, M, D, R, C, U…). */

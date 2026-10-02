@@ -14,6 +14,7 @@ import { startUpdateChecks } from "./ui/updater";
 import { initZoom } from "./ui/zoom";
 import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
+import { showWhatsNew } from "./ui/whatsnew";
 import { resolveLocale, setLocale, t } from "./i18n";
 
 async function boot(): Promise<void> {
@@ -53,6 +54,7 @@ async function boot(): Promise<void> {
   window.setInterval(() => void refreshUsage(), 60_000);
 
   if (store.isMain) {
+    showWhatsNew(__APP_VERSION__, settings.onboarded);
     startUpdateChecks();
     if (!settings.onboarded) {
       openOnboarding(() => {

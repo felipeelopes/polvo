@@ -105,12 +105,29 @@ export class BranchesPane {
     const track = b.upstream ? `${b.upstream}${b.ahead ? ` · ${t("git.branches.ahead", { n: b.ahead })}` : ""}${b.behind ? ` · ${t("git.branches.behind", { n: b.behind })}` : ""}` : "";
     this.detail.innerHTML = `<div class="gh-info"><h3 class="mono">${GI.branch} ${esc(b.name)}${b.current ? ` <span class="gref head">${esc(t("git.branches.current"))}</span>` : ""}</h3>
       <div class="gh-meta">${track ? `<span>${esc(track)}</span>` : ""}${b.worktree ? `<span>${esc(t("git.branches.inWorktree", { path: b.worktree }))}</span>` : ""}<span class="mono">${esc(b.sha)}</span><span>${esc(ago(b.date * 1000))}</span></div>
-      <div class="gh-acts">${acts}</div></div><div class="gb-commits"><div class="gf-h">${esc(t("git.branches.lastCommits"))}</div><div class="gb-cl"></div></div>`;
-    void git.log(this.ctx.repo, 0, 15, undefined, b.name).then((list: Commit[]) => {
-      if (this.sel !== b.name) return;
-      const el = this.detail.querySelector(".gb-cl");
-      if (el) el.innerHTML = list.map((c) => `<div class="gh-r"><i class="gh-dot${c.unpushed ? " up" : ""}"></i><div class="gh-m"><b>${esc(c.subject)}</b><small><span>${esc(c.short)} · ${esc(c.author)} · ${esc(ago(c.date * 1000))}</span></small></div></div>`).join("");
-    }, () => {});
+      <div class="gh-acts">${acts}</div></div><div class="gb-commits"></div>`;
+    void this.renderCompare(b, cur);
+  }
+
+  /** Commits à frente e atrás da branch atual (ou os últimos, se for a atual). */
+  private async renderCompare(b: Branch, cur: string): Promise<void> {
+    const repo = this.ctx.repo;
+    const row = (c: Commit) => `<div class="gh-r"><i class="gh-dot${c.unpushed ? " up" : ""}"></i><div class="gh-m"><b>${esc(c.subject)}</b><small><span>${esc(c.short)} · ${esc(c.author)} · ${esc(ago(c.date * 1000))}</span></small></div></div>`;
+    let html: string;
+    if (b.current) {
+      const list = await git.log(repo, 0, 20, undefined, b.name).catch(() => []);
+      html = `<div class="gf-h">${esc(t("git.branches.lastCommits"))}</div>${list.map(row).join("")}`;
+    } else {
+      const [ahead, behind] = await Promise.all([
+        git.log(repo, 0, 50, undefined, `${cur}..${b.name}`).catch(() => []),
+        git.log(repo, 0, 50, undefined, `${b.name}..${cur}`).catch(() => []),
+      ]);
+      const sec = (title: string, list: Commit[]) => `<div class="gf-h">${esc(title)} <span class="gb-cnt">${list.length}${list.length === 50 ? "+" : ""}</span></div>${list.length ? list.map(row).join("") : `<div class="gb-none">${esc(t("git.branches.nothing"))}</div>`}`;
+      html = sec(t("git.branches.aheadOf", { branch: cur }), ahead) + sec(t("git.branches.behindOf", { branch: cur }), behind);
+    }
+    if (this.sel !== b.name) return;
+    const el = this.detail.querySelector(".gb-commits");
+    if (el) el.innerHTML = html;
   }
 
   private async onAction(e: MouseEvent): Promise<void> {

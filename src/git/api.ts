@@ -127,4 +127,5 @@ export const git = {
   openInEditor: (path: string, line?: number) => invoke<void>("open_in_editor", { path, line }),
   editorAvailable: () => invoke<boolean>("editor_available"),
   ghAvailable: () => invoke<boolean>("gh_available"),
+  repoConfig: (repo: string) => invoke<{ remote: string | null; name: string; email: string; defaultBranch: string | null }>("git_repo_config", { repo }),
 };

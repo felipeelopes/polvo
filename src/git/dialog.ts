@@ -7,13 +7,17 @@ export interface AskOpts {
   sub?: string;
   /** HTML extra (já escapado) entre o subtítulo e os campos. */
   html?: string;
-  input?: { value?: string; placeholder?: string; mono?: boolean; validate?: (v: string) => string | null };
+  input?: { value?: string; placeholder?: string; mono?: boolean; list?: string[]; validate?: (v: string) => string | null };
+  /** Campos extras com rótulo (configurações). */
+  fields?: { id: string; label: string; value?: string; placeholder?: string; mono?: boolean }[];
   input2?: { label: string; value?: string; placeholder?: string; mono?: boolean };
   checks?: { id: string; label: string; checked?: boolean }[];
   /** Escolhas grandes (como “Deixar” / “Levar”). Sem elas, usa Cancelar/OK. */
   choices?: { id: string; label: string; hint?: string; danger?: boolean }[];
   confirm?: { label: string; danger?: boolean };
   select?: { label: string; options: { value: string; label: string }[]; value?: string };
+  /** Botão extra dentro do diálogo (`data-gi`). */
+  onExtra?: () => void;
 }
 
 export interface AskResult {
@@ -22,14 +26,20 @@ export interface AskResult {
   value2: string;
   checks: Record<string, boolean>;
   select: string;
+  fields: Record<string, string>;
 }
 
 export function ask(o: AskOpts): Promise<AskResult | null> {
   return new Promise((resolve) => {
     const modal = h("div", "modal gdlg");
     const input = o.input
-      ? `<input class="txt${o.input.mono ? " mono" : ""}" data-in value="${esc(o.input.value ?? "")}" placeholder="${esc(o.input.placeholder ?? "")}" spellcheck="false">`
+      ? `<input class="txt${o.input.mono ? " mono" : ""}" data-in value="${esc(o.input.value ?? "")}" placeholder="${esc(o.input.placeholder ?? "")}" spellcheck="false"${o.input.list?.length ? ' list="gdlg-list"' : ""}>${
+          o.input.list?.length ? `<datalist id="gdlg-list">${o.input.list.map((x) => `<option value="${esc(x)}">`).join("")}</datalist>` : ""
+        }`
       : "";
+    const fields = (o.fields ?? [])
+      .map((f) => `<label class="lbl">${esc(f.label)}</label><input class="txt${f.mono ? " mono" : ""}" data-field="${esc(f.id)}" value="${esc(f.value ?? "")}" placeholder="${esc(f.placeholder ?? "")}" spellcheck="false">`)
+      .join("");
     const input2 = o.input2
       ? `<label class="lbl">${esc(o.input2.label)}</label><input class="txt${o.input2.mono ? " mono" : ""}" data-in2 value="${esc(o.input2.value ?? "")}" placeholder="${esc(o.input2.placeholder ?? "")}" spellcheck="false">`
       : "";
@@ -43,7 +53,7 @@ export function ask(o: AskOpts): Promise<AskResult | null> {
     const foot = o.choices
       ? `<div class="mfoot"><span class="hk"></span><button class="ghost" data-c="cancel">${esc(t("git.dialog.cancel"))}</button></div>`
       : `<div class="mfoot"><span class="hk err" data-err></span><button class="ghost" data-c="cancel">${esc(t("git.dialog.cancel"))}</button><button class="${o.confirm?.danger ? "danger" : "primary"}" data-c="ok">${esc(o.confirm?.label ?? t("git.dialog.ok"))}</button></div>`;
-    modal.innerHTML = `<div class="mbox gbox"><h2>${esc(o.title)}</h2>${o.sub ? `<div class="sub">${esc(o.sub)}</div>` : ""}${o.html ?? ""}${input}${input2}${select}${checks}${choices}${foot}</div>`;
+    modal.innerHTML = `<div class="mbox gbox"><h2>${esc(o.title)}</h2>${o.sub ? `<div class="sub">${esc(o.sub)}</div>` : ""}${o.html ?? ""}${input}${fields}${input2}${select}${checks}${choices}${foot}</div>`;
     const inEl = modal.querySelector<HTMLInputElement>("[data-in]");
     const done = (choice: string | null) => {
       if (choice === null) {
@@ -64,12 +74,17 @@ export function ask(o: AskOpts): Promise<AskResult | null> {
         value2: modal.querySelector<HTMLInputElement>("[data-in2]")?.value.trim() ?? "",
         checks: Object.fromEntries([...modal.querySelectorAll<HTMLInputElement>("[data-chk]")].map((c) => [c.dataset.chk!, c.checked])),
         select: modal.querySelector<HTMLSelectElement>("[data-sel]")?.value ?? "",
+        fields: Object.fromEntries([...modal.querySelectorAll<HTMLInputElement>("[data-field]")].map((f) => [f.dataset.field!, f.value.trim()])),
       };
       modal.remove();
       resolve(choice === "cancel" ? null : res);
     };
     modal.addEventListener("click", (e) => {
       if (e.target === modal) return done(null);
+      if ((e.target as Element).closest("[data-gi]")) {
+        o.onExtra?.();
+        return;
+      }
       const c = (e.target as Element).closest<HTMLElement>("[data-c]")?.dataset.c;
       if (c) done(c === "cancel" ? null : c);
     });
@@ -81,7 +96,9 @@ export function ask(o: AskOpts): Promise<AskResult | null> {
       }
     });
     document.body.append(modal);
-    if (inEl) {
+    const firstField = modal.querySelector<HTMLInputElement>("[data-field]");
+    if (!inEl && firstField) firstField.focus();
+    else if (inEl) {
       inEl.focus();
       inEl.select();
     } else modal.querySelector<HTMLButtonElement>(o.choices ? "[data-c]:not([data-c=cancel])" : '[data-c="ok"]')?.focus();
