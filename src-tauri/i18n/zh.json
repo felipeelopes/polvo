@@ -46,5 +46,15 @@
   "git.notRepo": "此文件夹不是 git 仓库。",
   "git.ghMissing": "未找到 GitHub CLI (gh)。请从 https://cli.github.com 安装，并运行“gh auth login”。",
   "git.claudeMissing": "在 PATH 中未找到 Claude Code。",
-  "git.nothingToCommit": "没有可提交的更改。"
+  "git.nothingToCommit": "没有可提交的更改。",
+  "work.network": "网络错误：{error}",
+  "work.vault": "无法使用 Windows 凭据管理器：{error}",
+  "work.cliMissing": "找不到“{name}”命令。",
+  "work.loginExpired": "代码在确认前已过期，请重试。",
+  "work.loginDenied": "未获得访问授权。",
+  "work.githubNotConnected": "请在“我的工作”中连接你的 GitHub 账户。",
+  "work.adoNotConnected": "请为 Azure DevOps 连接你的 Microsoft 账户（或 PAT）。",
+  "work.adoUnauthorized": "Azure DevOps 拒绝访问组织“{org}”。请重新登录或检查 PAT。",
+  "work.patMissing": "组织“{org}”没有保存 PAT。",
+  "work.patInvalid": "组织或 PAT 无效。"
 }

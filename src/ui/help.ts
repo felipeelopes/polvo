@@ -18,7 +18,7 @@ export function openHelp(anchor: HTMLElement): void {
         <div class="keys">
           <kbd>Ctrl Shift N</kbd><span>${t("help.keys.newSession")}</span>
           <kbd>Ctrl Shift T</kbd><span>${t("help.keys.terminal")}</span>
-          <kbd>Ctrl Shift 1 / 2</kbd><span>${t("help.keys.views")}</span>
+          <kbd>Ctrl Shift 1 / 2 / 3</kbd><span>${t("help.keys.views")}</span>
           <kbd>Ctrl Alt ←↑→↓</kbd><span>${t("help.keys.focus")}</span>
           <kbd>Ctrl Alt Shift ←↑→↓</kbd><span>${t("help.keys.swap")}</span>
           <kbd>Ctrl Shift G</kbd><span>${t("help.keys.git")}</span>

@@ -34,6 +34,7 @@ const svg = (body: string, size = 16) =>
   `<svg width="${size}" height="${size}" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="${+(24 / size).toFixed(2)}" stroke-linecap="round" stroke-linejoin="round">${body}</svg>`;
 
 export const ICON = {
+  work: svg('<path d="M2 13.5h12"/><path d="M4 11V7.5M7 11V4M10 11V6M13 11V2.5"/>', 14),
   tiles: svg('<rect x="1.5" y="1.5" width="13" height="13" rx="2.5"/><path d="M8 1.5v13M8 8h6.5"/>', 14),
   board: svg('<rect x="1.5" y="1.5" width="3.5" height="13" rx="1.2"/><rect x="6.25" y="1.5" width="3.5" height="9" rx="1.2"/><rect x="11" y="1.5" width="3.5" height="11" rx="1.2"/>', 14),
   grid: svg('<rect x="1.5" y="1.5" width="5.5" height="5.5" rx="1.3"/><rect x="9" y="1.5" width="5.5" height="5.5" rx="1.3"/><rect x="1.5" y="9" width="5.5" height="5.5" rx="1.3"/><rect x="9" y="9" width="5.5" height="5.5" rx="1.3"/>'),

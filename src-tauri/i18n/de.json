@@ -46,5 +46,15 @@
   "git.notRepo": "Dieser Ordner ist kein Git-Repository.",
   "git.ghMissing": "Die GitHub CLI (gh) wurde nicht gefunden. Installiere sie von https://cli.github.com und führe „gh auth login“ aus.",
   "git.claudeMissing": "Claude Code wurde im PATH nicht gefunden.",
-  "git.nothingToCommit": "Es gibt keine Änderungen zum Committen."
+  "git.nothingToCommit": "Es gibt keine Änderungen zum Committen.",
+  "work.network": "Netzwerkfehler: {error}",
+  "work.vault": "Die Windows-Anmeldeinformationsverwaltung konnte nicht verwendet werden: {error}",
+  "work.cliMissing": "Der Befehl „{name}“ wurde nicht gefunden.",
+  "work.loginExpired": "Der Code ist abgelaufen, bevor er bestätigt wurde. Versuche es erneut.",
+  "work.loginDenied": "Der Zugriff wurde nicht autorisiert.",
+  "work.githubNotConnected": "Verbinde dein GitHub-Konto unter Meine Arbeit.",
+  "work.adoNotConnected": "Verbinde dein Microsoft-Konto (oder ein PAT) für Azure DevOps.",
+  "work.adoUnauthorized": "Azure DevOps hat den Zugriff auf die Organisation „{org}“ verweigert. Melde dich erneut an oder prüfe das PAT.",
+  "work.patMissing": "Für die Organisation „{org}“ ist kein PAT gespeichert.",
+  "work.patInvalid": "Ungültige Organisation oder ungültiges PAT."
 }

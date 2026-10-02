@@ -46,5 +46,15 @@
   "git.notRepo": "이 폴더는 git 저장소가 아닙니다.",
   "git.ghMissing": "GitHub CLI(gh)를 찾을 수 없습니다. https://cli.github.com 에서 설치한 뒤 “gh auth login”을 실행하세요.",
   "git.claudeMissing": "PATH에서 Claude Code를 찾을 수 없습니다.",
-  "git.nothingToCommit": "커밋할 변경 사항이 없습니다."
+  "git.nothingToCommit": "커밋할 변경 사항이 없습니다.",
+  "work.network": "네트워크 오류: {error}",
+  "work.vault": "Windows 자격 증명 관리자를 사용할 수 없습니다: {error}",
+  "work.cliMissing": "“{name}” 명령을 찾을 수 없습니다.",
+  "work.loginExpired": "확인되기 전에 코드가 만료되었습니다. 다시 시도하세요.",
+  "work.loginDenied": "액세스가 승인되지 않았습니다.",
+  "work.githubNotConnected": "내 작업에서 GitHub 계정을 연결하세요.",
+  "work.adoNotConnected": "Azure DevOps용 Microsoft 계정(또는 PAT)을 연결하세요.",
+  "work.adoUnauthorized": "Azure DevOps가 “{org}” 조직에 대한 액세스를 거부했습니다. 다시 로그인하거나 PAT를 확인하세요.",
+  "work.patMissing": "“{org}” 조직에 저장된 PAT가 없습니다.",
+  "work.patInvalid": "조직 또는 PAT가 올바르지 않습니다."
 }

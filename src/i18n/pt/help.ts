@@ -13,7 +13,7 @@ export default {
   keys: {
     newSession: "Nova sessão",
     terminal: "Terminal na pasta da sessão ativa",
-    views: "Painéis / Quadro",
+    views: "Painéis / Quadro / Meu trabalho",
     focus: "Mover o foco entre painéis",
     swap: "Trocar o painel de lugar",
     maximize: "Maximizar / restaurar o painel",

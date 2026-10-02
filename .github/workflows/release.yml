@@ -34,6 +34,9 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+          # IDs públicos (não são segredos) dos apps OAuth do "Meu trabalho".
+          POLVO_GITHUB_CLIENT_ID: ${{ vars.POLVO_GITHUB_CLIENT_ID }}
+          POLVO_ENTRA_CLIENT_ID: ${{ vars.POLVO_ENTRA_CLIENT_ID }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: "Polvo ${{ github.ref_name }}"

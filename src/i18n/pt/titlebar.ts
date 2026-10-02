@@ -5,6 +5,8 @@ export default {
   tilesHint: "Painéis (Ctrl+Shift+1)",
   board: "Quadro",
   boardHint: "Quadro por status (Ctrl+Shift+2)",
+  work: "Meu trabalho",
+  workHint: "Meu trabalho: backlog, PRs e atividade do dia (Ctrl+Shift+3)",
   presets: {
     grid: "Organizar em grade",
     main: "Principal + pilha",

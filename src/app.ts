@@ -23,6 +23,7 @@ import { outdatedSessions, refreshUsage, refreshUsagePopovers, versionActions } 
 import { TOOLS } from "./ui/icons";
 import type { DocsPanel } from "./docs/panel";
 import type { GitView } from "./git/view";
+import type { WorkView } from "./work/view";
 import { git as gitApi } from "./git/api";
 import { defaultTool } from "./ui/projects";
 import { t, tn } from "./i18n";
@@ -50,7 +51,7 @@ const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRigh
 /** Atalhos do app: o terminal os ignora para que cheguem aqui. */
 export function isAppShortcut(e: KeyboardEvent): boolean {
   if (isZoomKey(e)) return true;
-  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "KeyZ", "KeyM", "KeyG"].includes(e.code)) return true;
+  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyM", "KeyG"].includes(e.code)) return true;
   return e.ctrlKey && e.altKey && e.key in ARROWS;
 }
 
@@ -97,6 +98,7 @@ export class App {
           return;
         }
         if (store.view === "tiles") this.tiles.startDrag(e, id, true);
+        else if (store.view === "work") this.openInTiles(id);
         else this.board.select(id);
       },
       newIn: (cwd, tool) => void this.newIn(cwd, tool),
@@ -110,6 +112,7 @@ export class App {
 
     const content = h("div", "content");
     content.append(this.tiles.el, this.board.el);
+    this.content = content;
     const main = h("div", "main");
     main.append(this.rail.el, content);
     this.docsMount = (panel) => main.append(panel.el);
@@ -128,6 +131,36 @@ export class App {
   }
 
   private docsContent: HTMLElement | null = null;
+  private content!: HTMLElement;
+  /** Tela "Meu trabalho", carregada no primeiro uso. */
+  private work: Promise<WorkView> | null = null;
+  private workView: WorkView | null = null;
+
+  private workPanel(): Promise<WorkView> {
+    return (this.work ??= import("./work/view").then(({ WorkView }) => {
+      const view = new WorkView({
+        repos: () => this.knownRepos(),
+        askAgent: (cwd, prompt, tool) => this.askAgent(cwd, prompt, tool),
+        openSession: (id) => this.openInTiles(id),
+        openBoard: () => this.setView("board"),
+      });
+      view.el.hidden = true;
+      this.content.append(view.el);
+      this.workView = view;
+      return view;
+    }));
+  }
+
+  /** Raízes dos repositórios git conhecidos: projetos salvos e pastas das sessões. */
+  private knownRepos(): string[] {
+    const roots = new Map<string, string>();
+    for (const p of [...store.projects.map((x) => x.path), ...store.sessions.map((s) => s.cwd)]) {
+      const info = store.git[p];
+      if (!info) continue;
+      roots.set(normPath(info.project), info.project);
+    }
+    return [...roots.values()];
+  }
 
   private gitView: GitView | null = null;
 
@@ -162,11 +195,14 @@ export class App {
   }
 
   /** Abre um agente na pasta e envia um pedido assim que ele estiver pronto. */
-  private async askAgent(cwd: string, prompt: string): Promise<void> {
-    const tool = (["claude", "codex", "opencode"] as ToolKind[]).find((k) => store.toolEnabled(k));
-    if (!tool) return toast(t("git.noAgent"));
+  private async askAgent(cwd: string, prompt: string, prefer?: ToolKind): Promise<string | null> {
+    const tool = prefer && store.toolEnabled(prefer) ? prefer : (["claude", "codex", "opencode"] as ToolKind[]).find((k) => store.toolEnabled(k));
+    if (!tool) {
+      toast(t("git.noAgent"));
+      return null;
+    }
     const id = await this.newIn(cwd, tool);
-    if (!id) return;
+    if (!id) return null;
     // Espera o CLI sair de "iniciando" (ou até 20 s) antes de digitar.
     const start = Date.now();
     while (Date.now() - start < 20_000) {
@@ -175,9 +211,12 @@ export class App {
       await new Promise((r) => setTimeout(r, 400));
     }
     await new Promise((r) => setTimeout(r, 900));
-    await ipc.ptyWrite(id, prompt).catch(() => {});
+    // Pedido com várias linhas vai como "colar" (bracketed paste); senão cada
+    // quebra de linha enviaria uma mensagem.
+    await ipc.ptyWrite(id, prompt.includes("\n") ? `\x1b[200~${prompt}\x1b[201~` : prompt).catch(() => {});
     await new Promise((r) => setTimeout(r, 350));
     await ipc.ptyWrite(id, "\r").catch(() => {});
+    return id;
   }
 
   /** Selos de git (alterados, à frente, atrás) dos worktrees desta janela. */
@@ -428,6 +467,7 @@ export class App {
         this.board.render();
         break;
       case "project":
+        this.workView?.rerender();
         this.tiles.reconcile();
         this.tiles.layout();
         this.rail.render();
@@ -453,6 +493,7 @@ export class App {
         this.board.renderDrawer();
         break;
       case "runtime":
+        this.workView?.sessionsChanged();
         this.terms.sync();
         this.rail.render();
         this.tiles.updatePanes();
@@ -534,15 +575,25 @@ export class App {
 
   private applyView(): void {
     const board = store.view === "board";
-    this.tiles.el.hidden = board;
+    const work = store.view === "work";
+    this.tiles.el.hidden = board || work;
     this.board.el.hidden = !board;
+    if (this.workView) this.workView.el.hidden = !work;
     if (board) {
       this.board.render();
       this.board.renderDrawer();
     } else {
       this.board.leave();
-      this.tiles.layout();
+      if (!work) this.tiles.layout();
     }
+    if (work)
+      void this.workPanel()
+        .then((v) => {
+          if (store.view !== "work") return;
+          v.el.hidden = false;
+          return v.show();
+        })
+        .catch((e) => toast(String(e)));
     this.titlebar.render();
   }
 
@@ -689,12 +740,15 @@ export class App {
       case "Digit2":
         this.setView("board");
         break;
+      case "Digit3":
+        this.setView("work");
+        break;
       case "KeyZ":
         this.tiles.undo();
         break;
       case "KeyM":
         if (store.view === "board") this.board.toggleMaximize();
-        else if (store.active) this.action("zoom", store.active);
+        else if (store.view === "tiles" && store.active) this.action("zoom", store.active);
         break;
       case "KeyG":
         this.openGit(undefined, true);

@@ -18,6 +18,7 @@ mod tools;
 mod usage;
 mod versions;
 mod windows;
+mod work;
 
 use tauri::{Manager, RunEvent, WindowEvent};
 use tauri_plugin_window_state::StateFlags;
@@ -142,6 +143,22 @@ pub fn run() {
             files::files_exist,
             files::file_bytes,
             files::file_reveal,
+            work::work_config_get,
+            work::work_config_set,
+            work::work_detect,
+            work::work_github_login,
+            work::work_github_logout,
+            work::work_ado_login,
+            work::work_ado_logout,
+            work::local::work_local,
+            work::github::work_github,
+            work::github::work_github_thread,
+            work::github::work_github_comment,
+            work::ado::work_ado,
+            work::ado::work_ado_thread,
+            work::ado::work_ado_comment,
+            work::ado::work_ado_discover,
+            work::ado::work_ado_pat_set,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

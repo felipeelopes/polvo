@@ -46,5 +46,15 @@
   "git.notRepo": "Questa cartella non è un repository git.",
   "git.ghMissing": "GitHub CLI (gh) non trovata. Installala da https://cli.github.com ed esegui “gh auth login”.",
   "git.claudeMissing": "Claude Code non è stato trovato nel PATH.",
-  "git.nothingToCommit": "Non ci sono modifiche da committare."
+  "git.nothingToCommit": "Non ci sono modifiche da committare.",
+  "work.network": "Errore di rete: {error}",
+  "work.vault": "Impossibile usare Gestione credenziali di Windows: {error}",
+  "work.cliMissing": "Il comando “{name}” non è stato trovato.",
+  "work.loginExpired": "Il codice è scaduto prima della conferma. Riprova.",
+  "work.loginDenied": "L’accesso non è stato autorizzato.",
+  "work.githubNotConnected": "Collega il tuo account GitHub in Il mio lavoro.",
+  "work.adoNotConnected": "Collega il tuo account Microsoft (o un PAT) per Azure DevOps.",
+  "work.adoUnauthorized": "Azure DevOps ha negato l’accesso all’organizzazione “{org}”. Accedi di nuovo o controlla il PAT.",
+  "work.patMissing": "Nessun PAT salvato per l’organizzazione “{org}”.",
+  "work.patInvalid": "Organizzazione o PAT non validi."
 }

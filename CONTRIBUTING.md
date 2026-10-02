@@ -44,6 +44,29 @@ Leia [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para entender o fluxo completo
 3. `src/ui/icons.ts`: nome, cor e ícone.
 4. `src/terminal/detector.ts`: textos que indicam "aguardando você".
 
+## Meu trabalho: GitHub e Azure DevOps
+
+A tela "Meu trabalho" (`src/work/`, `src-tauri/src/work/`) junta commits locais, issues e PRs do GitHub e work items, sprint e PRs do Azure DevOps. Os tokens ficam só no Gerenciador de Credenciais do Windows, e o webview nunca vê um token. As conexões funcionam assim, da mais simples à manual:
+
+- **GitHub:**
+  - Login do próprio Polvo pelo OAuth Device Flow: o app mostra um código e abre o navegador.
+  - Sem isso, usa o login do GitHub CLI (`gh auth token`), sem nenhum clique.
+  - As chamadas vão direto à API (GraphQL e REST).
+- **Azure DevOps:**
+  - Login com Microsoft Entra ID por device code, com refresh token.
+  - Sem isso, usa o token do Azure CLI (`az login`).
+  - PAT para organizações sem Entra.
+  - O OAuth antigo do Azure DevOps não é usado, porque foi descontinuado.
+
+O login próprio do Polvo precisa dos IDs públicos dos apps OAuth na hora do build. Esses IDs não são segredos. Sem eles, o login cai no `gh` e no `az`:
+
+| Variável | Como obter |
+| --- | --- |
+| `POLVO_GITHUB_CLIENT_ID` | GitHub → Settings → Developer settings → OAuth Apps → *New OAuth App*. Marque **Enable Device Flow**; a callback URL pode ser a página do projeto. |
+| `POLVO_ENTRA_CLIENT_ID` | Portal do Azure → Microsoft Entra ID → *App registrations* → *New registration*. Escolha contas de qualquer diretório organizacional. Em *Authentication*, ligue **Allow public client flows**. Em *API permissions*, adicione **Azure DevOps → user_impersonation** (delegada). |
+
+Na release do GitHub Actions, cadastre os dois IDs como *variables* do repositório, não como *secrets*. No build local, basta definir as variáveis de ambiente antes de rodar `pnpm release`.
+
 ## Padrões
 
 - `pnpm check` precisa passar (typecheck, testes, `cargo fmt`, `cargo clippy -D warnings`).

@@ -46,5 +46,15 @@
   "git.notRepo": "Эта папка не является git-репозиторием.",
   "git.ghMissing": "GitHub CLI (gh) не найден. Установите его с https://cli.github.com и выполните «gh auth login».",
   "git.claudeMissing": "Claude Code не найден в PATH.",
-  "git.nothingToCommit": "Нет изменений для коммита."
+  "git.nothingToCommit": "Нет изменений для коммита.",
+  "work.network": "Ошибка сети: {error}",
+  "work.vault": "Не удалось использовать диспетчер учётных данных Windows: {error}",
+  "work.cliMissing": "Команда «{name}» не найдена.",
+  "work.loginExpired": "Срок действия кода истёк до подтверждения. Попробуйте ещё раз.",
+  "work.loginDenied": "Доступ не был разрешён.",
+  "work.githubNotConnected": "Подключите аккаунт GitHub в разделе «Моя работа».",
+  "work.adoNotConnected": "Подключите аккаунт Microsoft (или PAT) для Azure DevOps.",
+  "work.adoUnauthorized": "Azure DevOps отказал в доступе к организации «{org}». Войдите снова или проверьте PAT.",
+  "work.patMissing": "Для организации «{org}» не сохранён PAT.",
+  "work.patInvalid": "Неверная организация или PAT."
 }

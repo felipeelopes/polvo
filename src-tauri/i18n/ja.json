@@ -46,5 +46,15 @@
   "git.notRepo": "このフォルダーは git リポジトリではありません。",
   "git.ghMissing": "GitHub CLI (gh) が見つかりません。https://cli.github.com からインストールし、「gh auth login」を実行してください。",
   "git.claudeMissing": "Claude Code が PATH に見つかりません。",
-  "git.nothingToCommit": "コミットする変更がありません。"
+  "git.nothingToCommit": "コミットする変更がありません。",
+  "work.network": "ネットワークエラー: {error}",
+  "work.vault": "Windows 資格情報マネージャーを使用できませんでした: {error}",
+  "work.cliMissing": "「{name}」コマンドが見つかりません。",
+  "work.loginExpired": "確認される前にコードの有効期限が切れました。もう一度お試しください。",
+  "work.loginDenied": "アクセスが許可されませんでした。",
+  "work.githubNotConnected": "「マイワーク」で GitHub アカウントを接続してください。",
+  "work.adoNotConnected": "Azure DevOps 用に Microsoft アカウント（または PAT）を接続してください。",
+  "work.adoUnauthorized": "Azure DevOps が組織「{org}」へのアクセスを拒否しました。再度サインインするか PAT を確認してください。",
+  "work.patMissing": "組織「{org}」の PAT が保存されていません。",
+  "work.patInvalid": "組織または PAT が無効です。"
 }

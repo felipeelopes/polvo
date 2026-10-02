@@ -38,6 +38,7 @@ export class Titlebar {
       <div class="seg views">
         <button data-v="tiles" title="${t("titlebar.tilesHint")}">${ICON.tiles}<span class="lbl-v">${t("titlebar.tiles")}</span></button>
         <button data-v="board" title="${t("titlebar.boardHint")}">${ICON.board}<span class="lbl-v">${t("titlebar.board")}</span></button>
+        <button data-v="work" title="${t("titlebar.workHint")}">${ICON.work}<span class="lbl-v">${t("titlebar.work")}</span></button>
       </div>
       <div class="tg layout-tools">
         <button data-p="grid" title="${t("titlebar.presets.grid")}">${ICON.grid}</button>

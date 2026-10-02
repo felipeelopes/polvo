@@ -42,7 +42,7 @@ export type LayoutNode =
   | { type: "leaf"; id: string }
   | { type: "split"; dir: SplitDir; sizes: number[]; children: LayoutNode[] };
 
-export type View = "tiles" | "board";
+export type View = "tiles" | "board" | "work";
 export type Side = "left" | "right" | "top" | "bottom";
 export type StartMode = "new" | "resume" | "continue";
 
