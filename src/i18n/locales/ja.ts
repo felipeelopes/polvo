@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "変更を破棄しました (ごみ箱にあります)",
       ignored: ".gitignore に追加しました",
       keys: "↑↓ 移動 · Space 含める/除外 · Del 破棄",
+      resize: "ドラッグでサイズ変更 · ダブルクリックで既定に戻す",
     },
     diff: {
       unified: "統合",

@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "변경 사항을 취소했습니다 (휴지통에 있음)",
       ignored: ".gitignore에 추가했습니다",
       keys: "↑↓ 이동 · Space 포함/제외 · Del 취소",
+      resize: "드래그해서 크기 조절 · 더블 클릭으로 기본값 복원",
     },
     diff: {
       unified: "통합",

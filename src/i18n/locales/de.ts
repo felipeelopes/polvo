@@ -654,6 +654,7 @@ const messages: Messages = {
       discarded: "Änderungen verworfen (im Papierkorb)",
       ignored: "Zur .gitignore hinzugefügt",
       keys: "↑↓ navigieren · Leertaste aufnehmen/entfernen · Del verwerfen",
+      resize: "Ziehen zum Ändern der Größe · Doppelklick stellt den Standard wieder her",
     },
     diff: {
       unified: "Vereint",

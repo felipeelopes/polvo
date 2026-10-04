@@ -12,6 +12,9 @@ import { ask, branchError, slugBranch } from "./dialog";
 import { absPath, GI, IMAGE_EXT, letterOf, menu, splitPath, stagedState, type GitCtx } from "./ui";
 
 const PROTECTED = /^(main|master|develop|trunk|release.*)$/;
+/** Larguras mínimas da lista e do diff ao arrastar a divisória (as mesmas do CSS de `.gc-col`). */
+const MIN_LIST = 220;
+const MIN_DIFF = 320;
 const pref = (k: string, d: string) => {
   try {
     return localStorage.getItem(`polvo.git.${k}`) ?? d;
@@ -83,7 +86,15 @@ export class ChangesPane {
     const diff = h("div", "gc-diff");
     this.selBar.hidden = true;
     diff.append(this.dHead, this.dScroll, this.selBar);
-    this.el.append(col, diff);
+    const grip = h("div", "gc-grip");
+    grip.title = t("git.changes.resize");
+    grip.addEventListener("pointerdown", (e) => this.startResize(e, col));
+    grip.addEventListener("dblclick", () => {
+      this.setListWidth(null);
+      setPref("listW", "");
+    });
+    this.setListWidth(Number(pref("listW", "")) || null);
+    this.el.append(col, grip, diff);
 
     this.head.innerHTML = `<span class="cb" data-all title="${esc(t("git.changes.selectAll"))}"></span><span class="gc-count"></span><span class="sp"></span>
       <button class="ibtn sm" data-find title="${esc(t("git.changes.filter"))} (Ctrl+F)">${GI.search}</button><button class="ibtn sm" data-stash title="${esc(t("git.changes.stashNew"))}">${GI.stash}</button><button class="ibtn sm" data-lm title="${esc(t("git.head.more"))}">${GI.more}</button>`;
@@ -122,6 +133,39 @@ export class ChangesPane {
 
   private file(path: string | null): FileChange | undefined {
     return path ? this.all.find((f) => f.path === path) : undefined;
+  }
+
+  /** Largura da lista de arquivos; `null` volta ao padrão do CSS. */
+  private setListWidth(w: number | null): void {
+    if (w) this.el.style.setProperty("--gc-w", `${Math.round(w)}px`);
+    else this.el.style.removeProperty("--gc-w");
+  }
+
+  /** Divisória entre a lista e o diff: arrastar muda a largura, que fica lembrada. */
+  private startResize(e: PointerEvent, col: HTMLElement): void {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    const grip = e.currentTarget as HTMLElement;
+    grip.setPointerCapture(e.pointerId);
+    const x0 = e.clientX;
+    const w0 = col.getBoundingClientRect().width;
+    const max = this.el.clientWidth - MIN_DIFF;
+    let w = w0;
+    document.body.classList.add("resizing-git");
+    const move = (ev: PointerEvent) => {
+      w = Math.max(MIN_LIST, Math.min(max, w0 + ev.clientX - x0));
+      this.setListWidth(w);
+    };
+    const up = () => {
+      document.body.classList.remove("resizing-git");
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+      if (w !== w0) setPref("listW", String(Math.round(w)));
+    };
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
   }
 
   /** Repositório trocado. */

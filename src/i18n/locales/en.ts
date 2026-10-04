@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "Changes discarded (they are in the Recycle Bin)",
       ignored: "Added to .gitignore",
       keys: "↑↓ navigate · Space stage/unstage · Del discard",
+      resize: "Drag to resize · double-click restores the default",
     },
     diff: {
       unified: "Unified",

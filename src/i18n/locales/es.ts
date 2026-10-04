@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "Cambios descartados (están en la Papelera)",
       ignored: "Añadido a .gitignore",
       keys: "↑↓ navegar · Espacio incluir/quitar · Del descartar",
+      resize: "Arrastra para redimensionar · doble clic restablece el tamaño",
     },
     diff: {
       unified: "Unificado",

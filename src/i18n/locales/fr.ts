@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "Modifications annulées (elles sont dans la Corbeille)",
       ignored: "Ajouté à .gitignore",
       keys: "↑↓ naviguer · Espace inclure/retirer · Del annuler",
+      resize: "Faites glisser pour redimensionner · double-clic pour revenir à la taille par défaut",
     },
     diff: {
       unified: "Unifié",

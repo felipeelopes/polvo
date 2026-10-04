@@ -649,6 +649,7 @@ const messages: Messages = {
       discarded: "已放弃更改 (在回收站中)",
       ignored: "已添加到 .gitignore",
       keys: "↑↓ 导航 · 空格 纳入/移出 · Del 放弃",
+      resize: "拖动调整大小 · 双击恢复默认",
     },
     diff: {
       unified: "统一",

@@ -63,8 +63,15 @@
 .g-body { flex: 1; min-height: 0; position: relative; }
 .g-none { flex: 1; display: grid; place-items: center; padding: 24px; }
 .gp { position: absolute; inset: 0; display: flex; min-height: 0; }
-.gc-col { width: 300px; flex: none; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
-@container git (max-width: 720px) { .gc-col { width: 230px; } }
+.gc-col { width: var(--gc-w, 300px); flex: none; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
+@container git (max-width: 720px) { .gc-col { width: var(--gc-w, 230px); } }
+/* Alterações: divisória entre a lista e o diff (arrastar muda a largura, duplo clique volta ao padrão) */
+.gp-changes .gc-col { min-width: 220px; max-width: calc(100% - 320px); }
+.gc-grip { flex: none; width: 0; position: relative; z-index: 5; cursor: col-resize; touch-action: none; }
+.gc-grip::before { content: ""; position: absolute; inset: 0 -5px 0 -2px; }
+.gc-grip::after { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--accent); opacity: 0; transition: opacity 0.15s; }
+.gc-grip:hover::after, body.resizing-git .gc-grip::after { opacity: 0.55; }
+body.resizing-git, body.resizing-git * { cursor: col-resize !important; user-select: none !important; }
 .gc-head { flex: none; display: flex; align-items: center; gap: 8px; padding: 7px 10px; border-bottom: 1px solid var(--line); min-height: 42px; }
 .gc-count { font-size: 11.5px; color: var(--faint); white-space: nowrap; }
 .gc-filter { flex: 1; min-width: 0; height: 28px; padding: 0 9px; border-radius: 7px; border: 1px solid var(--line); background: rgba(0, 0, 0, 0.2); color: var(--text); font-size: 12px; outline: 0; }

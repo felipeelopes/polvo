@@ -654,6 +654,7 @@ const messages: Messages = {
       discarded: "Modifiche scartate (si trovano nel Cestino)",
       ignored: "Aggiunto a .gitignore",
       keys: "↑↓ naviga · Spazio includi/rimuovi · Del scarta",
+      resize: "Trascina per ridimensionare · doppio clic ripristina la larghezza predefinita",
     },
     diff: {
       unified: "Unificato",

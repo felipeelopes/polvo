@@ -133,6 +133,7 @@ export default {
     discarded: "Alterações descartadas (estão na Lixeira)",
     ignored: "Adicionado ao .gitignore",
     keys: "↑↓ navegar · Espaço incluir/tirar · Del descartar",
+    resize: "Arraste para redimensionar · duplo clique volta ao padrão",
   },
   diff: {
     unified: "Unificado",
