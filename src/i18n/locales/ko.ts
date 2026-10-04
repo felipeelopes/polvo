@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "크기 균등하게",
       undo: "레이아웃 실행 취소 (Ctrl+Shift+Z)",
     },
-    newWindow: "새 창 (다른 모니터가 있으면 거기서 열기)",
     monitor: "이 창을 다른 모니터로 옮기기",
     help: "팁과 단축키",
     settings: "설정",

@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "均分大小",
       undo: "撤销布局 (Ctrl+Shift+Z)",
     },
-    newWindow: "新窗口 (如有其他显示器则在其上打开)",
     monitor: "将此窗口移到其他显示器",
     help: "提示与快捷键",
     settings: "设置",

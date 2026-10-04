@@ -16,7 +16,6 @@ export interface TitlebarHost {
   preset(kind: Preset | "equal" | "undo"): void;
   openSettings(anchor: HTMLElement): void;
   openHelp(anchor: HTMLElement): void;
-  newWindow(): void;
   openAbout(): void;
   openMonitors(anchor: HTMLElement): void;
   projectMenu(anchor: HTMLElement): void;
@@ -52,7 +51,6 @@ export class Titlebar {
       <button class="pchip" data-x="unfocus" hidden></button>
       <button class="gchip" data-x="git" hidden></button>
       <div class="rings"></div>
-      <button class="ibtn" data-x="window" title="${t("titlebar.newWindow")}">${ICON.window}</button>
       <button class="ibtn" data-pop data-x="monitor" title="${t("titlebar.monitor")}">${ICON.monitor}</button>
       <button class="ibtn" data-pop data-x="help" title="${t("titlebar.help")}">${ICON.help}</button>
       <button class="ibtn" data-pop data-x="settings" title="${t("titlebar.settings")}">${ICON.gear}</button>
@@ -80,7 +78,6 @@ export class Titlebar {
       const x = tg.closest<HTMLElement>("[data-x]");
       if (x?.dataset.x === "help") return host.openHelp(x);
       if (x?.dataset.x === "settings") return host.openSettings(x);
-      if (x?.dataset.x === "window") return host.newWindow();
       if (x?.dataset.x === "about") return host.openAbout();
       if (x?.dataset.x === "update") return showUpdate();
       if (x?.dataset.x === "monitor") return host.openMonitors(x);

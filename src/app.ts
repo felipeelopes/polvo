@@ -82,7 +82,6 @@ export class App {
       preset: (k) => (k === "undo" ? this.tiles.undo() : this.tiles.applyPreset(k as Preset | "equal")),
       openSettings: () => openSettings(),
       openHelp: (a) => openHelp(a),
-      newWindow: () => void this.newWindow(),
       openMonitors: (a) => void this.openMonitors(a),
       openAbout: () => openAbout(),
       projectMenu: (a) => openProjectMenu(a, this.projectHost),
@@ -406,6 +405,10 @@ export class App {
           if (b) {
             closePopover();
             void ipc.windowToMonitor(Number(b.dataset.m));
+          }
+          if ((e.target as Element).closest("[data-new]")) {
+            closePopover();
+            void this.newWindow();
           }
         };
       },

@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "Igualar tamaños",
       undo: "Deshacer diseño (Ctrl+Shift+Z)",
     },
-    newWindow: "Nueva ventana (se abre en otro monitor, si hay)",
     monitor: "Llevar esta ventana a otro monitor",
     help: "Consejos y atajos",
     settings: "Ajustes",

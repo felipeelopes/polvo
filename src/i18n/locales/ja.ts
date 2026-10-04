@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "サイズを均等にする",
       undo: "レイアウトを元に戻す (Ctrl+Shift+Z)",
     },
-    newWindow: "新しいウィンドウ (別のモニターがあればそこで開きます)",
     monitor: "このウィンドウを別のモニターに移動",
     help: "ヒントとショートカット",
     settings: "設定",

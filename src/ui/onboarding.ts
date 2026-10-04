@@ -26,7 +26,7 @@ async function saveLanguage(settings: Settings, language: string): Promise<void>
   }
 }
 
-const monitorHint = `<span style="display:inline-flex;vertical-align:-3px">${ICON.window}</span>`;
+const monitorHint = `<span style="display:inline-flex;vertical-align:-3px">${ICON.monitor}</span>`;
 
 type Step = "welcome" | "autostart" | "resume" | "done";
 const STEPS: Step[] = ["welcome", "autostart", "resume", "done"];

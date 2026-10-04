@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "Égaliser les tailles",
       undo: "Annuler la disposition (Ctrl+Shift+Z)",
     },
-    newWindow: "Nouvelle fenêtre (s'ouvre sur un autre écran, s'il y en a un)",
     monitor: "Déplacer cette fenêtre vers un autre écran",
     help: "Astuces et raccourcis",
     settings: "Réglages",

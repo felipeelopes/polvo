@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "Equalize sizes",
       undo: "Undo layout (Ctrl+Shift+Z)",
     },
-    newWindow: "New window (opens on another monitor, if any)",
     monitor: "Move this window to another monitor",
     help: "Tips and shortcuts",
     settings: "Settings",

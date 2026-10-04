@@ -15,7 +15,6 @@ export default {
     equal: "Igualar tamanhos",
     undo: "Desfazer layout (Ctrl+Shift+Z)",
   },
-  newWindow: "Nova janela (abre em outro monitor, se houver)",
   monitor: "Levar esta janela para outro monitor",
   help: "Dicas e atalhos",
   settings: "Ajustes",

@@ -45,7 +45,6 @@ const messages: Messages = {
       equal: "Größen angleichen",
       undo: "Layout rückgängig (Ctrl+Shift+Z)",
     },
-    newWindow: "Neues Fenster (öffnet auf einem anderen Monitor, falls vorhanden)",
     monitor: "Dieses Fenster auf einen anderen Monitor verschieben",
     help: "Tipps und Tastenkürzel",
     settings: "Einstellungen",
