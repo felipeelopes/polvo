@@ -674,7 +674,7 @@ export class DocsPanel {
     return new Promise((resolve) => {
       const modal = h("div", "modal");
       const names = docs.map((d) => `<li>${I.doc}<span>${esc(d.name)}</span></li>`).join("");
-      modal.innerHTML = `<div class="mbox guard"><h2>${esc(t("docs.discard.title"))}</h2><div class="sub">${esc(tn("docs.discard.sub", docs.length))}</div><ul class="busy">${names}</ul>
+      modal.innerHTML = `<div class="mbox guard"><h2>${esc(t("docs.discard.title"))}</h2><div class="sub">${esc(tn("docs.discard.sub", docs.length))}</div><ul class="mlist">${names}</ul>
         <div class="mfoot"><span class="hk"></span><button class="ghost" data-c="cancel">${esc(t("docs.discard.cancel"))}</button><button class="ghost" data-c="discard">${esc(t("docs.discard.discard"))}</button><button class="primary" data-c="save">${esc(t("docs.discard.save"))}</button></div></div>`;
       const done = (ok: boolean) => {
         modal.remove();

@@ -353,7 +353,7 @@ export class ChangesPane {
     const ok = await ask({
       title: tn("git.changes.discardTitle", files.length, { name: splitPath(files[0].path).name }),
       sub: t("git.changes.discardSub"),
-      html: `<ul class="busy gfiles">${files.slice(0, 8).map((f) => `<li><span class="gst ${letterOf(f)}">${letterOf(f)}</span><span>${esc(f.path)}</span></li>`).join("")}${files.length > 8 ? `<li><span>…</span></li>` : ""}</ul>`,
+      html: `<ul class="mlist gfiles">${files.slice(0, 8).map((f) => `<li><span class="gst ${letterOf(f)}">${letterOf(f)}</span><span>${esc(f.path)}</span></li>`).join("")}${files.length > 8 ? `<li><span>…</span></li>` : ""}</ul>`,
       confirm: { label: t("git.changes.discardBtn"), danger: true },
     });
     if (!ok) return;
