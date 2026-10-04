@@ -6,7 +6,7 @@ import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { t } from "../i18n";
 
-export type PaneAction = "split" | "git" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dmax" | "dclose" | "start" | "rename";
+export type PaneAction = "split" | "git" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dmax" | "start" | "rename";
 
 export interface PaneHandlers {
   action(action: PaneAction, id: string, extra?: string, anchor?: HTMLElement): void;
@@ -15,6 +15,9 @@ export interface PaneHandlers {
 }
 
 const statusLabel = (s: Status): string => t(`status.${s}`);
+
+/** Tempo para o segundo clique confirmar uma ação de fechar ("Encerrar?", "Tirar?"). */
+export const CONFIRM_MS = 2500;
 
 export const statusPill = (s: Status) => `<i></i><span>${statusLabel(s)}</span>`;
 
@@ -45,7 +48,7 @@ export class Pane {
            <button data-a="terminal" title="${t("pane.openTerminal")}">${ICON.terminal}</button>
            <button data-a="open" title="${t("pane.openInTiles")}">${ICON.open}</button>
            <button data-a="dmax" title="${t("pane.maximizeChat")} (Ctrl+Shift+M)">${ICON.max}</button>
-           <button data-a="dclose" title="${t("pane.closeDrawer")}">${ICON.close}</button>`;
+           <button data-a="close" title="${t("pane.close")}">${ICON.close}</button>`;
     this.el.innerHTML = `
       <div class="ph">${toolIcon(s.tool, 15)}<div class="pt"><b title="${t("pane.renameHint")}"></b><span></span></div><span class="ctx" hidden></span><span class="st"></span><div class="pacts">${acts}</div></div>
       <div class="pb"><div class="pane-note" hidden></div>${mode === "tile" ? '<div class="psz"></div>' : ""}</div>`;
@@ -160,7 +163,7 @@ export class Pane {
       this.closeArmed = undefined;
       btn.classList.remove("confirm");
       btn.innerHTML = ICON.close;
-    }, 2500);
+    }, CONFIRM_MS);
     return false;
   }
 

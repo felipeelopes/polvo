@@ -9,6 +9,7 @@ export default {
   showAll: "Mostrar todos os projetos",
   focusProject: "Ver só este projeto (Painéis e Quadro)",
   remove: "Tirar da barra (não apaga a pasta)",
+  confirmRemove: "Tirar?",
   onlyThis: "só este",
   newInProject: "Nova sessão {tool} neste projeto",
   worktree: "worktree",

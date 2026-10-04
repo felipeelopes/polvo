@@ -6,7 +6,7 @@ import type { Session, ToolKind } from "../core/types";
 import { basename, esc, h, hideTip, showTip } from "./dom";
 import { closePopover, popover, popoverOpen, refreshPopover } from "./feedback";
 import { ICON, projectIcon, sessionColor, TOOLS, toolIcon } from "./icons";
-import { statusPill } from "./pane";
+import { CONFIRM_MS, statusPill } from "./pane";
 import { openProjectStyle } from "./project-style";
 import { t, tn } from "../i18n";
 import "../styles/git-badges.css";
@@ -144,6 +144,8 @@ export class Sidebar {
   private closed = new Set(readJson<string[]>(CLOSED_KEY, []));
   /** Popover de sessões aberto a partir do trilho (atualiza junto com a barra). */
   private railPop: { key: string; render: (el: HTMLDivElement) => void } | null = null;
+  /** Projeto esperando o segundo clique para sair da barra (a barra se redesenha o tempo todo). */
+  private removeArmed: { path: string; timer: number } | null = null;
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
@@ -226,7 +228,8 @@ export class Sidebar {
             const focused = store.project === g.key;
             const out = !!store.project && !focused;
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
-            const removeBtn = g.saved && !all.length ? `<button class="sb-tool" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${ICON.close}</button>` : "";
+            const armed = this.removeArmed?.path === g.path;
+            const removeBtn = g.saved && !all.length ? `<button class="sb-tool${armed ? " confirm" : ""}" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${armed ? t("sidebar.confirmRemove") : ICON.close}</button>` : "";
             const rec = store.projectRecord(g.key);
             const pc = colorValue(rec?.color);
             const head = `<div class="pg-h${closed ? " closed" : ""}${pc ? " styled" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}"${pc ? ` style="--pc:${pc}"` : ""}>
@@ -283,7 +286,7 @@ export class Sidebar {
     const remove = t.closest<HTMLElement>("[data-remove]")?.dataset.remove;
     if (remove) {
       e.stopPropagation();
-      return this.host.removeProject(remove);
+      return this.confirmRemove(remove);
     }
     const railItem = t.closest<HTMLElement>("[data-project]");
     if (railItem) return this.openRailProject(railItem, railItem.dataset.project!);
@@ -301,6 +304,22 @@ export class Sidebar {
       localStorage.setItem(CLOSED_KEY, JSON.stringify([...this.closed]));
       this.render();
     }
+  }
+
+  /** Tirar um projeto da barra pede um segundo clique, como o "Encerrar?" dos painéis. */
+  private confirmRemove(path: string): void {
+    const armed = this.removeArmed;
+    if (armed) clearTimeout(armed.timer);
+    this.removeArmed = null;
+    if (armed?.path === path) return this.host.removeProject(path);
+    this.removeArmed = {
+      path,
+      timer: window.setTimeout(() => {
+        this.removeArmed = null;
+        this.render();
+      }, CONFIRM_MS),
+    };
+    this.render();
   }
 
   /** Clique direito num projeto (barra ou trilho): cor e ícone. */

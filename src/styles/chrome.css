@@ -68,6 +68,11 @@
 .pg-h:hover .pg-acts, .wt-h:hover .pg-acts { display: flex; }
 .sb-tool, .sb-add { width: 22px; height: 22px; border-radius: var(--r-xs); display: grid; place-items: center; color: var(--muted); }
 .sb-tool:hover, .sb-add:hover { background: rgba(255, 255, 255, 0.1); color: #fff; }
+/* tirar o projeto da barra: segundo clique confirma ("Tirar?"), e o botão fica à vista enquanto espera */
+.sb-tool[data-remove]:hover, .sb-tool.confirm { background: rgba(229, 83, 75, 0.18); color: var(--bad); }
+.sb-tool.confirm { width: auto; padding: 0 6px; font-size: 11px; white-space: nowrap; }
+.pg-h .pg-acts:has(.confirm) { display: flex; }
+.pg-h:has(.confirm) .cnt { display: none; }
 .si { display: flex; align-items: center; gap: 8px; height: 30px; padding: 0 8px 0 22px; border-radius: var(--r-sm); font-size: 12.5px; cursor: pointer; position: relative; min-width: 0; }
 .wt .si { padding-left: 20px; }
 .si:hover { background: rgba(255, 255, 255, 0.06); }

@@ -6,6 +6,7 @@ export default {
     idle: { title: "Ocioso", sub: "prontas ou pausadas" },
   },
   drawerSplit: "Arraste para mudar a largura do chat · duplo clique maximiza",
+  closeDrawer: "Clique de novo para fechar a gaveta",
   columnSplit: "Arraste para mudar a largura · duplo clique iguala",
   expand: "Expandir “{title}”",
   collapse: "Recolher coluna",

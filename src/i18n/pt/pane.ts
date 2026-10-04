@@ -9,7 +9,6 @@ export default {
   openInTiles: "Abrir nos painéis",
   maximizeChat: "Maximizar o chat",
   backToBoard: "Voltar ao Quadro",
-  closeDrawer: "Fechar gaveta",
   renameHint: "Duplo clique para renomear",
   sessionId: "Sessão: {id}",
   context: "Contexto usado: {pct}%",

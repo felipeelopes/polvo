@@ -638,11 +638,6 @@ export class App {
       case "dmax":
         this.board.toggleMaximize();
         break;
-      case "dclose":
-        store.selected = null;
-        this.board.render();
-        this.board.renderDrawer();
-        break;
       case "start": {
         const s = store.session(id);
         if (s) {

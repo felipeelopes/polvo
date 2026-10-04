@@ -71,7 +71,11 @@ export class BoardView {
       const toggle = t.closest<HTMLElement>("[data-collapse]")?.dataset.collapse;
       if (toggle) return this.toggleColumn(toggle);
       const card = t.closest<HTMLElement>(".kc");
-      if (card) this.select(card.dataset.id!);
+      // Clicar de novo no cartão aberto fecha a gaveta (o 2º clique de um duplo clique não conta).
+      if (card && e.detail < 2) {
+        if (card.dataset.id === store.selected) this.closeDrawer();
+        else this.select(card.dataset.id!);
+      }
     });
     this.cols.addEventListener("dblclick", (e) => {
       const t = e.target as Element;
@@ -91,6 +95,13 @@ export class BoardView {
   select(id: string): void {
     store.selected = id;
     store.setActive(id);
+    this.render();
+    this.renderDrawer();
+  }
+
+  /** Fecha a gaveta sem encerrar a sessão. */
+  closeDrawer(): void {
+    store.selected = null;
     this.render();
     this.renderDrawer();
   }
@@ -146,7 +157,8 @@ export class BoardView {
     const where = s.window !== store.label ? t("board.where.window", { name: store.windowName(s.window) }) : s.minimized ? t("board.where.rail") : t("board.where.tile");
     const st = s.runtime.status;
     const note = st === "paused" ? t("board.note.paused") : st === "exited" ? t("board.note.exited") : st === "error" ? t("board.note.error") : "";
-    return `<div class="kc ${st}${store.selected === s.id ? " sel" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
+    const sel = store.selected === s.id;
+    return `<div class="kc ${st}${sel ? " sel" : ""}" data-id="${s.id}"${sel ? ` title="${esc(t("board.closeDrawer"))}"` : ""} style="--acc:${sessionColor(s)}">
       <div class="kh"><span class="ic">${toolIcon(s.tool, 16)}</span><div><b>${esc(s.title)}</b><span>${tool.short} · ${esc(basename(s.cwd))}</span></div><em>${ago(s.runtime.since)}</em></div>
       <div class="kp">${esc(s.runtime.preview.join("\n"))}</div>
       <div class="kf"><span class="tag">${where}</span>${note ? `<span class="tag">${note}</span>` : ""}${store.context[s.id] !== undefined ? `<span class="tag" title="${t("board.context")}">${t("board.ctx", { pct: Math.round(store.context[s.id]) })}</span>` : ""}${
