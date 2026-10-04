@@ -6,9 +6,17 @@ export default {
     title: "Bem-vindo ao Polvo",
     tagline: "Um braço para cada agente: Claude Code, Codex, OpenCode e shells lado a lado.",
     providers: "Quais fornecedores você quer usar?",
-    hint: "Desligue os que não quer ver (mesmo instalados). Depois são só 2 perguntas rápidas; tudo pode mudar em Ajustes.",
+    hint: "Desligue os que não quer ver (mesmo instalados). Depois são só 3 perguntas rápidas; tudo pode mudar em Ajustes.",
   },
   step: "Pergunta {n} de {total}",
+  theme: {
+    title: "Como você prefere o Polvo?",
+    sub: "Dá para trocar depois em Ajustes.",
+    recommended: "recomendado",
+    autoText: "Segue o tema do Windows",
+    lightText: "Sempre claro",
+    darkText: "Sempre escuro",
+  },
   autostart: {
     title: "Abrir o Polvo junto com o Windows?",
     sub: "Suas sessões já ficam prontas quando você liga o computador.",

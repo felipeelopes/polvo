@@ -87,14 +87,14 @@ const I = {
   gh: '<svg class="src" viewBox="0 0 16 16"><path fill="currentColor" d="M8 0C3.6 0 0 3.6 0 8c0 3.5 2.3 6.5 5.5 7.6.4.1.5-.2.5-.4v-1.4c-2.2.5-2.7-1-2.7-1-.4-.9-.9-1.2-.9-1.2-.7-.5.1-.5.1-.5.8.1 1.2.8 1.2.8.7 1.2 1.9.9 2.3.7.1-.5.3-.9.5-1.1-1.8-.2-3.6-.9-3.6-4 0-.9.3-1.6.8-2.1-.1-.2-.4-1 .1-2.1 0 0 .7-.2 2.2.8.6-.2 1.3-.3 2-.3s1.4.1 2 .3c1.5-1 2.2-.8 2.2-.8.4 1.1.2 1.9.1 2.1.5.6.8 1.3.8 2.1 0 3.1-1.9 3.7-3.6 3.9.3.3.6.8.6 1.5v2.2c0 .2.1.5.6.4C13.7 14.5 16 11.5 16 8c0-4.4-3.6-8-8-8z"/></svg>',
   ado: '<svg class="src ado" viewBox="0 0 16 16"><path fill="currentColor" d="M15 3.6v8.3l-3.4 2.8-5.3-1.9v1.9L3.3 10.8l8.7.7V4.1zm-2.9.4L7.2 1v2L2.7 4.3 1.3 6.1v4.1l1.9.8V5.8z"/></svg>',
   git: '<svg class="src" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="8" cy="8" r="2.6"/><path d="M1 8h4.4M10.6 8H15"/></svg>',
-  bug: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#e5534b" stroke-width="1.6" stroke-linecap="round"><ellipse cx="8" cy="9" rx="3.5" ry="4.5"/><path d="M8 4.5v9M4.5 9H2M14 9h-2.5M4.8 5.5 3 4M11.2 5.5 13 4"/></svg>',
-  issue: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3fb27f" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="1.3" fill="#3fb27f"/></svg>',
-  task: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#e5a33a" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg>',
-  story: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#5cc8e0" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 2.5h9v11l-4.5-3-4.5 3z"/></svg>',
-  feature: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#b48aff" stroke-width="1.6" stroke-linejoin="round"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>',
-  epic: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#f08a5d" stroke-width="1.6" stroke-linejoin="round"><path d="M9.2 1.5L3.2 9h4.3l-.7 5.5 6-7.5H8.5z"/></svg>',
-  pr: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#3fb27f" stroke-width="1.6" stroke-linecap="round"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="12.5" r="1.6"/><path d="M4 5.1v5.8M12 10.9V6.5a2 2 0 0 0-2-2H7.5M9 3l-1.5 1.5L9 6"/></svg>',
-  merged: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#b48aff" stroke-width="1.6" stroke-linecap="round"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="8" r="1.6"/><path d="M4 5.1v5.8M5.5 4.3C7 7 8.5 8 10.4 8"/></svg>',
+  bug: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--bad)" stroke-width="1.6" stroke-linecap="round"><ellipse cx="8" cy="9" rx="3.5" ry="4.5"/><path d="M8 4.5v9M4.5 9H2M14 9h-2.5M4.8 5.5 3 4M11.2 5.5 13 4"/></svg>',
+  issue: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--ok)" stroke-width="1.6"><circle cx="8" cy="8" r="6"/><circle cx="8" cy="8" r="1.3" fill="currentColor"/></svg>',
+  task: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--warn)" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="2.5" width="11" height="11" rx="2.5"/><path d="M5.5 8.2l1.8 1.8 3.3-3.6"/></svg>',
+  story: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--accent)" stroke-width="1.6" stroke-linejoin="round"><path d="M3.5 2.5h9v11l-4.5-3-4.5 3z"/></svg>',
+  feature: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--violet)" stroke-width="1.6" stroke-linejoin="round"><path d="M8 1.8l1.9 3.9 4.3.6-3.1 3 .7 4.3L8 11.6l-3.8 2 .7-4.3-3.1-3 4.3-.6z"/></svg>',
+  epic: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--ai)" stroke-width="1.6" stroke-linejoin="round"><path d="M9.2 1.5L3.2 9h4.3l-.7 5.5 6-7.5H8.5z"/></svg>',
+  pr: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--ok)" stroke-width="1.6" stroke-linecap="round"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="12.5" r="1.6"/><path d="M4 5.1v5.8M12 10.9V6.5a2 2 0 0 0-2-2H7.5M9 3l-1.5 1.5L9 6"/></svg>',
+  merged: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" style="color:var(--violet)" stroke-width="1.6" stroke-linecap="round"><circle cx="4" cy="3.5" r="1.6"/><circle cx="4" cy="12.5" r="1.6"/><circle cx="12" cy="8" r="1.6"/><path d="M4 5.1v5.8M5.5 4.3C7 7 8.5 8 10.4 8"/></svg>',
   bot: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"><rect x="2.5" y="5" width="11" height="8.5" rx="2.5"/><path d="M8 2v3M6 9v.1M10 9v.1"/></svg>',
   comment: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M2.5 3.5h11v7.5H7l-3 2.5V11H2.5z"/></svg>',
   ext: '<svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 2.5h4.5V7M13.5 2.5 7.5 8.5M12 9.5v3.5a.5.5 0 0 1-.5.5h-8a.5.5 0 0 1-.5-.5v-8a.5.5 0 0 1 .5-.5H7"/></svg>',
@@ -464,7 +464,7 @@ export class WorkView {
     const hgt = 26;
     const max = Math.max(1, ...vals);
     const pts = vals.map((v, i) => `${((i / Math.max(1, vals.length - 1)) * w).toFixed(1)},${(hgt - (v / max) * (hgt - 4) - 2).toFixed(1)}`).join(" ");
-    return `<svg class="wk-spark" width="${w}" height="${hgt}" viewBox="0 0 ${w} ${hgt}"><polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
+    return `<svg class="wk-spark" width="${w}" height="${hgt}" viewBox="0 0 ${w} ${hgt}"><polyline points="${pts}" fill="none" style="stroke:${color}" stroke-width="1.6" stroke-linejoin="round" stroke-linecap="round"/></svg>`;
   }
 
   private renderKpis(): void {
@@ -489,13 +489,13 @@ export class WorkView {
         t(`work.kpi.commits.${this.ui.range}`),
         nf.format(slice.commits.length),
         `<span class="add">+${nf.format(slice.add)}</span> <span class="del">−${nf.format(slice.del)}</span> ${t("work.kpi.lines")}`,
-        this.spark(perDay(this.commits(), 7), "#3fb27f"),
+        this.spark(perDay(this.commits(), 7), "var(--ok)"),
       ),
       kpi("var(--accent)", t("work.kpi.prs"), String(mine.length), failing ? tn("work.kpi.prsFailing", failing) : t("work.kpi.prsAllGood"), "", 'data-prtab="mine"'),
-      kpi("#b48aff", t("work.kpi.reviews"), String(reviews.length), reviews.length ? t("work.kpi.reviewsOldest", { ago: ago(oldest) }) : t("work.kpi.reviewsNone"), "", 'data-prtab="review"'),
+      kpi("var(--violet)", t("work.kpi.reviews"), String(reviews.length), reviews.length ? t("work.kpi.reviewsOldest", { ago: ago(oldest) }) : t("work.kpi.reviewsNone"), "", 'data-prtab="review"'),
       sp
         ? kpi(
-            "#4c9bf0",
+            "var(--accent)",
             esc(sp.name),
             `${nf.format(sp.done)}<small>/ ${nf.format(sp.total)}</small>`,
             t("work.kpi.sprintSub", {
@@ -503,9 +503,9 @@ export class WorkView {
               days: sp.daysLeft ? tn("work.sprint.left", sp.daysLeft).replace(/<\/?b>/g, "") : t("work.sprint.ended"),
             }),
           )
-        : kpi("#4c9bf0", t("work.kpi.sprint"), "—", t("work.kpi.sprintNone")),
+        : kpi("var(--accent)", t("work.kpi.sprint"), "—", t("work.kpi.sprintNone")),
       kpi("var(--warn)", t("work.kpi.pending"), String(pending.length), tn("work.kpi.pendingBugs", pending.filter(isBug).length), "", 'data-pending=""'),
-      kpi("#ff8a70", t("work.kpi.agents"), String(working + waiting), t("work.kpi.agentsSub", { working, waiting }), "", 'data-board=""'),
+      kpi("var(--ai)", t("work.kpi.agents"), String(working + waiting), t("work.kpi.agentsSub", { working, waiting }), "", 'data-board=""'),
     ].join("");
   }
 
@@ -820,7 +820,7 @@ export class WorkView {
     }
     const fmt = (d: number) => new Date(d).toLocaleDateString(localeTag(), { day: "numeric", month: "short" });
     const unit = t(sp.unit === "points" ? "work.sprint.unitPoints" : "work.sprint.unitItems");
-    const fallback: Record<string, string> = { done: "var(--ok)", doing: "#5cc8e0", review: "#b48aff", blocked: "var(--bad)", todo: "rgba(255,255,255,.18)" };
+    const fallback: Record<string, string> = { done: "var(--ok)", doing: "var(--accent)", review: "var(--violet)", blocked: "var(--bad)", todo: "var(--line2)" };
     const parts: [string, number, string][] = sp.byState.map((s) => [esc(s.name), s.value, s.color ? esc(s.color) : fallback[s.state]]);
     const tot = Math.max(1, sp.total);
     const W = 220;
@@ -840,9 +840,8 @@ export class WorkView {
         </div>
         <div>
           <svg class="wk-burn" viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
-            <defs><linearGradient id="wkg" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#8aa2ff" stop-opacity=".35"/><stop offset="1" stop-color="#8aa2ff" stop-opacity="0"/></linearGradient></defs>
-            <line x1="0" y1="${y(tot)}" x2="${W}" y2="${y(0)}" stroke="rgba(255,255,255,.22)" stroke-dasharray="3 4"/>
-            ${last >= 0 ? `<polygon points="0,${H} ${pts} ${x(last)},${H}" fill="url(#wkg)"/><polyline points="${pts}" fill="none" stroke="#8aa2ff" stroke-width="2" stroke-linejoin="round"/><circle cx="${x(last)}" cy="${y(sp.burndown[last])}" r="3.5" fill="#8aa2ff" stroke="#0e1020" stroke-width="2"/>` : ""}
+            <line x1="0" y1="${y(tot)}" x2="${W}" y2="${y(0)}" style="stroke:var(--line2)" stroke-dasharray="3 4"/>
+            ${last >= 0 ? `<polygon points="0,${H} ${pts} ${x(last)},${H}" style="fill:var(--accent);fill-opacity:.12"/><polyline points="${pts}" fill="none" style="stroke:var(--accent)" stroke-width="2" stroke-linejoin="round"/><circle cx="${x(last)}" cy="${y(sp.burndown[last])}" r="3.5" style="fill:var(--accent);stroke:var(--pane)" stroke-width="2"/>` : ""}
           </svg>
           <div class="wk-burnlbl"><span>${fmt(sp.start)}</span><span>${t("work.sprint.burndown")}</span><span>${fmt(sp.finish)}</span></div>
         </div>
@@ -870,15 +869,15 @@ export class WorkView {
       evs.push({ at: b.at, color: "var(--ok)", html: tn("work.timeline.commits", b.n, { repo: esc(basename(b.repo)) }), sub: `+${b.add} −${b.del}` });
     }
     for (const p of this.prs()) {
-      if (p.role === "mine" && p.created >= since) evs.push({ at: p.created, color: "#c9d1d9", html: esc(t("work.timeline.prOpened", { ref: p.ref })), sub: esc(p.title), url: p.url });
-      if (p.role === "merged" && (p.merged ?? 0) >= since) evs.push({ at: p.merged!, color: "#b48aff", html: esc(t("work.timeline.prMerged", { ref: p.ref })), sub: esc(p.title), url: p.url });
+      if (p.role === "mine" && p.created >= since) evs.push({ at: p.created, color: "var(--muted)", html: esc(t("work.timeline.prOpened", { ref: p.ref })), sub: esc(p.title), url: p.url });
+      if (p.role === "merged" && (p.merged ?? 0) >= since) evs.push({ at: p.merged!, color: "var(--violet)", html: esc(t("work.timeline.prMerged", { ref: p.ref })), sub: esc(p.title), url: p.url });
     }
     for (const i of this.items()) {
-      if (i.src === "gh" && i.closed && i.closed >= since) evs.push({ at: i.closed, color: "#3fb27f", html: esc(t("work.timeline.issueClosed", { ref: i.ref })), sub: esc(i.title), url: i.url });
+      if (i.src === "gh" && i.closed && i.closed >= since) evs.push({ at: i.closed, color: "var(--ok)", html: esc(t("work.timeline.issueClosed", { ref: i.ref })), sub: esc(i.title), url: i.url });
     }
     for (const i of this.model?.touched ?? []) {
       if (i.updated >= since && this.inProject(this.repoPath(i)))
-        evs.push({ at: i.updated, color: "#4c9bf0", html: esc(t("work.timeline.itemTouched", { ref: i.ref, state: i.rawState })), sub: esc(i.title), url: i.url });
+        evs.push({ at: i.updated, color: "var(--accent)", html: esc(t("work.timeline.itemTouched", { ref: i.ref, state: i.rawState })), sub: esc(i.title), url: i.url });
     }
     for (const s of store.sessions.filter((s) => s.createdAt >= since && s.tool !== "shell" && store.inProject(s))) {
       evs.push({ at: s.createdAt, color: TOOLS[s.tool].color, html: esc(t("work.timeline.session", { tool: TOOLS[s.tool].short, project: basename(s.cwd) })), sub: esc(s.title) });
@@ -933,7 +932,7 @@ export class WorkView {
     m.forEach((row, d) => {
       cells += `<div class="dl">${esc(day(6 - d))}</div>`;
       row.forEach((v, hr) => {
-        cells += `<div class="c" style="${v ? `background:rgba(138,162,255,${(0.2 + (v / max) * 0.8).toFixed(2)})` : ""}" title="${esc(day(6 - d))} ${hr}h · ${tn("work.projects.commits", v)}"></div>`;
+        cells += `<div class="c" style="${v ? `background:color-mix(in srgb, var(--accent) ${Math.round(20 + (v / max) * 80)}%, transparent)` : ""}" title="${esc(day(6 - d))} ${hr}h · ${tn("work.projects.commits", v)}"></div>`;
       });
     });
     el.innerHTML = `<div class="wk-ch"><h3>${t("work.rhythm.title")}</h3><div class="sp"></div><span class="wk-faint">${t("work.rhythm.sub")}</span></div><div class="wk-hm">${cells}</div>`;
@@ -1443,10 +1442,10 @@ export class WorkView {
     } else {
       opts =
         i.state === "done"
-          ? [{ value: "open", label: t("work.stateMenu.ghReopen"), color: "#3fb27f" }]
+          ? [{ value: "open", label: t("work.stateMenu.ghReopen"), color: "var(--ok)" }]
           : [
-              { value: "completed", label: t("work.stateMenu.ghClose"), color: "#b48aff" },
-              { value: "not_planned", label: t("work.stateMenu.ghNotPlanned"), color: "#8b949e" },
+              { value: "completed", label: t("work.stateMenu.ghClose"), color: "var(--violet)" },
+              { value: "not_planned", label: t("work.stateMenu.ghNotPlanned"), color: "var(--faint)" },
             ];
     }
     popover(

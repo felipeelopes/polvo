@@ -165,6 +165,7 @@ pub fn run() {
         .setup(|app| {
             let handle = app.handle().clone();
             let settings = app.state::<SettingsState>().get();
+            settings::apply_theme(&handle, &settings.theme);
             // Reaplica a inicialização com o Windows (ex.: após instalar ou mover o app).
             if settings.onboarded {
                 if let Err(e) = settings::sync_autostart(&handle, settings.autostart) {

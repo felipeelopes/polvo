@@ -1,7 +1,7 @@
 // Onboarding da primeira execução e a tela de ajustes (mesmas opções).
 import { ipc } from "../core/ipc";
 import { store } from "../core/store";
-import type { Settings, ToolKind } from "../core/types";
+import type { Settings, Theme, ToolKind } from "../core/types";
 import { h } from "./dom";
 import { toast } from "./feedback";
 import { ICON, TOOLS, toolIcon } from "./icons";
@@ -26,10 +26,23 @@ async function saveLanguage(settings: Settings, language: string): Promise<void>
   }
 }
 
+const THEMES: Theme[] = ["auto", "light", "dark"];
+const themeLabel = (v: Theme) => t(v === "auto" ? "settings.themeAuto" : v === "light" ? "settings.themeLight" : "settings.themeDark");
+
+/** Salva o tema na hora: o Rust troca o tema de todas as janelas (e o Mica junto). */
+async function saveTheme(settings: Settings, theme: Theme): Promise<void> {
+  try {
+    store.settings = await ipc.settingsSet({ ...settings, theme });
+    store.emit("settings");
+  } catch (err) {
+    toast(String(err));
+  }
+}
+
 const monitorHint = `<span style="display:inline-flex;vertical-align:-3px">${ICON.monitor}</span>`;
 
-type Step = "welcome" | "autostart" | "resume" | "done";
-const STEPS: Step[] = ["welcome", "autostart", "resume", "done"];
+type Step = "welcome" | "theme" | "autostart" | "resume" | "done";
+const STEPS: Step[] = ["welcome", "theme", "autostart", "resume", "done"];
 
 export function openOnboarding(onFinish: () => void): void {
   const draft: Settings = { ...store.settings, autostart: false, autoResume: true, disabledTools: [] };
@@ -51,11 +64,16 @@ export function openOnboarding(onFinish: () => void): void {
         <span class="lbl">${t("onboarding.welcome.providers")}</span>
         <div class="detected">${providerToggles(draft)}</div>
         <div class="sub" style="margin-top:12px">${t("onboarding.welcome.hint")}</div>`;
+    } else if (s === "theme") {
+      const topt = (v: Theme, text: string) =>
+        `<button class="opt topt${draft.theme === v ? " on" : ""}" data-theme="${v}"><span class="tprev ${v}"><span class="lt"><i></i></span><span class="dk"><i></i></span></span><b>${themeLabel(v)}${v === "auto" ? ` <em>${t("onboarding.theme.recommended")}</em>` : ""}</b><small>${text}</small></button>`;
+      body = `<div class="step">${t("onboarding.step", { n: 1, total: 3 })}</div><h2>${t("onboarding.theme.title")}</h2><div class="sub">${t("onboarding.theme.sub")}</div>
+        <div class="opts opts3">${topt("auto", t("onboarding.theme.autoText"))}${topt("light", t("onboarding.theme.lightText"))}${topt("dark", t("onboarding.theme.darkText"))}</div>`;
     } else if (s === "autostart") {
-      body = `<div class="step">${t("onboarding.step", { n: 1, total: 2 })}</div><h2>${t("onboarding.autostart.title")}</h2><div class="sub">${t("onboarding.autostart.sub")}</div>
+      body = `<div class="step">${t("onboarding.step", { n: 2, total: 3 })}</div><h2>${t("onboarding.autostart.title")}</h2><div class="sub">${t("onboarding.autostart.sub")}</div>
         <div class="opts">${opt("autostart", "1", draft.autostart, t("onboarding.autostart.yes"), t("onboarding.autostart.yesText"))}${opt("autostart", "0", !draft.autostart, t("onboarding.autostart.no"), t("onboarding.autostart.noText"))}</div>`;
     } else if (s === "resume") {
-      body = `<div class="step">${t("onboarding.step", { n: 2, total: 2 })}</div><h2>${t("onboarding.resume.title")}</h2><div class="sub">${t("onboarding.resume.sub", { commands: "claude --resume, codex resume, opencode --session" })}</div>
+      body = `<div class="step">${t("onboarding.step", { n: 3, total: 3 })}</div><h2>${t("onboarding.resume.title")}</h2><div class="sub">${t("onboarding.resume.sub", { commands: "claude --resume, codex resume, opencode --session" })}</div>
         <div class="opts">${opt("autoResume", "1", draft.autoResume, t("onboarding.resume.yes"), t("onboarding.resume.yesText"))}${opt("autoResume", "0", !draft.autoResume, t("onboarding.resume.no"), t("onboarding.resume.noText"))}</div>`;
     } else {
       body = `${bubbles}<div class="hero">${logo(76, "wave")}<div><h2>${t("onboarding.done.title")}</h2><div class="sub" style="margin:0">${t("onboarding.done.tip", { icon: monitorHint })}</div></div></div>
@@ -76,6 +94,13 @@ export function openOnboarding(onFinish: () => void): void {
   });
   box.addEventListener("click", async (e) => {
     const target = e.target as Element;
+    const th = target.closest<HTMLElement>("[data-theme]")?.dataset.theme as Theme | undefined;
+    if (th) {
+      draft.theme = th;
+      render();
+      void saveTheme({ ...store.settings, ...draft }, th);
+      return;
+    }
     const o = target.closest<HTMLElement>(".opt");
     if (o) {
       const k = o.dataset.k!;
@@ -146,9 +171,11 @@ export function openSettings(): void {
   const render = () => {
     box.innerHTML = `<h2>${t("settings.title")}</h2><div class="sub">${t("settings.sub")}</div>
       <div class="lang-row"><span class="lbl">${t("settings.language")}</span>${languageSelect(store.settings.language)}</div>
+      <div class="lang-row"><span class="lbl">${t("settings.theme")}</span><div class="seg2" title="${t("settings.themeText")}">${THEMES.map((v) => `<button data-theme="${v}" class="${store.settings.theme === v ? "on" : ""}">${themeLabel(v)}</button>`).join("")}</div></div>
       <span class="lbl">${t("settings.providers")}</span>
       <div class="detected">${providerToggles(store.settings)}</div>
       <div class="rows" style="margin-top:12px">
+        ${row("terminalDark", t("settings.terminalDark"), t("settings.terminalDarkText"))}
         ${row("autostart", t("settings.autostart"), t("settings.autostartText"))}
         <div class="row" style="cursor:default"><div><b>${t("settings.windows")}</b><small>${t("settings.windowsText", { windows: tn("settings.windowsOpen", store.windows.length), monitors: tn("settings.monitors", store.display.monitors) })}</small></div>
           <button class="ghost" data-newwin>${t("settings.newWindow")}</button></div>
@@ -179,6 +206,8 @@ export function openSettings(): void {
     const target = e.target as Element;
     const key = target.closest<HTMLElement>("[data-toggle]")?.dataset.toggle as keyof Settings | undefined;
     if (key) void save({ [key]: !store.settings[key] });
+    const th = target.closest<HTMLElement>("[data-theme]")?.dataset.theme as Theme | undefined;
+    if (th && th !== store.settings.theme) void save({ theme: th });
     const tool = target.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
     if (tool) void save({ disabledTools: toggleTool(store.settings.disabledTools, tool) });
     if (target.closest("[data-about]")) {

@@ -17,6 +17,7 @@ import { installModalFit } from "./ui/modal-fit";
 import { installCloseGuard } from "./ui/close-guard";
 import { refreshUsage } from "./ui/usage";
 import { showWhatsNew } from "./ui/whatsnew";
+import { initTheme } from "./ui/theme";
 import { resolveLocale, setLocale, t } from "./i18n";
 
 async function boot(): Promise<void> {
@@ -33,9 +34,13 @@ async function boot(): Promise<void> {
   store.settings = settings;
   setLocale(resolveLocale(settings.language));
   // Mudou o idioma (nesta ou em outra janela): recarrega a interface. As sessões continuam rodando.
+  // As outras preferências (ex.: terminal escuro) valem na hora em todas as janelas.
   await events.onSettings((s) => {
-    if (s.language !== store.settings.language) location.reload();
+    if (s.language !== store.settings.language) return location.reload();
+    store.settings = s;
+    store.emit("settings");
   });
+  initTheme();
   store.tools = tools;
   store.display = display;
   store.sessions = snapshot.sessions;
@@ -68,5 +73,5 @@ async function boot(): Promise<void> {
 }
 
 boot().catch((err) => {
-  document.body.innerHTML = `<pre style="color:#f88;padding:24px;white-space:pre-wrap">${t("app.bootFailed")}\n${String(err)}</pre>`;
+  document.body.innerHTML = `<pre style="color:var(--bad);padding:24px;white-space:pre-wrap">${t("app.bootFailed")}\n${String(err)}</pre>`;
 });

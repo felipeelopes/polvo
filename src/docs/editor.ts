@@ -3,56 +3,59 @@
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { languages } from "@codemirror/language-data";
-import { EditorState } from "@codemirror/state";
+import { Compartment, EditorState } from "@codemirror/state";
 import { EditorView, keymap } from "@codemirror/view";
 import { indentWithTab } from "@codemirror/commands";
 import { tags as t } from "@lezer/highlight";
 import { basicSetup } from "codemirror";
+import { isLight, onThemeChange } from "../ui/theme";
 
-const theme = EditorView.theme(
-  {
-    "&": { height: "100%", color: "#e6e7ee", backgroundColor: "transparent", fontSize: "13px" },
-    ".cm-scroller": { fontFamily: '"Cascadia Mono", "Cascadia Code", Consolas, monospace', lineHeight: "1.6", scrollbarWidth: "thin", scrollbarColor: "rgba(255,255,255,.15) transparent" },
-    ".cm-content": { padding: "14px 0 40vh", caretColor: "#e6e7ee" },
-    ".cm-line": { padding: "0 18px 0 10px" },
-    "&.cm-focused": { outline: "none" },
-    "&.cm-focused .cm-cursor": { borderLeftColor: "#e6e7ee" },
-    ".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection": { backgroundColor: "#8aa2ff40 !important" },
-    ".cm-gutters": { backgroundColor: "transparent", color: "#4f546a", border: "none" },
-    ".cm-activeLineGutter": { backgroundColor: "transparent", color: "#9aa0b4" },
-    ".cm-activeLine": { backgroundColor: "rgba(255,255,255,.035)" },
-    ".cm-foldPlaceholder": { backgroundColor: "rgba(255,255,255,.08)", border: "none", color: "#9aa0b4" },
-    ".cm-matchingBracket": { backgroundColor: "rgba(138,162,255,.25) !important", outline: "none" },
-    ".cm-searchMatch": { backgroundColor: "rgba(229,163,58,.3)" },
-    ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "rgba(229,163,58,.55)" },
-    ".cm-panels": { backgroundColor: "rgba(24,26,40,.97)", color: "#e9eaf0", borderColor: "rgba(255,255,255,.12)" },
-    ".cm-panel input, .cm-panel button": { fontSize: "12px" },
-    ".cm-tooltip": { backgroundColor: "rgba(24,26,40,.97)", border: "1px solid rgba(255,255,255,.16)", borderRadius: "8px" },
-    ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "rgba(138,162,255,.25)" },
-  },
-  { dark: true },
-);
+// Cores pelos tokens do CSS: o mesmo tema serve ao claro e ao escuro. Só a
+// marcação "dark" do CodeMirror (que escolhe os padrões dele) troca com o tema.
+const themeSpec = {
+  "&": { height: "100%", color: "var(--text)", backgroundColor: "transparent", fontSize: "13px" },
+  ".cm-scroller": { fontFamily: "var(--mono)", lineHeight: "1.6", scrollbarWidth: "thin", scrollbarColor: "var(--thumb) transparent" },
+  ".cm-content": { padding: "14px 0 40vh", caretColor: "var(--text)" },
+  ".cm-line": { padding: "0 18px 0 10px" },
+  "&.cm-focused": { outline: "none" },
+  "&.cm-focused .cm-cursor": { borderLeftColor: "var(--text)" },
+  ".cm-selectionBackground, &.cm-focused .cm-selectionBackground, ::selection": { backgroundColor: "color-mix(in srgb, var(--accent) 25%, transparent) !important" },
+  ".cm-gutters": { backgroundColor: "transparent", color: "var(--faint)", border: "none" },
+  ".cm-activeLineGutter": { backgroundColor: "transparent", color: "var(--muted)" },
+  ".cm-activeLine": { backgroundColor: "var(--hover)" },
+  ".cm-foldPlaceholder": { backgroundColor: "var(--hover2)", border: "none", color: "var(--muted)" },
+  ".cm-matchingBracket": { backgroundColor: "color-mix(in srgb, var(--accent) 25%, transparent) !important", outline: "none" },
+  ".cm-searchMatch": { backgroundColor: "color-mix(in srgb, var(--warn) 30%, transparent)" },
+  ".cm-searchMatch.cm-searchMatch-selected": { backgroundColor: "color-mix(in srgb, var(--warn) 55%, transparent)" },
+  ".cm-panels": { backgroundColor: "var(--raised)", color: "var(--text)", borderColor: "var(--line2)" },
+  ".cm-panel input, .cm-panel button": { fontSize: "12px" },
+  ".cm-tooltip": { backgroundColor: "var(--raised)", border: "1px solid var(--line2)", borderRadius: "var(--r-lg)", boxShadow: "var(--shadow)" },
+  ".cm-tooltip-autocomplete > ul > li[aria-selected]": { backgroundColor: "color-mix(in srgb, var(--accent) 25%, transparent)", color: "var(--text)" },
+};
+const darkTheme = EditorView.theme(themeSpec, { dark: true });
+const lightTheme = EditorView.theme(themeSpec, { dark: false });
+const themeFor = () => (isLight() ? lightTheme : darkTheme);
 
 const highlight = HighlightStyle.define([
-  { tag: t.heading1, color: "#ffffff", fontWeight: "700", fontSize: "1.25em" },
-  { tag: t.heading2, color: "#ffffff", fontWeight: "700", fontSize: "1.12em" },
-  { tag: [t.heading3, t.heading4, t.heading5, t.heading6], color: "#ffffff", fontWeight: "650" },
-  { tag: t.strong, fontWeight: "700", color: "#f2f3f8" },
-  { tag: t.emphasis, fontStyle: "italic", color: "#ddb6f5" },
-  { tag: t.strikethrough, textDecoration: "line-through", color: "#9aa0b4" },
-  { tag: [t.link, t.url], color: "#8aa2ff" },
-  { tag: t.monospace, color: "#8ee0ec" },
-  { tag: [t.processingInstruction, t.meta, t.contentSeparator], color: "#6b7086" },
-  { tag: t.quote, color: "#b8bccb", fontStyle: "italic" },
-  { tag: t.list, color: "#e5a33a" },
-  { tag: [t.keyword, t.operatorKeyword], color: "#c792ea" },
-  { tag: [t.string, t.special(t.string)], color: "#6fd4a3" },
-  { tag: [t.number, t.bool, t.null, t.atom], color: "#f2c46d" },
-  { tag: t.comment, color: "#6b7086", fontStyle: "italic" },
-  { tag: [t.function(t.variableName), t.function(t.propertyName)], color: "#7c9cff" },
-  { tag: [t.typeName, t.className], color: "#f2c46d" },
-  { tag: [t.propertyName, t.attributeName], color: "#a5b9ff" },
-  { tag: t.tagName, color: "#f07178" },
+  { tag: t.heading1, color: "var(--text)", fontWeight: "700", fontSize: "1.25em" },
+  { tag: t.heading2, color: "var(--text)", fontWeight: "700", fontSize: "1.12em" },
+  { tag: [t.heading3, t.heading4, t.heading5, t.heading6], color: "var(--text)", fontWeight: "650" },
+  { tag: t.strong, fontWeight: "700", color: "var(--text)" },
+  { tag: t.emphasis, fontStyle: "italic", color: "var(--syn-em)" },
+  { tag: t.strikethrough, textDecoration: "line-through", color: "var(--muted)" },
+  { tag: [t.link, t.url], color: "var(--accent)" },
+  { tag: t.monospace, color: "var(--syn-mono)" },
+  { tag: [t.processingInstruction, t.meta, t.contentSeparator], color: "var(--syn-meta)" },
+  { tag: t.quote, color: "var(--syn-quote)", fontStyle: "italic" },
+  { tag: t.list, color: "var(--syn-list)" },
+  { tag: [t.keyword, t.operatorKeyword], color: "var(--syn-keyword)" },
+  { tag: [t.string, t.special(t.string)], color: "var(--syn-string)" },
+  { tag: [t.number, t.bool, t.null, t.atom], color: "var(--syn-number)" },
+  { tag: t.comment, color: "var(--syn-comment)", fontStyle: "italic" },
+  { tag: [t.function(t.variableName), t.function(t.propertyName)], color: "var(--syn-fn)" },
+  { tag: [t.typeName, t.className], color: "var(--syn-type)" },
+  { tag: [t.propertyName, t.attributeName], color: "var(--syn-prop)" },
+  { tag: t.tagName, color: "var(--syn-tag)" },
 ]);
 
 export interface DocEditor {
@@ -70,6 +73,7 @@ export function createEditor(
   on: { change(text: string): void; save(): void; scroll(ratio: number): void },
 ): DocEditor {
   let silent = false;
+  const themeSlot = new Compartment();
   const view = new EditorView({
     parent,
     state: EditorState.create({
@@ -80,12 +84,18 @@ export function createEditor(
         markdown({ base: markdownLanguage, codeLanguages: languages }),
         syntaxHighlighting(highlight),
         EditorView.lineWrapping,
-        theme,
+        themeSlot.of(themeFor()),
         EditorView.updateListener.of((u) => {
           if (u.docChanged && !silent) on.change(u.state.doc.toString());
         }),
       ],
     }),
+  });
+  let dark = !isLight();
+  const offTheme = onThemeChange(() => {
+    if (dark === !isLight()) return;
+    dark = !isLight();
+    view.dispatch({ effects: themeSlot.reconfigure(themeFor()) });
   });
   view.scrollDOM.addEventListener("scroll", () => {
     const s = view.scrollDOM;
@@ -102,6 +112,9 @@ export function createEditor(
       silent = false;
     },
     focus: () => view.focus(),
-    destroy: () => view.destroy(),
+    destroy: () => {
+      offTheme();
+      view.destroy();
+    },
   };
 }

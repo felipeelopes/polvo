@@ -69,9 +69,9 @@ function winShort(w: UsageWindow): string {
 
 const planLabel = (plan: string): string => (plan === "Chaves de API próprias" ? t("usage.plan.ownKeys") : plan);
 
-export const levelColor = (tool: ToolKind, p: number) => (p >= 85 ? "#E5534B" : p >= 75 ? "#E5A33A" : TOOLS[tool].color);
+export const levelColor = (tool: ToolKind, p: number) => (p >= 85 ? "var(--bad)" : p >= 75 ? "var(--warn)" : TOOLS[tool].color);
 
-export function ring(p: number, color: string, size = 26, sw = 3, track = "rgba(255,255,255,.14)"): string {
+export function ring(p: number, color: string, size = 26, sw = 3, track = "var(--line2)"): string {
   const r = (size - sw) / 2;
   const len = 2 * Math.PI * r;
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)"><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${track}" stroke-width="${sw}"/><circle cx="${size / 2}" cy="${size / 2}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(len * Math.min(100, Math.max(0, p))) / 100} ${len}"/></svg>`;
@@ -98,7 +98,7 @@ export function doubleRing(outer: number, inner: number, tool: ToolKind, size = 
   const c = size / 2;
   const arc = (r: number, p: number, color: string, sw: number) => {
     const len = 2 * Math.PI * r;
-    return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="rgba(255,255,255,.12)" stroke-width="${sw}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(len * Math.min(100, Math.max(0, p))) / 100} ${len}"/>`;
+    return `<circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="var(--line2)" stroke-width="${sw}"/><circle cx="${c}" cy="${c}" r="${r}" fill="none" stroke="${color}" stroke-width="${sw}" stroke-linecap="round" stroke-dasharray="${(len * Math.min(100, Math.max(0, p))) / 100} ${len}"/>`;
   };
   return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="transform:rotate(-90deg)">${arc(c - 2, outer, levelColor(tool, outer), 3)}${arc(c - 7.5, inner, levelColor(tool, inner), 3)}</svg>`;
 }

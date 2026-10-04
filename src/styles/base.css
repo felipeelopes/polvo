@@ -1,38 +1,102 @@
-/* Tokens e base. O fundo da janela é o Mica do Windows 11; aqui só tingimos. */
+/* Tokens e base. Visual plano: superfícies sólidas, cinzas neutros e um único
+   azul para seleção, foco e a ação principal. O tema segue o da janela (o Rust
+   aplica Automático/Claro/Escuro e o WebView2 repassa em prefers-color-scheme).
+   O Mica do Windows 11 fica só na moldura (barra de título e lateral). */
 :root {
-  --text: #e9eaf0;
-  --muted: #9aa0b4;
-  --faint: #6b7086;
-  --line: rgba(255, 255, 255, 0.08);
-  --line2: rgba(255, 255, 255, 0.16);
-  --line-soft: rgba(255, 255, 255, 0.055); /* divisórias internas (cabeçalhos, barras) */
-  --hover: rgba(255, 255, 255, 0.07);
-  --hover2: rgba(255, 255, 255, 0.11);
-  --sel: rgba(255, 255, 255, 0.13);
-  --thumb: rgba(255, 255, 255, 0.13);
+  /* Superfícies */
+  --tint: rgba(20, 21, 24, 0.62); /* moldura sobre o Mica */
+  --bg: #141518; /* moldura sem Mica */
+  --pane: #1b1c20; /* painéis, cartões, gaveta, painel lateral */
+  --raised: #232429; /* menus, popovers, diálogos, dicas e avisos */
+  --field: #141518; /* campos de texto, blocos de código e prévias */
+  --scrim: rgba(0, 0, 0, 0.5); /* fundo atrás dos diálogos */
+  /* Texto */
+  --text: #e6e7ea;
+  --muted: #a0a3ab;
+  --faint: #6e717a;
+  --on-accent: #ffffff;
+  /* Linhas */
+  --line: #2a2c31;
+  --line2: #383a40;
+  --line-soft: #232428; /* divisórias internas (cabeçalhos, barras) */
+  /* Interação (por cima de qualquer superfície) */
+  --hover: rgba(255, 255, 255, 0.05);
+  --hover2: rgba(255, 255, 255, 0.08);
+  --sel: rgba(255, 255, 255, 0.08);
+  --thumb: rgba(255, 255, 255, 0.14);
+  /* Cores com significado */
+  --accent: #7aa5ff; /* seleção, foco, links, texto em destaque */
+  --accent-solid: #3c6fe6; /* fundo do botão principal (texto branco) */
+  --warn: #e0a642;
+  --ok: #4cb782;
+  --bad: #e5605a;
+  --violet: #b99cf2;
+  --ai: #e39a7c; /* ações de IA (gerar com Claude) */
+  --add-bg: rgba(76, 183, 130, 0.13);
+  --del-bg: rgba(229, 96, 90, 0.13);
+  /* Terminal */
+  --term-bg: #1b1c20;
+  --term-fg: #d9dade;
+  /* Sombras: só para o que flutua */
+  --shadow: 0 10px 28px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.55);
   /* Escala de cantos: controles pequenos, controles, superfícies, cartões, janelas flutuantes. */
-  --r-xs: 6px;
-  --r-sm: 8px;
-  --r-md: 10px;
-  --r-lg: 12px;
-  --r-xl: 16px;
+  --r-xs: 4px;
+  --r-sm: 6px;
+  --r-md: 6px;
+  --r-lg: 8px;
+  --r-xl: 10px;
   /* Altura única de controles e de cabeçalhos: tudo cai na mesma linha. */
-  --ctl: 32px;
-  --ctl-sm: 28px;
-  --head: 40px;
+  --ctl: 30px;
+  --ctl-sm: 26px;
+  --head: 36px;
   --gap: 10px;
   --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
   --fast: 0.14s;
-  --tint: rgba(18, 20, 30, 0.55);
-  --pane: rgba(12, 13, 20, 0.78);
-  --glass: rgba(24, 26, 40, 0.94);
-  --accent: #8aa2ff;
-  --warn: #e5a33a;
-  --ok: #3fb27f;
-  --bad: #e5534b;
   --mono: "Cascadia Mono", "Cascadia Code", Consolas, monospace;
   --sans: "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+  --display: "Segoe UI Variable Display", "Segoe UI", system-ui, sans-serif;
   color-scheme: dark;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --tint: rgba(243, 244, 246, 0.66);
+    --bg: #f3f4f6;
+    --pane: #ffffff;
+    --raised: #ffffff;
+    --field: #f6f7f9;
+    --scrim: rgba(20, 22, 28, 0.28);
+    --text: #1b1d22;
+    --muted: #5d626d;
+    --faint: #8b909a;
+    --line: #e4e6ea;
+    --line2: #d3d6dc;
+    --line-soft: #eceef1;
+    --hover: rgba(20, 22, 28, 0.045);
+    --hover2: rgba(20, 22, 28, 0.07);
+    --sel: rgba(20, 22, 28, 0.07);
+    --thumb: rgba(20, 22, 28, 0.2);
+    --accent: #1f5fd6;
+    --accent-solid: #1f5fd6;
+    --warn: #b7791f;
+    --ok: #1f8a5b;
+    --bad: #c93a33;
+    --violet: #7c4dce;
+    --ai: #b9532f;
+    --add-bg: rgba(31, 138, 91, 0.1);
+    --del-bg: rgba(201, 58, 51, 0.09);
+    --term-bg: #ffffff;
+    --term-fg: #24262b;
+    --shadow: 0 8px 24px rgba(20, 22, 28, 0.12), 0 0 0 1px #e4e6ea;
+    --shadow-lg: 0 24px 64px rgba(20, 22, 28, 0.18), 0 0 0 1px #e4e6ea;
+    color-scheme: light;
+  }
+  /* "Terminal escuro no tema claro" (Configurações). */
+  :root.term-dark {
+    --term-bg: #1b1c20;
+    --term-fg: #d9dade;
+  }
 }
 
 * { box-sizing: border-box; }
@@ -45,30 +109,27 @@ body {
   user-select: none;
 }
 /* Sem Mica (Windows 10): fundo sólido. */
-body.no-mica {
-  background: radial-gradient(1000px 700px at 10% 0%, #1d2b6b 0, transparent 60%),
-    radial-gradient(900px 700px at 100% 100%, #3b1d5e 0, transparent 55%), #0e1020;
-}
+body.no-mica { background: var(--bg); }
 body.grabbing, body.grabbing * { cursor: grabbing !important; }
 button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
 svg { flex: none; }
 input { font: inherit; }
-kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: 5px; border: 1px solid var(--line2); color: var(--faint); }
+kbd { font: 10px var(--sans); padding: 1px 6px; border-radius: var(--r-xs); border: 1px solid var(--line2); color: var(--faint); }
 
 .app { position: fixed; inset: 0; display: flex; flex-direction: column; }
 .main { flex: 1; display: flex; min-height: 0; padding: 0 var(--gap) var(--gap) 0; }
 .content { flex: 1; position: relative; min-width: 0; }
 
-.primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 14px; border-radius: var(--r-sm); background: var(--accent); color: #0b1020; font-weight: 600; font-size: 12.5px; }
+.primary { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 14px; border-radius: var(--r-sm); background: var(--accent-solid); color: var(--on-accent); font-weight: 600; font-size: 12.5px; }
 .primary:hover { filter: brightness(1.08); }
 .primary:active:not(:disabled) { transform: scale(0.97); }
 /* Rótulos de botão nunca quebram linha; quem precisa de espaço é o contêiner (que pode quebrar). */
 .primary, .ghost, .danger { white-space: nowrap; flex: none; }
 .primary:disabled { opacity: 0.5; cursor: default; }
 .ghost { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 12px; border-radius: var(--r-sm); color: var(--muted); }
-.ghost:hover { background: var(--hover); color: #fff; }
+.ghost:hover { background: var(--hover); color: var(--text); }
 .ibtn { width: var(--ctl); height: var(--ctl); border-radius: var(--r-sm); display: grid; place-items: center; color: var(--muted); }
-.ibtn:hover { background: var(--hover); color: #fff; }
+.ibtn:hover { background: var(--hover); color: var(--text); }
 
 /* Fluidez: todo controle responde com a mesma curva e duração. */
 button, .si, .pg-h, .wt-h, .kc, .prov, .rows .row, .txt, .lang-sel {
@@ -81,22 +142,22 @@ button, .si, .pg-h, .wt-h, .kc, .prov, .rows .row, .txt, .lang-sel {
 :focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 80%, transparent); outline-offset: 1px; }
 .txt:focus-visible, .lang-sel:focus-visible { outline: 0; }
 
-.bar { display: block; height: 4px; border-radius: 99px; background: rgba(255, 255, 255, 0.1); overflow: hidden; }
+.bar { display: block; height: 4px; border-radius: 99px; background: var(--hover2); overflow: hidden; }
 .bar i { display: block; height: 100%; border-radius: inherit; transition: width 0.4s var(--ease); }
 
-.st { display: inline-flex; align-items: center; gap: 6px; font-size: 11px; height: 22px; padding: 0 9px; border-radius: 99px; white-space: nowrap; flex: none; color: var(--faint); }
+/* Estado: ponto e texto na cor do estado, sem pílula de fundo. */
+.st { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; height: 22px; padding: 0 4px; white-space: nowrap; flex: none; color: var(--faint); }
 .st i { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
-.st.working { color: var(--acc); background: color-mix(in srgb, var(--acc) 15%, transparent); }
-.st.working i { width: 9px; height: 9px; background: none; border: 1.6px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
-.st.waiting { color: var(--warn); background: color-mix(in srgb, var(--warn) 15%, transparent); }
-.st.waiting i { animation: pulse 1.4s infinite; }
+.st.working { color: var(--acc, var(--accent)); }
+.st.working i { width: 9px; height: 9px; background: none; border: 1.5px solid currentColor; border-right-color: transparent; animation: spin 0.8s linear infinite; }
+.st.waiting { color: var(--warn); }
 .st.exited, .st.error { color: var(--bad); }
-.st.paused { color: var(--muted); background: rgba(255, 255, 255, 0.06); }
+.st.paused { color: var(--muted); }
 
 @keyframes spin { to { transform: rotate(360deg); } }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes flash { 0% { box-shadow: 0 0 0 0 var(--acc); } 100% { box-shadow: 0 0 0 16px transparent; } }
-@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
 @keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {

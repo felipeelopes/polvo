@@ -67,7 +67,13 @@ export interface Settings {
   claudeBypassPermissions: boolean;
   /** Idioma da interface: "auto" (o do Windows) ou um código ("en", "pt"…). */
   language: string;
+  /** Tema: "auto" segue o Windows. */
+  theme: Theme;
+  /** Terminal escuro mesmo no tema claro. */
+  terminalDark: boolean;
 }
+
+export type Theme = "auto" | "light" | "dark";
 
 export interface Worktree {
   path: string;

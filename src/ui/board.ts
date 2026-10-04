@@ -20,9 +20,9 @@ interface Column {
 
 /** Colunas do Quadro (função: os títulos dependem do idioma atual). */
 const columns = (): Column[] => [
-  { key: "waiting", title: t("board.columns.waiting.title"), color: "#E5A33A", sub: t("board.columns.waiting.sub"), match: (s) => s === "waiting" },
-  { key: "working", title: t("board.columns.working.title"), color: "#8aa2ff", sub: t("board.columns.working.sub"), match: (s) => s === "working" || s === "starting" },
-  { key: "idle", title: t("board.columns.idle.title"), color: "#5d6274", sub: t("board.columns.idle.sub"), match: (s) => ["idle", "paused", "exited", "error"].includes(s) },
+  { key: "waiting", title: t("board.columns.waiting.title"), color: "var(--warn)", sub: t("board.columns.waiting.sub"), match: (s) => s === "waiting" },
+  { key: "working", title: t("board.columns.working.title"), color: "var(--accent)", sub: t("board.columns.working.sub"), match: (s) => s === "working" || s === "starting" },
+  { key: "idle", title: t("board.columns.idle.title"), color: "var(--faint)", sub: t("board.columns.idle.sub"), match: (s) => ["idle", "paused", "exited", "error"].includes(s) },
 ];
 
 const STATE_KEY = "polvo.board";

@@ -2,7 +2,7 @@
 
 use parking_lot::RwLock;
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Emitter, State};
+use tauri::{AppHandle, Emitter, State, Theme};
 use tauri_plugin_autostart::ManagerExt;
 
 use crate::error::{AppResult, Context};
@@ -30,6 +30,10 @@ pub struct Settings {
     pub claude_bypass_permissions: bool,
     /// Idioma da interface: "auto" (o do Windows) ou um código como "en", "pt".
     pub language: String,
+    /// Tema: "auto" (segue o Windows), "light" ou "dark".
+    pub theme: String,
+    /// Terminal escuro mesmo no tema claro.
+    pub terminal_dark: bool,
 }
 
 impl Default for Settings {
@@ -44,6 +48,8 @@ impl Default for Settings {
             explorer_menu: true,
             claude_bypass_permissions: true,
             language: "auto".into(),
+            theme: "auto".into(),
+            terminal_dark: false,
         }
     }
 }
@@ -90,10 +96,21 @@ pub fn settings_set(
 ) -> AppResult<Settings> {
     let saved = state.update(|s| *s = settings)?;
     crate::i18n::set_language(&saved.language);
+    apply_theme(&app, &saved.theme);
     let _ = app.emit("settings-changed", &saved);
     sync_autostart(&app, saved.autostart)?;
     crate::explorer::sync_menu(saved.explorer_menu)?;
     Ok(saved)
+}
+
+/// Aplica o tema em todas as janelas (e nas que abrirem depois). O Mica e o
+/// `prefers-color-scheme` do WebView2 acompanham o tema da janela.
+pub fn apply_theme(app: &AppHandle, theme: &str) {
+    app.set_theme(match theme {
+        "light" => Some(Theme::Light),
+        "dark" => Some(Theme::Dark),
+        _ => None,
+    });
 }
 
 /// Deixa o registro de inicialização do Windows igual à preferência.

@@ -3,31 +3,44 @@
 import { t } from "../i18n";
 import { esc, h } from "../ui/dom";
 import { toast } from "../ui/feedback";
+import { cssVar, isLight, onThemeChange } from "../ui/theme";
 
 type Mermaid = typeof import("mermaid").default;
 let loading: Promise<Mermaid> | null = null;
 
+/**
+ * Cores do mermaid no tema atual. Ele precisa de cores concretas (calcula
+ * tons derivados), então os neutros vêm dos tokens já resolvidos e só os
+ * tingidos (nós, notas) ficam aqui, um conjunto por tema.
+ */
+function config(): Parameters<Mermaid["initialize"]>[0] {
+  const light = isLight();
+  const text = cssVar("--text") || (light ? "#1b1d22" : "#e6e7ea");
+  const muted = cssVar("--muted") || (light ? "#5d626d" : "#a0a3ab");
+  const accent = cssVar("--accent") || (light ? "#1f5fd6" : "#7aa5ff");
+  return {
+    startOnLoad: false,
+    securityLevel: "strict",
+    theme: "base",
+    fontFamily: '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif',
+    themeVariables: {
+      darkMode: !light,
+      background: "transparent",
+      fontSize: "14px",
+      textColor: text,
+      primaryTextColor: text,
+      primaryBorderColor: accent,
+      lineColor: muted,
+      ...(light
+        ? { primaryColor: "#edf2fc", secondaryColor: "#f3effb", tertiaryColor: "#f6f7f9", edgeLabelBackground: "#f6f7f9", noteBkgColor: "#fdf3dc", noteTextColor: "#5c4410", noteBorderColor: "#e3c47e" }
+        : { primaryColor: "#25272d", secondaryColor: "#2b2733", tertiaryColor: "#1f2024", edgeLabelBackground: "#141518", noteBkgColor: "#3a3220", noteTextColor: "#f2e6c8", noteBorderColor: "#7a6332" }),
+    },
+  };
+}
+
 function mermaid(): Promise<Mermaid> {
   loading ??= import("mermaid").then(({ default: m }) => {
-    m.initialize({
-      startOnLoad: false,
-      securityLevel: "strict",
-      theme: "dark",
-      fontFamily: '"Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif',
-      themeVariables: {
-        darkMode: true,
-        background: "transparent",
-        primaryColor: "#262a44",
-        primaryTextColor: "#e9eaf0",
-        primaryBorderColor: "#8aa2ff",
-        lineColor: "#9aa0b4",
-        secondaryColor: "#2c2440",
-        tertiaryColor: "#1b1e30",
-        noteBkgColor: "#3a3220",
-        noteTextColor: "#f2e6c8",
-        fontSize: "14px",
-      },
-    });
+    m.initialize(config());
     return m;
   });
   return loading;
@@ -36,6 +49,8 @@ function mermaid(): Promise<Mermaid> {
 /** SVG já desenhado por código-fonte (re-renderizar no modo dividido é caro). */
 const cache = new Map<string, string>();
 let seq = 0;
+/** Quem reenquadra cada bloco ao redimensionar (trocado quando o bloco é redesenhado). */
+const observers = new WeakMap<HTMLElement, ResizeObserver>();
 
 const ZOOM_MIN = 0.1;
 const ZOOM_MAX = 12;
@@ -203,11 +218,14 @@ function mount(block: HTMLElement, svgText: string, src: string): void {
   };
   sizeStage();
   pz.fit();
-  new ResizeObserver(() => {
+  observers.get(block)?.disconnect();
+  const ro = new ResizeObserver(() => {
     if (pz!.touched) return;
     sizeStage();
     pz!.fit();
-  }).observe(block);
+  });
+  ro.observe(block);
+  observers.set(block, ro);
   bar.addEventListener("click", (e) => {
     const act = (e.target as Element).closest<HTMLElement>("[data-act]")?.dataset.act;
     if (act === "full") openLightbox(svgText);
@@ -247,3 +265,21 @@ function openLightbox(svgText: string): void {
     if (e.target === box) close();
   });
 }
+
+/** Tema trocado: os diagramas já desenhados voltam com as cores novas. */
+let lightNow = isLight();
+onThemeChange(() => {
+  if (lightNow === isLight() || !loading) return;
+  lightNow = isLight();
+  cache.clear();
+  void loading.then(async (m) => {
+    m.initialize(config());
+    const roots = new Set<HTMLElement>();
+    for (const block of document.querySelectorAll<HTMLElement>(".mmd.ready")) {
+      block.classList.remove("ready", "mmd-err");
+      roots.add(block.parentElement ?? block);
+    }
+    // Um de cada vez: o mermaid não gosta de renderizações simultâneas.
+    for (const root of roots) await renderDiagrams(root);
+  });
+});

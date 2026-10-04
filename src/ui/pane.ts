@@ -113,7 +113,7 @@ export class Pane {
     const r = 5.5;
     const len = 2 * Math.PI * r;
     el.title = `${t("pane.context", { pct: p })}${p >= 75 ? ` · ${t("pane.nearCompact")}` : ""}`;
-    el.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" style="transform:rotate(-90deg)"><circle cx="7" cy="7" r="${r}" fill="none" stroke="rgba(255,255,255,.15)" stroke-width="2"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-dasharray="${(len * p) / 100} ${len}"/></svg>${p}%`;
+    el.innerHTML = `<svg width="14" height="14" viewBox="0 0 14 14" style="transform:rotate(-90deg)"><circle cx="7" cy="7" r="${r}" fill="none" stroke="var(--line2)" stroke-width="2"/><circle cx="7" cy="7" r="${r}" fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-dasharray="${(len * p) / 100} ${len}"/></svg>${p}%`;
   }
 
   private renderNote(s: Session): void {

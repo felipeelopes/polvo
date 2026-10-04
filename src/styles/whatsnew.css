@@ -5,9 +5,9 @@
 .wn h2 { font-size: 19px; }
 .wn-body { max-height: min(56vh, 520px, max(140px, calc(100vh - 260px))); overflow-y: auto; margin: 0 -6px 14px; padding: 0 6px; scrollbar-width: thin; }
 .wn-body section + section { margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--line); }
-.wn-v { display: inline-block; font: 600 11px var(--mono); color: var(--accent); background: rgba(138, 162, 255, 0.14); padding: 2px 8px; border-radius: 99px; margin-bottom: 8px; }
+.wn-v { display: inline-block; font: 600 11px var(--mono); color: var(--accent); background: color-mix(in srgb, var(--accent) 14%, transparent); padding: 2px 8px; border-radius: var(--r-xs); margin-bottom: 8px; }
 .wn ul { margin: 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.wn li { position: relative; padding-left: 18px; font-size: 13px; line-height: 1.55; color: #c9ccd8; }
+.wn li { position: relative; padding-left: 18px; font-size: 13px; line-height: 1.55; color: var(--muted); }
 .wn li::before { content: ""; position: absolute; left: 3px; top: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
 .wn li b { color: var(--text); }
-.wn code { font: 11.5px var(--mono); padding: 1px 6px; border-radius: 5px; background: rgba(255, 255, 255, 0.08); color: #ffd4a8; }
+.wn code { font: 11.5px var(--mono); padding: 1px 6px; border-radius: var(--r-xs); background: var(--hover2); color: var(--text); }

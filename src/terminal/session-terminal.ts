@@ -10,22 +10,19 @@ import { ipc } from "../core/ipc";
 import type { ToolKind } from "../core/types";
 import { MD_EXT, resolvePath } from "../docs/paths";
 import { installCtrlClick, mdLinkProvider, type FileLinkHost } from "./file-links";
+import { cssVar, isLightTerminal, onThemeChange } from "../ui/theme";
 
-const THEME: ITheme = {
-  background: "#00000000",
-  foreground: "#e6e7ee",
-  cursor: "#e6e7ee",
-  cursorAccent: "#0d0e16",
-  selectionBackground: "#8aa2ff55",
-  black: "#1b1d2a",
+/** Cores ANSI do terminal escuro e do claro; fundo e texto vêm dos tokens --term-bg e --term-fg. */
+const DARK_ANSI: ITheme = {
+  black: "#26282d",
   red: "#f07178",
-  green: "#3fb27f",
-  yellow: "#e5a33a",
-  blue: "#7c9cff",
+  green: "#4cb782",
+  yellow: "#e0a642",
+  blue: "#7aa5ff",
   magenta: "#c792ea",
   cyan: "#56c7d9",
   white: "#d5d7e0",
-  brightBlack: "#6b7086",
+  brightBlack: "#6e717a",
   brightRed: "#ff8a8f",
   brightGreen: "#6fd4a3",
   brightYellow: "#f2c46d",
@@ -34,6 +31,44 @@ const THEME: ITheme = {
   brightCyan: "#8ee0ec",
   brightWhite: "#ffffff",
 };
+const LIGHT_ANSI: ITheme = {
+  black: "#1b1d22",
+  red: "#c93a33",
+  green: "#1f8a5b",
+  yellow: "#9a6700",
+  blue: "#1f5fd6",
+  magenta: "#8a3ffc",
+  cyan: "#0f7b8a",
+  white: "#6e717a",
+  brightBlack: "#8b909a",
+  brightRed: "#d1453b",
+  brightGreen: "#23935f",
+  brightYellow: "#b07a12",
+  brightBlue: "#2f6fe0",
+  brightMagenta: "#9b51e0",
+  brightCyan: "#11869a",
+  brightWhite: "#3a3d44",
+};
+
+function terminalTheme(): ITheme {
+  const light = isLightTerminal();
+  const bg = cssVar("--term-bg") || (light ? "#ffffff" : "#1b1c20");
+  const fg = cssVar("--term-fg") || (light ? "#24262b" : "#d9dade");
+  return { ...(light ? LIGHT_ANSI : DARK_ANSI), background: bg, foreground: fg, cursor: fg, cursorAccent: bg, selectionBackground: light ? "#1f5fd633" : "#7aa5ff44" };
+}
+
+/** No terminal claro, o xterm escurece o texto que os CLIs desenham em cores feitas para fundo escuro. */
+const contrast = () => (isLightTerminal() ? 4.5 : 1);
+
+/** Terminais vivos: trocam de cores junto com o tema. */
+const live = new Set<SessionTerminal>();
+onThemeChange(() => {
+  const theme = terminalTheme();
+  for (const t of live) {
+    t.term.options.theme = theme;
+    t.term.options.minimumContrastRatio = contrast();
+  }
+});
 
 /** Contêiner fora da tela para terminais de sessões recolhidas. */
 const parking = document.createElement("div");
@@ -74,6 +109,7 @@ export class SessionTerminal {
     files?: FileLinkHost,
   ) {
     this.host.className = "term-host";
+    live.add(this);
     this.term = new Terminal({
       allowProposedApi: true,
       allowTransparency: true,
@@ -82,7 +118,8 @@ export class SessionTerminal {
       lineHeight: 1.12,
       cursorBlink: true,
       scrollback: 10_000,
-      theme: THEME,
+      theme: terminalTheme(),
+      minimumContrastRatio: contrast(),
       // Hiperlinks OSC 8 (alguns CLIs marcam arquivos e URLs assim).
       linkHandler: {
         allowNonHttpProtocols: true,
@@ -202,6 +239,7 @@ export class SessionTerminal {
   }
 
   dispose(): void {
+    live.delete(this);
     this.observer.disconnect();
     if (this.webgl) webglCount--;
     this.term.dispose();
