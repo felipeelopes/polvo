@@ -12,6 +12,55 @@ import { GI, menu, splitPath, splitter, type GitCtx } from "./ui";
 
 const PAGE = 150;
 
+/** Foto de cada e-mail: URL (ou `null`, sem foto conhecida), resolvida uma vez por sessão. */
+const photos = new Map<string, Promise<string | null>>();
+/** URLs que já falharam (404 do Gravatar, sem rede): ficam só as iniciais. */
+const failed = new Set<string>();
+
+/** Foto do autor: a do GitHub pelo e-mail noreply, senão o Gravatar (SHA-256, 404 se não houver). */
+function photoOf(email: string): Promise<string | null> {
+  const key = email.trim().toLowerCase();
+  let p = photos.get(key);
+  if (!p) {
+    const gh = /^(\d+)\+[^@]+@users\.noreply\.github\.com$/.exec(key);
+    p = gh
+      ? Promise.resolve(`https://avatars.githubusercontent.com/u/${gh[1]}?s=64`)
+      : !key.includes("@") || !crypto.subtle
+        ? Promise.resolve(null)
+        : crypto.subtle.digest("SHA-256", new TextEncoder().encode(key)).then(
+            (b) => `https://www.gravatar.com/avatar/${[...new Uint8Array(b)].map((x) => x.toString(16).padStart(2, "0")).join("")}?s=64&d=404`,
+            () => null,
+          );
+    photos.set(key, p);
+  }
+  return p;
+}
+
+/** Iniciais do nome, com a cor tirada do e-mail; a foto entra por cima quando carrega. */
+function avatar(name: string, email: string, cls = ""): string {
+  const words = name.trim().split(/[\s._-]+/).filter(Boolean);
+  const ini = ((words[0]?.[0] ?? "?") + (words.length > 1 ? words[words.length - 1][0] : "")).toUpperCase();
+  let hue = 0;
+  for (const ch of email.toLowerCase()) hue = (hue * 31 + ch.charCodeAt(0)) % 360;
+  return `<span class="gav ${cls}" style="--h:${hue}" data-e="${esc(email)}" title="${esc(name)}">${esc(ini)}</span>`;
+}
+
+/** Põe as fotos nos avatares de `root` (os que não têm foto ficam com as iniciais). */
+function loadPhotos(root: HTMLElement): void {
+  root.querySelectorAll<HTMLElement>(".gav[data-e]:not(.ph)").forEach((el) => {
+    el.classList.add("ph");
+    void photoOf(el.dataset.e!).then((url) => {
+      if (!url || failed.has(url)) return;
+      const img = new Image();
+      img.alt = "";
+      img.referrerPolicy = "no-referrer";
+      img.onload = () => el.append(img);
+      img.onerror = () => failed.add(url);
+      img.src = url;
+    });
+  });
+}
+
 export class HistoryPane {
   readonly el = h("div", "gp gp-history");
   private listEl = h("div", "gh-list");
@@ -129,10 +178,11 @@ export class HistoryPane {
     this.listEl.innerHTML =
       this.commits
         .map(
-          (c) => `<div class="gh-r${this.sel?.sha === c.sha ? " on" : ""}" data-sha="${c.sha}"><i class="gh-dot${c.parents.length > 1 ? " merge" : ""}${c.unpushed ? " up" : ""}"></i>
+          (c) => `<div class="gh-r${this.sel?.sha === c.sha ? " on" : ""}" data-sha="${c.sha}">${avatar(c.author, c.email, c.parents.length > 1 ? "merge" : "")}
           <div class="gh-m"><b>${esc(c.subject)}</b><small>${c.refs.map(refChip).join("")}<span>${esc(c.author)} · ${esc(ago(c.date * 1000))}</span>${c.unpushed ? `<span class="gunp">${GI.up}${esc(t("git.history.unpushed"))}</span>` : ""}</small></div></div>`,
         )
         .join("") + (this.done ? "" : `<button class="gh-more" data-more>${esc(t("git.history.more"))}</button>`);
+    loadPhotos(this.listEl);
   }
 
   private async pick(c: Commit): Promise<void> {
@@ -154,7 +204,7 @@ export class HistoryPane {
     const date = new Date(c.date * 1000).toLocaleString(localeTag(), { dateStyle: "medium", timeStyle: "short" });
     this.detail.innerHTML = `<div class="gh-info">
         <h3>${esc(c.subject)}</h3>${c.body ? `<pre class="gh-body">${esc(c.body)}</pre>` : ""}
-        <div class="gh-meta"><span>${esc(c.author)} &lt;${esc(c.email)}&gt;</span><span>${esc(date)}</span><button class="gsha" data-h="sha" title="${esc(t("git.history.ctx.copySha"))}">${GI.copy}${c.short}</button>${c.parents.length > 1 ? `<span class="gref">${esc(t("git.history.merge"))}</span>` : ""}<span>${esc(tn("git.history.files", this.files.length))}</span></div>
+        <div class="gh-meta"><span class="gh-who">${avatar(c.author, c.email, "sm")}${esc(c.author)} &lt;${esc(c.email)}&gt;</span><span>${esc(date)}</span><button class="gsha" data-h="sha" title="${esc(t("git.history.ctx.copySha"))}">${GI.copy}${c.short}</button>${c.parents.length > 1 ? `<span class="gref">${esc(t("git.history.merge"))}</span>` : ""}<span>${esc(tn("git.history.files", this.files.length))}</span></div>
         <div class="gh-acts"><button class="gbtn" data-h="revert">${esc(t("git.history.ctx.revert"))}</button><button class="gbtn" data-h="branch">${esc(t("git.history.ctx.branch"))}</button><button class="gbtn" data-h="tag">${esc(t("git.history.ctx.tag"))}</button><button class="gbtn ai" data-h="agent">${GI.spark} ${esc(t("git.history.ctx.askAgent"))}</button><button class="ibtn sm" data-h="more">${GI.more}</button></div>
       </div>
       <div class="gh-split"><div class="gh-files">${this.files
@@ -164,6 +214,7 @@ export class HistoryPane {
         })
         .join("")}</div><div class="gh-diff"></div></div>`;
     this.detail.querySelector(".gh-diff")!.append(this.view.el);
+    loadPhotos(this.detail);
   }
 
   private async loadFileDiff(): Promise<void> {
