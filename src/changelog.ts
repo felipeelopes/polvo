@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.5",
+    notes: {
+      pt: [
+        "**Marque arquivos nas Alterações**: marcar e desmarcar é instantâneo e não mexe no stage. Shift ou Ctrl+clique marca vários; com o botão direito sobre um marcado, descarte, guarde num stash ou coloque no stage todos de uma vez. O commit leva só os marcados.",
+        "**Resumo automático**: com um arquivo só no commit, o resumo vem pronto (“Cria”, “Atualiza”, “Exclui” ou “Renomeia” + o nome do arquivo), no idioma do Polvo.",
+        "**Divisória em todas as abas do Git**: Histórico, Branches e PRs também têm a divisória entre a lista e o conteúdo, cada uma com a largura lembrada.",
+        "**Autores no Histórico**: cada commit mostra a foto do autor (GitHub ou Gravatar) ou as iniciais do nome.",
+      ],
+      en: [
+        "**Check files in Changes**: checking and unchecking is instant and doesn't touch the stage. Shift or Ctrl+click checks several; right-click a checked file to discard, stash or stage them all at once. The commit takes only the checked files.",
+        "**Automatic summary**: with a single file in the commit, the summary is ready (“Create”, “Update”, “Delete” or “Rename” + the file name), in Polvo's language.",
+        "**Divider in every Git tab**: History, Branches and PRs also have the divider between the list and the content, each remembering its width.",
+        "**Authors in History**: each commit shows the author's photo (GitHub or Gravatar) or their initials.",
+      ],
+      es: [
+        "**Marca archivos en Cambios**: marcar y desmarcar es instantáneo y no toca el stage. Mayús o Ctrl+clic marca varios; con clic derecho sobre uno marcado, descarta, guarda en un stash o pasa al stage todos a la vez. El commit lleva solo los marcados.",
+        "**Resumen automático**: con un solo archivo en el commit, el resumen viene listo (“Crea”, “Actualiza”, “Elimina” o “Renombra” + el nombre del archivo), en el idioma de Polvo.",
+        "**Separador en todas las pestañas de Git**: Historial, Ramas y PRs también tienen el separador entre la lista y el contenido, cada una recordando su ancho.",
+        "**Autores en el Historial**: cada commit muestra la foto del autor (GitHub o Gravatar) o sus iniciales.",
+      ],
+      fr: [
+        "**Cochez des fichiers dans Modifications** : cocher et décocher est instantané et ne touche pas à l'index. Maj ou Ctrl+clic en coche plusieurs ; clic droit sur un fichier coché pour tout annuler, remiser ou indexer d'un coup. Le commit ne prend que les fichiers cochés.",
+        "**Résumé automatique** : avec un seul fichier dans le commit, le résumé est prêt (« Crée », « Met à jour », « Supprime » ou « Renomme » + le nom du fichier), dans la langue de Polvo.",
+        "**Séparateur dans tous les onglets Git** : Historique, Branches et PR ont aussi le séparateur entre la liste et le contenu, chacun mémorisant sa largeur.",
+        "**Auteurs dans l'Historique** : chaque commit affiche la photo de l'auteur (GitHub ou Gravatar) ou ses initiales.",
+      ],
+      de: [
+        "**Dateien in Änderungen markieren**: Markieren und Abwählen geht sofort und ändert den Index nicht. Umschalt- oder Strg+Klick markiert mehrere; per Rechtsklick auf eine markierte Datei alle auf einmal verwerfen, stashen oder stagen. Der Commit nimmt nur die markierten Dateien.",
+        "**Automatische Zusammenfassung**: Bei nur einer Datei im Commit steht die Zusammenfassung schon da („erstellen“, „aktualisieren“, „löschen“ oder „umbenennen“ + Dateiname), in der Sprache von Polvo.",
+        "**Trennlinie in allen Git-Tabs**: Verlauf, Branches und PRs haben ebenfalls die Trennlinie zwischen Liste und Inhalt, jeweils mit gemerkter Breite.",
+        "**Autoren im Verlauf**: Jeder Commit zeigt das Foto des Autors (GitHub oder Gravatar) oder seine Initialen.",
+      ],
+      it: [
+        "**Seleziona file in Modifiche**: selezionare e deselezionare è istantaneo e non tocca lo stage. Maiusc o Ctrl+clic ne seleziona diversi; con il tasto destro su uno selezionato puoi scartarli, metterli nello stash o nello stage tutti insieme. Il commit prende solo i selezionati.",
+        "**Riepilogo automatico**: con un solo file nel commit, il riepilogo è già pronto (“Crea”, “Aggiorna”, “Elimina” o “Rinomina” + il nome del file), nella lingua di Polvo.",
+        "**Divisore in tutte le schede Git**: Cronologia, Branch e PR hanno anch'esse il divisore tra elenco e contenuto, ognuna con la larghezza ricordata.",
+        "**Autori nella Cronologia**: ogni commit mostra la foto dell'autore (GitHub o Gravatar) o le sue iniziali.",
+      ],
+      ja: [
+        "**変更画面でファイルをチェック**：チェックの切り替えは即座に反映され、ステージには影響しません。Shift または Ctrl+クリックで複数をチェックし、チェック済みのファイルを右クリックすると、まとめて破棄・スタッシュ・ステージできます。コミットにはチェックしたファイルだけが含まれます。",
+        "**自動サマリー**：コミットするファイルが 1 つだけのとき、サマリーが自動で入ります（「作成」「更新」「削除」「名前変更」+ ファイル名、Polvo の表示言語で）。",
+        "**すべての Git タブに仕切り**：履歴、ブランチ、PR にも一覧と内容の間の仕切りが付き、それぞれ幅が保存されます。",
+        "**履歴に作成者を表示**：各コミットに作成者の写真（GitHub または Gravatar）、またはイニシャルが表示されます。",
+      ],
+      zh: [
+        "**在更改中勾选文件**：勾选和取消勾选即时生效，不影响暂存区。Shift 或 Ctrl+点击可勾选多个；右键点击已勾选的文件，可一次性丢弃、贮藏或暂存它们。提交只包含已勾选的文件。",
+        "**自动摘要**：提交只有一个文件时，摘要会自动填好（“创建”“更新”“删除”或“重命名” + 文件名），使用 Polvo 的界面语言。",
+        "**所有 Git 标签页都有分隔线**：历史、分支和 PR 也有列表与内容之间的分隔线，并各自记住宽度。",
+        "**历史中显示作者**：每个提交显示作者的照片（GitHub 或 Gravatar）或姓名首字母。",
+      ],
+      ko: [
+        "**변경 사항에서 파일 선택**: 선택과 해제가 즉시 반영되며 스테이지는 건드리지 않습니다. Shift 또는 Ctrl+클릭으로 여러 개를 선택하고, 선택한 파일을 오른쪽 클릭해 한 번에 버리기, 스태시, 스테이지할 수 있습니다. 커밋에는 선택한 파일만 들어갑니다.",
+        "**자동 요약**: 커밋에 파일이 하나뿐이면 요약이 자동으로 채워집니다(“생성”, “업데이트”, “삭제”, “이름 변경” + 파일 이름, Polvo 언어로).",
+        "**모든 Git 탭에 구분선**: 기록, 브랜치, PR에도 목록과 내용 사이의 구분선이 생기고 각각 너비를 기억합니다.",
+        "**기록에 작성자 표시**: 각 커밋에 작성자 사진(GitHub 또는 Gravatar)이나 이름 이니셜이 표시됩니다.",
+      ],
+      ru: [
+        "**Отмечайте файлы в Изменениях**: отметка мгновенная и не трогает индекс. Shift или Ctrl+клик отмечает несколько; правый клик по отмеченному файлу позволяет сразу отменить, спрятать в stash или добавить в индекс их все. Коммит берёт только отмеченные файлы.",
+        "**Автоматическое описание**: если в коммите один файл, описание уже готово («Создать», «Обновить», «Удалить» или «Переименовать» + имя файла) на языке Polvo.",
+        "**Разделитель во всех вкладках Git**: в Истории, Ветках и PR тоже есть разделитель между списком и содержимым, и каждая вкладка запоминает ширину.",
+        "**Авторы в Истории**: у каждого коммита видно фото автора (GitHub или Gravatar) или его инициалы.",
+      ],
+    },
+  },
+  {
     version: "0.3.4",
     notes: {
       pt: [

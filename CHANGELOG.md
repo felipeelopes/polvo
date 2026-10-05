@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.5
+
+- **Marque arquivos nas Alterações**: marcar e desmarcar é instantâneo e não mexe no stage. Shift ou Ctrl+clique marca vários; com o botão direito sobre um marcado, descarte, guarde num stash ou coloque no stage todos de uma vez. O commit leva só os marcados.
+- **Resumo automático**: com um arquivo só no commit, o resumo vem pronto (“Cria”, “Atualiza”, “Exclui” ou “Renomeia” + o nome do arquivo), no idioma do Polvo.
+- **Divisória em todas as abas do Git**: Histórico, Branches e PRs também têm a divisória entre a lista e o conteúdo, cada uma com a largura lembrada.
+- **Autores no Histórico**: cada commit mostra a foto do autor (GitHub ou Gravatar) ou as iniciais do nome.
+
 ## 0.3.4
 
 - **Visual plano e temas claro e escuro**: escolha seguir o Windows ou fixar o tema em Ajustes. Terminais, editor e diagramas acompanham o tema, com a opção de manter o terminal escuro.
