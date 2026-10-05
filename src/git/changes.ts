@@ -952,6 +952,8 @@ export class ChangesPane {
     const total = this.all.length;
     const marked = this.marked.size;
     const amend = this.amending;
+    const auto = this.autoSummary();
+    this.sum.placeholder = auto ?? t("git.commit.summary");
     const len = this.sum.value.length;
     const lenEl = this.box.querySelector<HTMLElement>(".gc-len")!;
     lenEl.textContent = len > 50 ? String(72 - len) : "";
@@ -968,12 +970,34 @@ export class ChangesPane {
     this.btn.innerHTML = `<span>${esc(label)}</span><kbd>${t("git.commit.shortcut")}</kbd>`;
     this.btn.title = !marked && !staged && total && !amend ? t("git.commit.allHint") : "";
     const conflicts = this.all.some((f) => f.conflict);
-    this.btn.disabled = conflicts || (!total && !amend) || (!amend && !this.sum.value.trim());
+    this.btn.disabled = conflicts || (!total && !amend) || (!amend && !this.sum.value.trim() && !auto);
     const prot = this.box.querySelector<HTMLElement>(".gc-prot")!;
     const isProt = !!st.branch && PROTECTED.test(st.branch) && total > 0 && !amend;
     prot.hidden = !isProt;
     if (isProt) prot.innerHTML = `${GI.warn}<span>${esc(t("git.commit.protected", { branch: st.branch! }))}</span><button data-c="branch">${esc(t("git.commit.createBranch"))}</button>`;
     this.box.classList.toggle("gc-idle", !total && !amend);
+  }
+
+  /** Arquivos que vão no commit: os marcados; sem marcados, o índice; sem índice, tudo. */
+  private commitSet(): FileChange[] {
+    if (this.marked.size) return this.all.filter((f) => this.marked.has(f.path));
+    const staged = this.all.filter((f) => !f.untracked && f.x !== ".");
+    return staged.length ? staged : this.all;
+  }
+
+  /** Resumo automático quando o commit leva um arquivo só ("Cria x.ts", "Atualiza x.ts"…). */
+  private autoSummary(): string | null {
+    if (this.amending) return null;
+    const files = this.commitSet();
+    if (files.length !== 1 || files[0].conflict) return null;
+    const f = files[0];
+    const name = splitPath(f.path).name;
+    // Pelo índice, o que vai no commit é o que está nele; marcado ou "tudo", vale a pasta.
+    const L = f.untracked ? "A" : !this.marked.size && f.x !== "." ? f.x : letterOf(f);
+    if (L === "A") return t("git.commit.autoCreate", { name });
+    if (L === "D") return t("git.commit.autoDelete", { name });
+    if (L === "R" && f.orig) return t("git.commit.autoRename", { from: splitPath(f.orig).name, name });
+    return t("git.commit.autoUpdate", { name });
   }
 
   private async generate(btn: HTMLButtonElement): Promise<void> {
@@ -1003,13 +1027,13 @@ export class ChangesPane {
   async commit(): Promise<void> {
     if (this.btn.disabled) {
       if (this.all.some((f) => f.conflict)) toast(t("git.commit.conflicts"));
-      else if (!this.sum.value.trim() && !this.amending) {
+      else if (!this.sum.value.trim() && !this.amending && !this.autoSummary()) {
         toast(t("git.commit.needSummary"));
         this.sum.focus();
       }
       return;
     }
-    const summary = this.sum.value.trim();
+    const summary = this.sum.value.trim() || (this.autoSummary() ?? "");
     const body = this.desc.value.trim();
     const trailers = this.coauthors.map((c) => `Co-authored-by: ${c}`).join("\n");
     const message = [summary, body, trailers].filter(Boolean).join("\n\n");
