@@ -1,5 +1,6 @@
 // Peças compartilhadas do painel Git: contexto do repositório, menus e ícones.
 import type { ToolKind } from "../core/types";
+import { t } from "../i18n";
 import { esc, h } from "../ui/dom";
 import { closePopover, popover } from "../ui/feedback";
 import type { GitStatus, RemoteOp } from "./api";
@@ -118,3 +119,65 @@ export const IMAGE_EXT = /\.(png|jpe?g|gif|webp|bmp|ico|avif|svg)$/i;
 
 /** Pasta absoluta de um caminho relativo ao repositório. */
 export const absPath = (repo: string, rel: string) => `${repo.replace(/[\\/]+$/, "")}\\${rel.replace(/\//g, "\\")}`;
+
+export const pref = (k: string, d: string) => {
+  try {
+    return localStorage.getItem(`polvo.git.${k}`) ?? d;
+  } catch {
+    return d;
+  }
+};
+export const setPref = (k: string, v: string) => {
+  try {
+    localStorage.setItem(`polvo.git.${k}`, v);
+  } catch {
+    /* sem armazenamento */
+  }
+};
+
+/** Larguras mínimas da coluna lateral e do conteúdo ao arrastar a divisória (as mesmas do CSS de `.gc-col`). */
+const MIN_LIST = 220;
+const MIN_MAIN = 320;
+
+/**
+ * Divisória entre a coluna lateral (`col`) e o conteúdo de uma aba: arrastar
+ * muda a largura, que fica lembrada em `key`; duplo clique volta ao padrão.
+ */
+export function splitter(pane: HTMLElement, col: HTMLElement, key: string): HTMLElement {
+  const setW = (w: number | null) => {
+    if (w) pane.style.setProperty("--gc-w", `${Math.round(w)}px`);
+    else pane.style.removeProperty("--gc-w");
+  };
+  const grip = h("div", "gc-grip");
+  grip.title = t("git.changes.resize");
+  grip.addEventListener("dblclick", () => {
+    setW(null);
+    setPref(key, "");
+  });
+  grip.addEventListener("pointerdown", (e) => {
+    if (e.button !== 0) return;
+    e.preventDefault();
+    grip.setPointerCapture(e.pointerId);
+    const x0 = e.clientX;
+    const w0 = col.getBoundingClientRect().width;
+    const max = pane.clientWidth - MIN_MAIN;
+    let w = w0;
+    document.body.classList.add("resizing-git");
+    const move = (ev: PointerEvent) => {
+      w = Math.max(MIN_LIST, Math.min(max, w0 + ev.clientX - x0));
+      setW(w);
+    };
+    const up = () => {
+      document.body.classList.remove("resizing-git");
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", up);
+      grip.removeEventListener("pointercancel", up);
+      if (w !== w0) setPref(key, String(Math.round(w)));
+    };
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", up);
+    grip.addEventListener("pointercancel", up);
+  });
+  setW(Number(pref(key, "")) || null);
+  return grip;
+}

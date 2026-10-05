@@ -4,7 +4,7 @@ import { t } from "../i18n";
 import { ago, esc, h } from "../ui/dom";
 import { git, type Branch, type Commit } from "./api";
 import { ask, branchError } from "./dialog";
-import { GI, type GitCtx } from "./ui";
+import { GI, splitter, type GitCtx } from "./ui";
 
 export class BranchesPane {
   readonly el = h("div", "gp gp-branches");
@@ -31,7 +31,7 @@ export class BranchesPane {
       if (b === "wt") void this.ctx.newBranch(undefined, true);
     });
     col.append(top, this.listEl, foot);
-    this.el.append(col, this.detail);
+    this.el.append(col, splitter(this.el, col, "listW.branches"), this.detail);
     this.listEl.addEventListener("click", (e) => {
       const row = (e.target as Element).closest<HTMLElement>("[data-b]");
       if (row) this.pick(row.dataset.b!);

@@ -5,7 +5,7 @@ import { t } from "../i18n";
 import { ago, esc, h } from "../ui/dom";
 import { toast } from "../ui/feedback";
 import { git, type PullRequest } from "./api";
-import { GI, type GitCtx } from "./ui";
+import { GI, splitter, type GitCtx } from "./ui";
 
 let ghOk: Promise<boolean> | null = null;
 
@@ -36,7 +36,7 @@ export class PrsPane {
       if (p === "refresh") void this.reload();
     });
     col.append(this.listEl, foot);
-    this.el.append(col, this.detail);
+    this.el.append(col, splitter(this.el, col, "listW.prs"), this.detail);
     this.listEl.addEventListener("click", (e) => {
       const n = (e.target as Element).closest<HTMLElement>("[data-n]")?.dataset.n;
       if (n) {

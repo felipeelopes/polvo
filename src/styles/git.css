@@ -67,8 +67,8 @@
 .gp { position: absolute; inset: 0; display: flex; min-height: 0; }
 .gc-col { width: var(--gc-w, 300px); flex: none; display: flex; flex-direction: column; min-height: 0; border-right: 1px solid var(--line); }
 @container git (max-width: 720px) { .gc-col { width: var(--gc-w, 230px); } }
-/* Alterações: divisória entre a lista e o diff (arrastar muda a largura, duplo clique volta ao padrão) */
-.gp-changes .gc-col { min-width: 220px; max-width: calc(100% - 320px); }
+/* Divisória entre a coluna lateral e o conteúdo (arrastar muda a largura, duplo clique volta ao padrão) */
+.gp .gc-col { min-width: 220px; max-width: calc(100% - 320px); }
 .gc-grip { flex: none; width: 0; position: relative; z-index: 5; cursor: col-resize; touch-action: none; }
 .gc-grip::before { content: ""; position: absolute; inset: 0 -5px 0 -2px; }
 .gc-grip::after { content: ""; position: absolute; top: 0; bottom: 0; left: -1px; width: 2px; background: var(--accent); opacity: 0; transition: opacity 0.15s; }

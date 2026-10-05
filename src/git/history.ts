@@ -8,7 +8,7 @@ import { git, type Commit, type CommitFile } from "./api";
 import { parseDiff } from "./diff";
 import { DiffView } from "./diffview";
 import { ask, branchError } from "./dialog";
-import { GI, menu, splitPath, type GitCtx } from "./ui";
+import { GI, menu, splitPath, splitter, type GitCtx } from "./ui";
 
 const PAGE = 150;
 
@@ -41,7 +41,7 @@ export class HistoryPane {
       if ((e.target as Element).closest("[data-clear]")) this.setPath(null);
     });
     col.append(top, this.listEl);
-    this.el.append(col, this.detail);
+    this.el.append(col, splitter(this.el, col, "listW.history"), this.detail);
     this.listEl.addEventListener("click", (e) => {
       if ((e.target as Element).closest("[data-more]")) return void this.load();
       const row = (e.target as Element).closest<HTMLElement>("[data-sha]");
