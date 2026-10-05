@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.6
+
+- **Ordem dos projetos fixa**: a barra lateral não reordena mais os projetos conforme as sessões abrem e fecham. Arraste um projeto (ou o ícone, com a barra recolhida) para mudar a posição; todas as janelas seguem a mesma ordem.
+- **Encerrar pela barra lateral**: passe o mouse numa sessão e clique no X; um segundo clique em “Encerrar?” confirma.
+- **Ctrl + clique em caminhos no terminal**, como no VS Code: pastas abrem no Explorer, arquivos aparecem selecionados no Explorer e arquivos Markdown abrem no visualizador do Polvo.
+- **Correções no Git**: o cartão “Puxar” da tela sem alterações não sai mais deformado, os avatares do Histórico ficam alinhados e os cartões de Meu trabalho não piscam mais.
+
 ## 0.3.5
 
 - **Marque arquivos nas Alterações**: marcar e desmarcar é instantâneo e não mexe no stage. Shift ou Ctrl+clique marca vários; com o botão direito sobre um marcado, descarte, guarde num stash ou coloque no stage todos de uma vez. O commit leva só os marcados.

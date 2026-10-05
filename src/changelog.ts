@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.6",
+    notes: {
+      pt: [
+        "**Ordem dos projetos fixa**: a barra lateral não reordena mais os projetos conforme as sessões abrem e fecham. Arraste um projeto (ou o ícone, com a barra recolhida) para mudar a posição; todas as janelas seguem a mesma ordem.",
+        "**Encerrar pela barra lateral**: passe o mouse numa sessão e clique no X; um segundo clique em “Encerrar?” confirma.",
+        "**Ctrl + clique em caminhos no terminal**, como no VS Code: pastas abrem no Explorer, arquivos aparecem selecionados no Explorer e arquivos Markdown abrem no visualizador do Polvo.",
+        "**Correções no Git**: o cartão “Puxar” da tela sem alterações não sai mais deformado, os avatares do Histórico ficam alinhados e os cartões de Meu trabalho não piscam mais.",
+      ],
+      en: [
+        "**Fixed project order**: the sidebar no longer reorders projects as sessions open and close. Drag a project (or its icon, with the sidebar collapsed) to move it; every window follows the same order.",
+        "**End sessions from the sidebar**: hover a session and click the X; a second click on “End?” confirms.",
+        "**Ctrl + click paths in the terminal**, like in VS Code: folders open in Explorer, files show up selected in Explorer and Markdown files open in Polvo's viewer.",
+        "**Git fixes**: the “Pull” card on the no-changes screen is no longer misshapen, History avatars are aligned and the My work cards no longer flicker.",
+      ],
+      es: [
+        "**Orden de proyectos fijo**: la barra lateral ya no reordena los proyectos al abrir y cerrar sesiones. Arrastra un proyecto (o su icono, con la barra contraída) para moverlo; todas las ventanas siguen el mismo orden.",
+        "**Cierra sesiones desde la barra lateral**: pasa el ratón sobre una sesión y haz clic en la X; un segundo clic en “¿Cerrar?” confirma.",
+        "**Ctrl + clic en rutas del terminal**, como en VS Code: las carpetas se abren en el Explorador, los archivos aparecen seleccionados en el Explorador y los Markdown se abren en el visor de Polvo.",
+        "**Correcciones en Git**: la tarjeta “Pull” de la pantalla sin cambios ya no sale deformada, los avatares del Historial quedan alineados y las tarjetas de Mi trabajo ya no parpadean.",
+      ],
+      fr: [
+        "**Ordre des projets fixe** : la barre latérale ne réordonne plus les projets à l'ouverture et à la fermeture des sessions. Glissez un projet (ou son icône, barre repliée) pour le déplacer ; toutes les fenêtres suivent le même ordre.",
+        "**Fermez une session depuis la barre latérale** : survolez une session et cliquez sur le X ; un second clic sur « Fermer ? » confirme.",
+        "**Ctrl + clic sur les chemins du terminal**, comme dans VS Code : les dossiers s'ouvrent dans l'Explorateur, les fichiers y apparaissent sélectionnés et les fichiers Markdown s'ouvrent dans la visionneuse de Polvo.",
+        "**Corrections Git** : la carte « Pull » de l'écran sans modifications n'est plus déformée, les avatars de l'Historique sont alignés et les cartes de Mon travail ne clignotent plus.",
+      ],
+      de: [
+        "**Feste Projektreihenfolge**: Die Seitenleiste sortiert Projekte nicht mehr um, wenn Sitzungen geöffnet und geschlossen werden. Ziehen Sie ein Projekt (oder sein Symbol bei eingeklappter Leiste), um es zu verschieben; alle Fenster folgen derselben Reihenfolge.",
+        "**Sitzungen in der Seitenleiste beenden**: Mit der Maus über eine Sitzung fahren und auf das X klicken; ein zweiter Klick auf „Beenden?“ bestätigt.",
+        "**Strg + Klick auf Pfade im Terminal**, wie in VS Code: Ordner öffnen sich im Explorer, Dateien werden im Explorer markiert und Markdown-Dateien öffnen sich im Viewer von Polvo.",
+        "**Git-Korrekturen**: Die Karte „Pull“ im Bildschirm ohne Änderungen ist nicht mehr verzerrt, die Avatare im Verlauf sind ausgerichtet und die Karten in Meine Arbeit flackern nicht mehr.",
+      ],
+      it: [
+        "**Ordine dei progetti fisso**: la barra laterale non riordina più i progetti quando le sessioni si aprono e si chiudono. Trascina un progetto (o la sua icona, con la barra compressa) per spostarlo; tutte le finestre seguono lo stesso ordine.",
+        "**Chiudi le sessioni dalla barra laterale**: passa il mouse su una sessione e fai clic sulla X; un secondo clic su “Chiudere?” conferma.",
+        "**Ctrl + clic sui percorsi nel terminale**, come in VS Code: le cartelle si aprono in Esplora file, i file vi appaiono selezionati e i file Markdown si aprono nel visualizzatore di Polvo.",
+        "**Correzioni Git**: la scheda “Pull” della schermata senza modifiche non è più deformata, gli avatar della Cronologia sono allineati e le schede di Il mio lavoro non sfarfallano più.",
+      ],
+      ja: [
+        "**プロジェクトの並び順を固定**：セッションの開閉でサイドバーのプロジェクトが並び替わらなくなりました。プロジェクト（サイドバーを折りたたんでいるときはアイコン）をドラッグすると位置を変えられ、すべてのウィンドウで同じ順序になります。",
+        "**サイドバーからセッションを終了**：セッションにマウスを合わせて X をクリックし、「終了?」をもう一度クリックして確定します。",
+        "**ターミナルのパスを Ctrl + クリック**（VS Code と同様）：フォルダーはエクスプローラーで開き、ファイルはエクスプローラーで選択された状態で表示され、Markdown ファイルは Polvo のビューアーで開きます。",
+        "**Git の修正**：変更なし画面の「プル」カードが崩れなくなり、履歴のアバターが揃い、マイワークのカードがちらつかなくなりました。",
+      ],
+      zh: [
+        "**项目顺序固定**：侧边栏不再随着会话的打开和关闭而重新排列项目。拖动项目（侧边栏折叠时拖动图标）即可调整位置，所有窗口都使用相同的顺序。",
+        "**在侧边栏结束会话**：将鼠标悬停在会话上并点击 X，再次点击“结束?”确认。",
+        "**在终端中 Ctrl + 点击路径**，与 VS Code 相同：文件夹在资源管理器中打开，文件在资源管理器中被选中显示，Markdown 文件在 Polvo 的查看器中打开。",
+        "**Git 修复**：无更改界面的“拉取”卡片不再变形，历史中的头像已对齐，“我的工作”中的卡片不再闪烁。",
+      ],
+      ko: [
+        "**프로젝트 순서 고정**: 세션을 열고 닫아도 사이드바의 프로젝트 순서가 바뀌지 않습니다. 프로젝트(사이드바를 접었을 때는 아이콘)를 끌어 위치를 바꿀 수 있으며, 모든 창이 같은 순서를 따릅니다.",
+        "**사이드바에서 세션 종료**: 세션에 마우스를 올리고 X를 클릭한 뒤 “종료?”를 한 번 더 클릭해 확인합니다.",
+        "**터미널의 경로를 Ctrl + 클릭** (VS Code처럼): 폴더는 탐색기에서 열리고, 파일은 탐색기에서 선택된 상태로 표시되며, Markdown 파일은 Polvo 뷰어에서 열립니다.",
+        "**Git 수정**: 변경 사항 없음 화면의 “풀” 카드가 더 이상 찌그러지지 않고, 기록의 아바타가 정렬되며, 내 작업의 카드가 더 이상 깜박이지 않습니다.",
+      ],
+      ru: [
+        "**Порядок проектов закреплён**: боковая панель больше не переставляет проекты при открытии и закрытии сеансов. Перетащите проект (или его значок, если панель свёрнута), чтобы переместить его; все окна используют один и тот же порядок.",
+        "**Завершение сеансов из боковой панели**: наведите указатель на сеанс и нажмите X; второй щелчок по «Завершить?» подтверждает.",
+        "**Ctrl + щелчок по путям в терминале**, как в VS Code: папки открываются в Проводнике, файлы показываются в нём выделенными, а файлы Markdown открываются в просмотрщике Polvo.",
+        "**Исправления Git**: карточка «Pull» на экране без изменений больше не искажается, аватары в Истории выровнены, а карточки в «Моей работе» больше не мигают.",
+      ],
+    },
+  },
+  {
     version: "0.3.5",
     notes: {
       pt: [
