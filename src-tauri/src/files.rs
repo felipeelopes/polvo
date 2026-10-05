@@ -89,19 +89,69 @@ pub fn file_mtime(path: String) -> Option<u64> {
     mtime_of(&absolute(&path).ok()?).ok()
 }
 
-/// Tipo de cada caminho: 0 não existe, 1 arquivo, 2 pasta (links do terminal).
+/// Tipo de cada caminho (para links no terminal): 0 não existe, 1 arquivo, 2 pasta.
 #[tauri::command]
 pub fn paths_kind(paths: Vec<String>) -> Vec<u8> {
     paths
         .iter()
         .map(
-            |p| match absolute(p).and_then(|p| std::fs::metadata(p).map_err(Into::into)) {
+            |p| match absolute(p).and_then(|p| Ok(std::fs::metadata(p)?)) {
                 Ok(m) if m.is_dir() => 2,
                 Ok(m) if m.is_file() => 1,
                 _ => 0,
             },
         )
         .collect()
+}
+
+/// Extensões que o Windows executaria em vez de abrir: só mostramos no Explorer.
+const RUNNABLE: &[&str] = &[
+    "exe",
+    "com",
+    "bat",
+    "cmd",
+    "ps1",
+    "psm1",
+    "vbs",
+    "vbe",
+    "js",
+    "jse",
+    "wsf",
+    "wsh",
+    "msi",
+    "msp",
+    "scr",
+    "lnk",
+    "url",
+    "reg",
+    "hta",
+    "cpl",
+    "msc",
+    "pif",
+    "jar",
+    "appref-ms",
+    "application",
+];
+
+/// É um arquivo que o Windows executaria ao abrir?
+fn is_runnable(path: &Path) -> bool {
+    path.extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| RUNNABLE.contains(&e.to_ascii_lowercase().as_str()))
+}
+
+/// Abre a pasta no Explorer ou o arquivo no programa padrão. Executáveis e
+/// scripts não rodam: são só selecionados no Explorer (devolve `false`).
+#[tauri::command]
+pub fn file_open(path: String) -> AppResult<bool> {
+    let p = absolute(&path)?;
+    let meta = std::fs::metadata(&p)?;
+    if meta.is_file() && is_runnable(&p) {
+        file_reveal(path)?;
+        return Ok(false);
+    }
+    std::process::Command::new("explorer").arg(&p).spawn()?;
+    Ok(true)
 }
 
 /// Conteúdo binário (imagens referenciadas pelo Markdown).
@@ -124,20 +174,18 @@ pub fn file_reveal(path: String) -> AppResult<()> {
     Ok(())
 }
 
-/// Abre a pasta no Explorer.
-#[tauri::command]
-pub fn folder_open(path: String) -> AppResult<()> {
-    let p = absolute(&path)?;
-    if !p.is_dir() {
-        return Err(AppError::msg(crate::i18n::tr("files.notAFolder", &[])));
-    }
-    std::process::Command::new("explorer").arg(&p).spawn()?;
-    Ok(())
-}
-
 #[cfg(test)]
 mod tests {
-    use super::absolute;
+    use super::{absolute, is_runnable};
+    use std::path::Path;
+
+    #[test]
+    fn blocks_runnable_files() {
+        assert!(is_runnable(Path::new(r"C:\x\setup.EXE")));
+        assert!(is_runnable(Path::new("build.ps1")));
+        assert!(!is_runnable(Path::new("foto.png")));
+        assert!(!is_runnable(Path::new("Makefile")));
+    }
 
     #[cfg(windows)]
     #[test]

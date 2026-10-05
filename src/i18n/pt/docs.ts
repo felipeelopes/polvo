@@ -60,4 +60,14 @@ export default {
     hintFull: "Roda para zoom · arraste para mover · + − 0 · Esc fecha",
     codeCopied: "Código do diagrama copiado",
   },
+  image: {
+    open: "Abrir no programa padrão",
+    reveal: "Mostrar no Explorer",
+    copy: "Copiar imagem (Ctrl+C)",
+    copyPath: "Copiar caminho",
+    copied: "Imagem copiada",
+    pathCopied: "Caminho copiado",
+    copyError: "Não foi possível copiar a imagem",
+    loadError: "Não foi possível abrir a imagem: {error}",
+  },
 };

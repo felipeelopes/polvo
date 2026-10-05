@@ -79,9 +79,15 @@ export const ipc = {
   fileMtime: (path: string) => invoke<number | null>("file_mtime", { path }),
   fileBytes: async (path: string) => toBytes(await invoke<ArrayBuffer | number[]>("file_bytes", { path })),
   fileReveal: (path: string) => invoke<void>("file_reveal", { path }),
-  /** Tipo de cada caminho: 0 não existe, 1 arquivo, 2 pasta. */
+  /** Abre no programa padrão (pasta no Explorer); `false` se só mostrou um executável no Explorer. */
+  fileOpen: (path: string) => invoke<boolean>("file_open", { path }),
+  /** 0 não existe, 1 arquivo, 2 pasta. */
   pathsKind: (paths: string[]) => invoke<number[]>("paths_kind", { paths }),
-  folderOpen: (path: string) => invoke<void>("folder_open", { path }),
+  /** Arquivos copiados no Explorer (área de transferência). */
+  clipboardFiles: () => invoke<string[]>("clipboard_files"),
+  /** Traz os arquivos para `.polvo/pasted` do projeto e devolve como referenciá-los. */
+  pasteFiles: (cwd: string, paths: string[]) => invoke<string[]>("paste_files", { cwd, paths }),
+  pasteImage: (cwd: string, data: string, ext: string) => invoke<string>("paste_image", { cwd, data, ext }),
 };
 
 function toBytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {

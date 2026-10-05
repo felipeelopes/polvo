@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "レイアウトを元に戻す",
       zoom: "UI のズーム",
       git: "Git パネル",
+      openPath: "ターミナルのパスを開く: .md は Polvo、画像はプレビュー、フォルダーはエクスプローラー、その他は既定のアプリ",
+      revealPath: "ターミナルのファイル/フォルダーをエクスプローラーで表示",
+      pasteFiles: "コピーしたファイルや画像をチャットに貼り付け (.polvo/pasted に保存)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "クリック",
       openInPolvo: "→ Polvo で開く",
-      openInExplorer: "→ エクスプローラーで開く",
-      revealInExplorer: "→ エクスプローラーに表示",
+      preview: "→ 画像をプレビュー",
+      open: "→ 開く",
+      openFolder: "→ フォルダーを開く",
+      reveal: "→ エクスプローラーで表示",
+      runnable: "実行ファイルのため、エクスプローラーで表示のみ（実行していません）",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + ホイールでズーム · ドラッグで移動 · ダブルクリックで全体表示",
       hintFull: "ホイールでズーム · ドラッグで移動 · + − 0 · Esc で閉じる",
       codeCopied: "図のコードをコピーしました",
+    },
+    image: {
+      open: "既定のアプリで開く",
+      reveal: "エクスプローラーで表示",
+      copy: "画像をコピー (Ctrl+C)",
+      copyPath: "パスをコピー",
+      copied: "画像をコピーしました",
+      pathCopied: "パスをコピーしました",
+      copyError: "画像をコピーできませんでした",
+      loadError: "画像を開けませんでした: {error}",
     },
   },
   git: {

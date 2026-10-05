@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "Deshacer diseño",
       zoom: "Zoom de la interfaz",
       git: "Panel de Git",
+      openPath: "Abrir ruta del terminal: .md en Polvo, vista previa de imagen, carpeta en el Explorador, resto en la app predeterminada",
+      revealPath: "Mostrar archivo o carpeta del terminal en el Explorador",
+      pasteFiles: "Pegar archivos copiados o una imagen en el chat (van a .polvo/pasted)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "clic",
       openInPolvo: "para abrir en Polvo",
-      openInExplorer: "para abrir en el Explorador",
-      revealInExplorer: "para mostrar en el Explorador",
+      preview: "para ver la imagen",
+      open: "para abrir",
+      openFolder: "para abrir la carpeta",
+      reveal: "para mostrar en el Explorador",
+      runnable: "Archivo ejecutable: solo se muestra en el Explorador, no se ejecutó",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + rueda para zoom · arrastra para mover · doble clic encuadra",
       hintFull: "Rueda para zoom · arrastra para mover · + − 0 · Esc cierra",
       codeCopied: "Código del diagrama copiado",
+    },
+    image: {
+      open: "Abrir en la aplicación predeterminada",
+      reveal: "Mostrar en el Explorador",
+      copy: "Copiar imagen (Ctrl+C)",
+      copyPath: "Copiar ruta",
+      copied: "Imagen copiada",
+      pathCopied: "Ruta copiada",
+      copyError: "No se pudo copiar la imagen",
+      loadError: "No se pudo abrir la imagen: {error}",
     },
   },
   git: {

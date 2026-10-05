@@ -1,7 +1,7 @@
 {
   "files.notFound": "File non trovato: {path}",
   "files.notAFile": "Non è un file",
-  "files.notAFolder": "Non è una cartella",
+  "paste.noFolder": "La cartella della sessione non esiste",
   "files.tooLargeForEditor": "File troppo grande per aprirlo nell'editor",
   "files.tooLarge": "File troppo grande",
   "projects.gitNotFound": "git non è stato trovato nel PATH.",

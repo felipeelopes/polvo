@@ -3,7 +3,10 @@ export default {
   ctrlClick: {
     click: "clique",
     openInPolvo: "para abrir no Polvo",
-    openInExplorer: "para abrir no Explorer",
-    revealInExplorer: "para mostrar no Explorer",
+    preview: "para ver a imagem",
+    open: "para abrir",
+    openFolder: "para abrir a pasta",
+    reveal: "para mostrar no Explorer",
+    runnable: "Arquivo executável: só mostrado no Explorer, não foi executado",
   },
 };

@@ -1,10 +1,13 @@
-// Caminhos de arquivos e pastas no terminal viram links (como no VS Code):
-// Ctrl + clique abre a pasta no Explorer, mostra o arquivo selecionado nele ou,
-// se for Markdown, abre no visualizador do Polvo. Só sublinha o que existe.
+// Caminhos de arquivos e pastas no terminal viram links. Ctrl + clique abre:
+// Markdown no visualizador do Polvo, imagens numa prévia em tela cheia, pastas
+// no Explorer e o resto no programa padrão. Ctrl + Shift + clique mostra no
+// Explorer. Só sublinha o que existe, mesmo que o CLI tenha quebrado o
+// caminho em várias linhas.
 import type { IBufferCellPosition, ILink, ILinkProvider, Terminal } from "@xterm/xterm";
 import { ipc } from "../core/ipc";
 import { t } from "../i18n";
-import { findPaths, MD_EXT, resolvePath } from "../docs/paths";
+import { openImage } from "../docs/image-viewer";
+import { findPathsAcross, IMAGE_EXT, MD_EXT, resolvePath } from "../docs/paths";
 import { toast } from "../ui/feedback";
 
 export interface FileLinkHost {
@@ -13,7 +16,7 @@ export interface FileLinkHost {
   open(path: string): void;
 }
 
-/** 0 não existe, 1 arquivo, 2 pasta (como `paths_kind` no backend). */
+/** 0 não existe, 1 arquivo, 2 pasta. */
 type Kind = 0 | 1 | 2;
 
 const KIND_TTL = 5000;
@@ -29,21 +32,50 @@ async function kindsOf(paths: string[]): Promise<Kind[]> {
   return paths.map((p) => kinds.get(p)?.kind ?? 0);
 }
 
-/** Abre conforme o tipo: pasta no Explorer, Markdown no Polvo, outro arquivo selecionado no Explorer. */
-export function openPath(host: FileLinkHost, path: string, kind: Kind): void {
-  if (kind === 2) ipc.folderOpen(path).catch((e) => toast(String(e)));
-  else if (MD_EXT.test(path)) host.open(path);
-  else if (kind === 1) ipc.fileReveal(path).catch((e) => toast(String(e)));
+/** Tipos já conhecidos de todos os caminhos, ou `null` se falta perguntar algum ao disco. */
+function cachedKinds(paths: string[]): Kind[] | null {
+  const now = Date.now();
+  const out: Kind[] = [];
+  for (const p of paths) {
+    const k = kinds.get(p);
+    if (!k || now - k.at >= KIND_TTL) return null;
+    out.push(k.kind);
+  }
+  return out;
+}
+
+/** O que o Ctrl + clique faz com este caminho. */
+function actionOf(path: string, kind: Kind): "openInPolvo" | "preview" | "openFolder" | "open" {
+  if (kind === 2) return "openFolder";
+  if (MD_EXT.test(path)) return "openInPolvo";
+  if (IMAGE_EXT.test(path)) return "preview";
+  return "open";
+}
+
+/** Abre (ou, com Shift, mostra no Explorer) um caminho que existe. */
+function activate(host: FileLinkHost, path: string, kind: Kind, reveal: boolean): void {
+  hideHint();
+  const fail = (e: unknown) => toast(String((e as Error)?.message ?? e));
+  if (reveal) return void ipc.fileReveal(path).catch(fail);
+  const action = actionOf(path, kind);
+  if (action === "openInPolvo") host.open(path);
+  else if (action === "preview") void openImage(path);
+  else void ipc.fileOpen(path).then((opened) => opened || toast(t("terminal.ctrlClick.runnable")), fail);
+}
+
+/** Hiperlink `file://` (OSC 8): mesma regra do Ctrl + clique. */
+export function openFileLink(host: FileLinkHost, path: string, reveal: boolean): void {
+  void kindsOf([path]).then(([kind]) => kind && activate(host, path, kind, reveal));
 }
 
 let hint: HTMLDivElement | null = null;
 
-function showHint(e: MouseEvent, path: string, kind: Kind): void {
+function showHint(e: MouseEvent, action: ReturnType<typeof actionOf>): void {
   hideHint();
-  const what = kind === 2 ? "openInExplorer" : MD_EXT.test(path) ? "openInPolvo" : "revealInExplorer";
   hint = document.createElement("div");
   hint.className = "tip";
-  hint.innerHTML = `<kbd>Ctrl</kbd> + ${t("terminal.ctrlClick.click")} <span>${t(`terminal.ctrlClick.${what}`)}</span>`;
+  const click = t("terminal.ctrlClick.click");
+  hint.innerHTML = `<kbd>Ctrl</kbd> + ${click} <span>${t(`terminal.ctrlClick.${action}`)}</span> · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + ${click} <span>${t("terminal.ctrlClick.reveal")}</span>`;
   hint.style.left = `${e.clientX + 12}px`;
   hint.style.top = `${e.clientY + 16}px`;
   document.body.appendChild(hint);
@@ -54,13 +86,24 @@ function hideHint(): void {
   hint = null;
 }
 
-/** Texto da linha lógica (juntando quebras automáticas) e a célula de cada caractere. */
-function logicalLine(term: Terminal, row: number): { text: string; cells: IBufferCellPosition[] } {
+interface Line {
+  text: string;
+  /** Célula (1-based) de cada caractere de `text`. */
+  cells: IBufferCellPosition[];
+}
+
+/** Primeira e última linha do buffer da linha lógica (quebras automáticas do xterm) de `row`. */
+function logicalRange(term: Terminal, row: number): [number, number] {
   const buf = term.buffer.active;
   let start = row;
   while (start > 0 && buf.getLine(start)?.isWrapped) start--;
   let end = row;
   while (end + 1 < buf.length && buf.getLine(end + 1)?.isWrapped) end++;
+  return [start, end];
+}
+
+function readLine(term: Terminal, start: number, end: number): Line {
+  const buf = term.buffer.active;
   let text = "";
   const cells: IBufferCellPosition[] = [];
   for (let y = start; y <= end; y++) {
@@ -77,35 +120,87 @@ function logicalLine(term: Terminal, row: number): { text: string; cells: IBuffe
   return { text, cells };
 }
 
-export function pathLinkProvider(term: Terminal, host: FileLinkHost): ILinkProvider {
+/** Quantas linhas lógicas acima e abaixo entram na busca (caminho quebrado pelo CLI). */
+const REACH = 3;
+
+/** A linha lógica de `row` (0-based) e as vizinhas. */
+function linesAround(term: Terminal, row: number): Line[] {
+  const buf = term.buffer.active;
+  const [start, end] = logicalRange(term, row);
+  const lines = [readLine(term, start, end)];
+  for (let i = 0, top = start; i < REACH && top > 0; i++) {
+    const [s, e] = logicalRange(term, top - 1);
+    lines.unshift(readLine(term, s, e));
+    top = s;
+  }
+  for (let i = 0, bottom = end; i < REACH && bottom + 1 < buf.length; i++) {
+    const [s, e] = logicalRange(term, bottom + 1);
+    lines.push(readLine(term, s, e));
+    bottom = e;
+  }
+  return lines;
+}
+
+interface Candidate {
+  path: string;
+  /** Posição linear para comparar sobreposição. */
+  from: number;
+  to: number;
+  cells: IBufferCellPosition[];
+  text: string;
+}
+
+interface Found extends Candidate {
+  kind: Kind;
+}
+
+function candidates(lines: Line[], cwd: string): Candidate[] {
+  const pos = (line: number, col: number) => line * 1_000_000 + col;
+  return findPathsAcross(lines.map((l) => l.text)).map((m) => {
+    const cells: IBufferCellPosition[] = [];
+    let text = "";
+    for (let line = m.start.line; line <= m.end.line; line++) {
+      // Sem o recuo da continuação nem os espaços do fim da linha quebrada.
+      const l = lines[line];
+      const a = line === m.start.line ? m.start.col : l.text.length - l.text.trimStart().length;
+      const b = line === m.end.line ? m.end.col + 1 : l.text.trimEnd().length;
+      cells.push(...l.cells.slice(a, b));
+      text += l.text.slice(a, b);
+    }
+    return { path: resolvePath(cwd, m.path), from: pos(m.start.line, m.start.col), to: pos(m.end.line, m.end.col), cells, text };
+  });
+}
+
+/** Fica com os que existem, preferindo o trecho mais longo quando se sobrepõem. */
+function pick(cands: Candidate[], found: Kind[]): Found[] {
+  const ok = cands.map((c, i) => ({ ...c, kind: found[i] })).filter((c) => c.kind);
+  ok.sort((a, b) => b.to - b.from - (a.to - a.from));
+  const out: Found[] = [];
+  for (const c of ok) if (!out.some((o) => c.from <= o.to && c.to >= o.from)) out.push(c);
+  return out;
+}
+
+export function fileLinkProvider(term: Terminal, host: FileLinkHost): ILinkProvider {
   return {
     provideLinks(row, callback) {
       const cwd = host.cwd();
       if (!cwd) return callback(undefined);
-      const { text, cells } = logicalLine(term, row - 1);
-      const matches = findPaths(text);
-      if (!matches.length) return callback(undefined);
-      const resolved = matches.map((m) => resolvePath(cwd, m.path));
-      void kindsOf(resolved).then((found) => {
-        const links: ILink[] = [];
-        matches.forEach((m, i) => {
-          const kind = found[i];
-          if (!kind) return;
-          const from = cells[m.index];
-          const to = cells[m.index + m.length - 1];
-          if (!from || !to || (from.y !== row && to.y !== row && !(from.y < row && to.y > row))) return;
-          links.push({
-            range: { start: from, end: to },
-            text: text.slice(m.index, m.index + m.length),
+      const cands = candidates(linesAround(term, row - 1), cwd);
+      if (!cands.length) return callback(undefined);
+      void kindsOf(cands.map((c) => c.path)).then((found) => {
+        const links: ILink[] = pick(cands, found)
+          .filter((f) => f.cells.some((c) => c.y === row))
+          .map((f) => ({
+            range: { start: f.cells[0], end: f.cells[f.cells.length - 1] },
+            text: f.text,
             decorations: { pointerCursor: true, underline: true },
             // Quem abre é o `mousedown` de `installCtrlClick`: aqui o xterm só
             // ativaria no `mouseup`, e o redesenho do CLI ao ganhar foco
             // apaga o link no meio do clique.
             activate: hideHint,
-            hover: (e) => showHint(e, resolved[i], kind),
+            hover: (e) => showHint(e, actionOf(f.path, f.kind)),
             leave: hideHint,
-          });
-        });
+          }));
         callback(links.length ? links : undefined);
       });
     },
@@ -124,7 +219,7 @@ function cellAt(term: Terminal, e: MouseEvent): { x: number; y: number } | null 
 }
 
 /**
- * Ctrl + clique abre o caminho já no `mousedown`, sem depender do estado de
+ * Ctrl (+ Shift) + clique abre o arquivo já no `mousedown`, sem depender do estado de
  * links do xterm (que se perde quando o CLI redesenha a tela ao ganhar foco).
  */
 export function installCtrlClick(term: Terminal, el: HTMLElement, host: FileLinkHost): void {
@@ -135,20 +230,24 @@ export function installCtrlClick(term: Terminal, el: HTMLElement, host: FileLink
       const cwd = host.cwd();
       const at = cellAt(term, e);
       if (!cwd || !at) return;
-      const { text, cells } = logicalLine(term, at.y - 1);
-      const m = findPaths(text).find((m) => cells.slice(m.index, m.index + m.length).some((c) => c.x === at.x && c.y === at.y));
-      if (!m) return;
-      const path = resolvePath(cwd, m.path);
+      const cands = candidates(linesAround(term, at.y - 1), cwd);
+      if (!cands.length) return;
+      const under = (list: Found[]) => list.find((f) => f.cells.some((c) => c.x === at.x && c.y === at.y));
+      const reveal = e.shiftKey;
       // Já visto ao passar o mouse: abre e não deixa o clique ir para o CLI.
-      const seen = kinds.get(path)?.kind;
-      if (seen) {
+      const cached = cachedKinds(cands.map((c) => c.path));
+      if (cached) {
+        const f = under(pick(cands, cached));
+        if (!f) return;
         e.preventDefault();
         e.stopPropagation();
-        hideHint();
-        openPath(host, path, seen);
+        activate(host, f.path, f.kind, reveal);
         return;
       }
-      void kindsOf([path]).then(([kind]) => kind && openPath(host, path, kind));
+      void kindsOf(cands.map((c) => c.path)).then((found) => {
+        const f = under(pick(cands, found));
+        if (f) activate(host, f.path, f.kind, reveal);
+      });
     },
     true,
   );

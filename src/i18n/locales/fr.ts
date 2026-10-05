@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "Annuler la disposition",
       zoom: "Zoom de l'interface",
       git: "Panneau Git",
+      openPath: "Ouvrir un chemin du terminal : .md dans Polvo, aperçu d’image, dossier dans l’Explorateur, le reste dans l’app par défaut",
+      revealPath: "Afficher un fichier ou dossier du terminal dans l’Explorateur",
+      pasteFiles: "Coller des fichiers copiés ou une image dans le chat (copiés dans .polvo/pasted)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "clic",
       openInPolvo: "pour ouvrir dans Polvo",
-      openInExplorer: "pour ouvrir dans l’Explorateur",
-      revealInExplorer: "pour afficher dans l’Explorateur",
+      preview: "pour voir l’image",
+      open: "pour ouvrir",
+      openFolder: "pour ouvrir le dossier",
+      reveal: "pour afficher dans l’Explorateur",
+      runnable: "Fichier exécutable : seulement affiché dans l’Explorateur, non exécuté",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + molette pour zoomer · glisser pour déplacer · double-clic pour ajuster",
       hintFull: "Molette pour zoomer · glisser pour déplacer · + − 0 · Esc pour fermer",
       codeCopied: "Code du diagramme copié",
+    },
+    image: {
+      open: "Ouvrir dans l’application par défaut",
+      reveal: "Afficher dans l’Explorateur",
+      copy: "Copier l’image (Ctrl+C)",
+      copyPath: "Copier le chemin",
+      copied: "Image copiée",
+      pathCopied: "Chemin copié",
+      copyError: "Impossible de copier l’image",
+      loadError: "Impossible d’ouvrir l’image : {error}",
     },
   },
   git: {

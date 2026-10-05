@@ -9,7 +9,8 @@ import "@xterm/xterm/css/xterm.css";
 import { ipc } from "../core/ipc";
 import type { ToolKind } from "../core/types";
 import { resolvePath } from "../docs/paths";
-import { installCtrlClick, openPath, pathLinkProvider, type FileLinkHost } from "./file-links";
+import { fileLinkProvider, installCtrlClick, openFileLink, type FileLinkHost } from "./file-links";
+import { clipboardImage, installPasteFiles, pasteFiles } from "./paste-files";
 import { cssVar, isLightTerminal, onThemeChange } from "../ui/theme";
 
 /** Cores ANSI do terminal escuro e do claro; fundo e texto vêm dos tokens --term-bg e --term-fg. */
@@ -108,7 +109,7 @@ export class SessionTerminal {
     isAppShortcut: (e: KeyboardEvent) => boolean,
     onTitle?: (title: string) => void,
     private onCommand?: (cmd: "rename" | "color", arg: string) => void,
-    files?: FileLinkHost,
+    private files?: FileLinkHost,
   ) {
     this.host.className = "term-host";
     live.add(this);
@@ -128,8 +129,7 @@ export class SessionTerminal {
         activate: (e, uri) => {
           if (/^https?:/i.test(uri)) ipc.openUrl(uri).catch(() => {});
           else if (files && /^file:/i.test(uri) && (e.ctrlKey || e.metaKey)) {
-            const path = resolvePath(files.cwd() ?? "C:\\", uri.split(/[?#]/)[0]);
-            void ipc.pathsKind([path]).then(([kind]) => kind && openPath(files, path, kind as 1 | 2));
+            openFileLink(files, resolvePath(files.cwd() ?? "C:\\", uri.split(/[?#]/)[0]), e.shiftKey);
           }
         },
       },
@@ -140,8 +140,9 @@ export class SessionTerminal {
     this.term.unicode.activeVersion = "11";
     this.term.loadAddon(new WebLinksAddon((_e, url) => ipc.openUrl(url).catch(() => {})));
     if (files) {
-      this.term.registerLinkProvider(pathLinkProvider(this.term, files));
+      this.term.registerLinkProvider(fileLinkProvider(this.term, files));
       installCtrlClick(this.term, this.host, files);
+      installPasteFiles(this.term, this.host, files, tool);
     }
 
     // onData também recebe cliques do mouse e relatórios de foco enviados ao CLI.
@@ -338,7 +339,10 @@ export class SessionTerminal {
     if (this.term.hasSelection()) return this.copySelection();
     navigator.clipboard
       .readText()
-      .then((text) => text && this.term.paste(text))
-      .catch(() => {});
+      .catch(() => "")
+      .then(async (text) => {
+        if (text) this.term.paste(text);
+        else if (this.files) await pasteFiles(this.term, this.files, this.tool, await clipboardImage());
+      });
   }
 }

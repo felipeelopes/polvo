@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "Undo layout",
       zoom: "Interface zoom",
       git: "Git panel",
+      openPath: "Open a path from the terminal: .md in Polvo, image preview, folder in Explorer, others in the default app",
+      revealPath: "Show a file or folder from the terminal in Explorer",
+      pasteFiles: "Paste copied files or an image into the chat (saved to .polvo/pasted)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "click",
       openInPolvo: "to open in Polvo",
-      openInExplorer: "to open in Explorer",
-      revealInExplorer: "to show in Explorer",
+      preview: "to preview the image",
+      open: "to open",
+      openFolder: "to open the folder",
+      reveal: "to show in Explorer",
+      runnable: "Executable file: only shown in Explorer, not run",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + wheel to zoom · drag to pan · double-click to fit",
       hintFull: "Wheel to zoom · drag to pan · + − 0 · Esc closes",
       codeCopied: "Diagram code copied",
+    },
+    image: {
+      open: "Open in default app",
+      reveal: "Show in Explorer",
+      copy: "Copy image (Ctrl+C)",
+      copyPath: "Copy path",
+      copied: "Image copied",
+      pathCopied: "Path copied",
+      copyError: "Couldn't copy the image",
+      loadError: "Couldn't open the image: {error}",
     },
   },
   git: {

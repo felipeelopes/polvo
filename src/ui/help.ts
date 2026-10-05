@@ -25,6 +25,9 @@ export function openHelp(anchor: HTMLElement): void {
           <kbd>Ctrl Shift M</kbd><span>${t("help.keys.maximize")}</span>
           <kbd>Ctrl Shift Z</kbd><span>${t("help.keys.undo")}</span>
           <kbd>Ctrl + / Ctrl − / Ctrl 0</kbd><span>${t("help.keys.zoom")}</span>
+          <kbd>Ctrl ${t("terminal.ctrlClick.click")}</kbd><span>${t("help.keys.openPath")}</span>
+          <kbd>Ctrl Shift ${t("terminal.ctrlClick.click")}</kbd><span>${t("help.keys.revealPath")}</span>
+          <kbd>Ctrl V</kbd><span>${t("help.keys.pasteFiles")}</span>
         </div>`;
     },
     "help",

@@ -3,7 +3,8 @@ import type { SessionTerminal } from "../src/terminal/session-terminal";
 
 vi.mock("../src/core/ipc", () => ({ ipc: { ptyAttach: vi.fn(), ptyResize: vi.fn() } }));
 vi.mock("../src/ui/theme", () => ({ cssVar: () => "", isLightTerminal: () => false, onThemeChange: vi.fn() }));
-vi.mock("../src/terminal/file-links", () => ({ installCtrlClick: vi.fn(), mdLinkProvider: vi.fn() }));
+vi.mock("../src/terminal/paste-files", () => ({ installPasteFiles: vi.fn(), pasteFiles: vi.fn(), clipboardImage: vi.fn() }));
+vi.mock("../src/terminal/file-links", () => ({ installCtrlClick: vi.fn(), fileLinkProvider: vi.fn(), openFileLink: vi.fn() }));
 vi.mock("@xterm/addon-fit", () => ({ FitAddon: class { fit = vi.fn(); } }));
 vi.mock("@xterm/addon-unicode11", () => ({ Unicode11Addon: class {} }));
 vi.mock("@xterm/addon-web-links", () => ({ WebLinksAddon: class {} }));

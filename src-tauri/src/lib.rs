@@ -9,6 +9,7 @@ mod files;
 mod git;
 mod gitops;
 pub mod i18n;
+mod paste;
 mod paths;
 mod projects;
 mod pty;
@@ -142,8 +143,11 @@ pub fn run() {
             files::file_mtime,
             files::file_bytes,
             files::file_reveal,
+            files::file_open,
             files::paths_kind,
-            files::folder_open,
+            paste::clipboard_files,
+            paste::paste_files,
+            paste::paste_image,
             work::work_config_get,
             work::work_config_set,
             work::work_detect,

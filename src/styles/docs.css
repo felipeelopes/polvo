@@ -197,6 +197,14 @@ body.resizing-docs .content { pointer-events: none; }
 .mmd-lightbox .mmd-stage { position: absolute; inset: 0; }
 .mmd-lightbox .mmd-bar { top: 16px; right: 16px; }
 .mmd-lightbox .mmd-hint { opacity: 1; left: 50%; bottom: 16px; transform: translateX(-50%); padding: 5px 12px; border-radius: var(--r-sm); background: var(--raised); border: 1px solid var(--line); font-size: 11.5px; }
+.mmd-sep { width: 1px; height: 16px; margin: 0 3px; background: var(--line2); }
+.img-lightbox img { background: repeating-conic-gradient(color-mix(in srgb, var(--text) 7%, transparent) 0 25%, transparent 0 50%) 0 0 / 16px 16px; box-shadow: 0 0 0 1px var(--line); }
+.img-lightbox img.pixelated { image-rendering: pixelated; }
+.img-info { position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); display: flex; align-items: baseline; gap: 10px; max-width: calc(100% - 32px); padding: 6px 12px; border-radius: var(--r-sm); background: var(--raised); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 12px; white-space: nowrap; }
+.img-info b { font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
+.img-info span { color: var(--muted); font-variant-numeric: tabular-nums; }
+.img-info .img-hint { color: var(--faint); font-size: 11px; }
+@media (max-width: 720px) { .img-info .img-hint { display: none; } }
 
 /* menu "mais" do painel */
 .pop.menu button[data-m] { display: block; width: 100%; text-align: left; }

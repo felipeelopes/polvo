@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "撤销布局",
       zoom: "界面缩放",
       git: "Git 面板",
+      openPath: "打开终端中的路径：.md 在 Polvo 中、图片预览、文件夹在资源管理器、其他用默认应用",
+      revealPath: "在资源管理器中显示终端中的文件或文件夹",
+      pasteFiles: "将复制的文件或图片粘贴到聊天（保存到 .polvo/pasted）",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "单击",
       openInPolvo: "在 Polvo 中打开",
-      openInExplorer: "在资源管理器中打开",
-      revealInExplorer: "在资源管理器中显示",
+      preview: "预览图片",
+      open: "打开",
+      openFolder: "打开文件夹",
+      reveal: "在资源管理器中显示",
+      runnable: "可执行文件：仅在资源管理器中显示，未运行",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + 滚轮缩放 · 拖动以移动 · 双击适应窗口",
       hintFull: "滚轮缩放 · 拖动以移动 · + − 0 · Esc 关闭",
       codeCopied: "已复制图表代码",
+    },
+    image: {
+      open: "用默认应用打开",
+      reveal: "在资源管理器中显示",
+      copy: "复制图片 (Ctrl+C)",
+      copyPath: "复制路径",
+      copied: "图片已复制",
+      pathCopied: "路径已复制",
+      copyError: "无法复制图片",
+      loadError: "无法打开图片：{error}",
     },
   },
   git: {

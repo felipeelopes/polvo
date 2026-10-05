@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "Annulla layout",
       zoom: "Zoom dell'interfaccia",
       git: "Pannello Git",
+      openPath: "Apri un percorso dal terminale: .md in Polvo, anteprima immagine, cartella in Esplora file, il resto nell’app predefinita",
+      revealPath: "Mostra file o cartella del terminale in Esplora file",
+      pasteFiles: "Incolla file copiati o un’immagine nella chat (salvati in .polvo/pasted)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "clic",
       openInPolvo: "per aprire in Polvo",
-      openInExplorer: "per aprire in Esplora file",
-      revealInExplorer: "per mostrare in Esplora file",
+      preview: "per vedere l’immagine",
+      open: "per aprire",
+      openFolder: "per aprire la cartella",
+      reveal: "per mostrare in Esplora file",
+      runnable: "File eseguibile: solo mostrato in Esplora file, non eseguito",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + rotellina per lo zoom · trascina per spostare · doppio clic adatta",
       hintFull: "Rotellina per lo zoom · trascina per spostare · + − 0 · Esc chiude",
       codeCopied: "Codice del diagramma copiato",
+    },
+    image: {
+      open: "Apri nell’app predefinita",
+      reveal: "Mostra in Esplora file",
+      copy: "Copia immagine (Ctrl+C)",
+      copyPath: "Copia percorso",
+      copied: "Immagine copiata",
+      pathCopied: "Percorso copiato",
+      copyError: "Impossibile copiare l’immagine",
+      loadError: "Impossibile aprire l’immagine: {error}",
     },
   },
   git: {

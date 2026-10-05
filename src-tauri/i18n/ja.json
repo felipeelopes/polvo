@@ -1,7 +1,7 @@
 {
   "files.notFound": "ファイルが見つかりません: {path}",
   "files.notAFile": "ファイルではありません",
-  "files.notAFolder": "フォルダーではありません",
+  "paste.noFolder": "セッションのフォルダーが存在しません",
   "files.tooLargeForEditor": "ファイルが大きすぎてエディターで開けません",
   "files.tooLarge": "ファイルが大きすぎます",
   "projects.gitNotFound": "PATH に git が見つかりません。",

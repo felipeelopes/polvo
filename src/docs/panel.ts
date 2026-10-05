@@ -10,6 +10,7 @@ import { basename, esc, h } from "../ui/dom";
 import { closePopover, popover, toast } from "../ui/feedback";
 import type { DocEditor } from "./editor";
 import { renderDiagrams } from "./mermaid";
+import { IMAGE_MIME } from "./image-viewer";
 import { dirname, MD_EXT, resolvePath } from "./paths";
 import { enhance, renderMarkdown, toggleTask } from "./render";
 
@@ -30,7 +31,6 @@ const I = {
   plus: '<svg width="13" height="13" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
 };
 
-const MIME: Record<string, string> = { png: "image/png", jpg: "image/jpeg", jpeg: "image/jpeg", gif: "image/gif", webp: "image/webp", svg: "image/svg+xml", bmp: "image/bmp", ico: "image/x-icon", avif: "image/avif" };
 const images = new Map<string, Promise<string>>();
 
 function localImage(path: string): Promise<string> {
@@ -38,7 +38,7 @@ function localImage(path: string): Promise<string> {
   if (!p) {
     p = ipc.fileBytes(path).then((bytes) => {
       const ext = path.split(".").pop()?.toLowerCase() ?? "";
-      return URL.createObjectURL(new Blob([bytes as BlobPart], { type: MIME[ext] ?? "application/octet-stream" }));
+      return URL.createObjectURL(new Blob([bytes as BlobPart], { type: IMAGE_MIME[ext] ?? "application/octet-stream" }));
     });
     p.catch(() => images.delete(path));
     images.set(path, p);

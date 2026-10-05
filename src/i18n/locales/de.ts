@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "Layout rückgängig",
       zoom: "Zoom der Oberfläche",
       git: "Git-Panel",
+      openPath: "Pfad aus dem Terminal öffnen: .md in Polvo, Bildvorschau, Ordner im Explorer, sonst Standard-App",
+      revealPath: "Datei oder Ordner aus dem Terminal im Explorer anzeigen",
+      pasteFiles: "Kopierte Dateien oder ein Bild in den Chat einfügen (landen in .polvo/pasted)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "Klick",
       openInPolvo: "zum Öffnen in Polvo",
-      openInExplorer: "um im Explorer zu öffnen",
-      revealInExplorer: "um im Explorer anzuzeigen",
+      preview: "zur Bildvorschau",
+      open: "zum Öffnen",
+      openFolder: "zum Öffnen des Ordners",
+      reveal: "zum Anzeigen im Explorer",
+      runnable: "Ausführbare Datei: nur im Explorer angezeigt, nicht ausgeführt",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + Mausrad zum Zoomen · ziehen zum Verschieben · Doppelklick passt ein",
       hintFull: "Mausrad zum Zoomen · ziehen zum Verschieben · + − 0 · Esc schließt",
       codeCopied: "Diagrammcode kopiert",
+    },
+    image: {
+      open: "In Standard-App öffnen",
+      reveal: "Im Explorer anzeigen",
+      copy: "Bild kopieren (Strg+C)",
+      copyPath: "Pfad kopieren",
+      copied: "Bild kopiert",
+      pathCopied: "Pfad kopiert",
+      copyError: "Bild konnte nicht kopiert werden",
+      loadError: "Bild konnte nicht geöffnet werden: {error}",
     },
   },
   git: {

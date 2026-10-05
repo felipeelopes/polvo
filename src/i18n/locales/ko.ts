@@ -102,6 +102,9 @@ const messages: Messages = {
       undo: "레이아웃 실행 취소",
       zoom: "인터페이스 확대/축소",
       git: "Git 패널",
+      openPath: "터미널 경로 열기: .md는 Polvo, 이미지는 미리 보기, 폴더는 탐색기, 나머지는 기본 앱",
+      revealPath: "터미널의 파일 또는 폴더를 탐색기에서 표시",
+      pasteFiles: "복사한 파일이나 이미지를 채팅에 붙여넣기 (.polvo/pasted에 저장)",
     },
   },
   about: {
@@ -469,8 +472,11 @@ const messages: Messages = {
     ctrlClick: {
       click: "클릭",
       openInPolvo: "→ Polvo에서 열기",
-      openInExplorer: "→ 탐색기에서 열기",
-      revealInExplorer: "→ 탐색기에서 표시",
+      preview: "이미지 미리 보기",
+      open: "열기",
+      openFolder: "폴더 열기",
+      reveal: "탐색기에서 표시",
+      runnable: "실행 파일: 탐색기에서 표시만 하고 실행하지 않았습니다",
     },
   },
   docs: {
@@ -533,6 +539,16 @@ const messages: Messages = {
       hint: "Ctrl + 휠로 확대/축소 · 드래그로 이동 · 더블 클릭으로 맞추기",
       hintFull: "휠로 확대/축소 · 드래그로 이동 · + − 0 · Esc로 닫기",
       codeCopied: "다이어그램 코드를 복사했습니다",
+    },
+    image: {
+      open: "기본 앱으로 열기",
+      reveal: "탐색기에서 표시",
+      copy: "이미지 복사 (Ctrl+C)",
+      copyPath: "경로 복사",
+      copied: "이미지를 복사했습니다",
+      pathCopied: "경로를 복사했습니다",
+      copyError: "이미지를 복사할 수 없습니다",
+      loadError: "이미지를 열 수 없습니다: {error}",
     },
   },
   git: {

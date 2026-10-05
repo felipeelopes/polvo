@@ -55,7 +55,7 @@ const observers = new WeakMap<HTMLElement, ResizeObserver>();
 const ZOOM_MIN = 0.1;
 const ZOOM_MAX = 12;
 
-const ICONS = {
+export const ICONS = {
   minus: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M3 8h10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   plus: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="M3 8h10M8 3v10" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
   fit: '<svg width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M2 6V2h4M14 6V2h-4M2 10v4h4M14 10v4h-4"/></svg>',
@@ -64,8 +64,8 @@ const ICONS = {
   close: '<svg width="14" height="14" viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>',
 };
 
-/** Transformação de zoom/arrastar sobre um SVG dentro de um palco. */
-class PanZoom {
+/** Transformação de zoom/arrastar sobre um SVG (ou imagem) dentro de um palco. */
+export class PanZoom {
   scale = 1;
   x = 0;
   y = 0;
@@ -75,11 +75,15 @@ class PanZoom {
 
   constructor(
     readonly stage: HTMLElement,
-    readonly svg: SVGSVGElement,
-    private opts: { wheelNeedsCtrl: boolean; onChange?: () => void },
+    readonly svg: SVGSVGElement | HTMLImageElement,
+    private opts: { wheelNeedsCtrl: boolean; onChange?: () => void; /** Zoom máximo ao enquadrar. */ fitMax?: number },
   ) {
-    const vb = svg.viewBox.baseVal;
-    const box = vb && vb.width ? { w: vb.width, h: vb.height } : { w: svg.getBBox().width || 400, h: svg.getBBox().height || 300 };
+    let box: { w: number; h: number };
+    if (svg instanceof HTMLImageElement) box = { w: svg.naturalWidth || 400, h: svg.naturalHeight || 300 };
+    else {
+      const vb = svg.viewBox.baseVal;
+      box = vb && vb.width ? { w: vb.width, h: vb.height } : { w: svg.getBBox().width || 400, h: svg.getBBox().height || 300 };
+    }
     this.natural = box;
     svg.removeAttribute("style");
     svg.setAttribute("width", String(box.w));
@@ -98,7 +102,7 @@ class PanZoom {
     return this.natural;
   }
 
-  fit(maxScale = 1): void {
+  fit(maxScale = this.opts.fitMax ?? 1): void {
     const W = this.stage.clientWidth;
     const H = this.stage.clientHeight;
     if (!W || !H) return;
@@ -158,7 +162,7 @@ class PanZoom {
   }
 }
 
-function toolbar(pz: () => PanZoom | null, extra: string): HTMLElement {
+export function toolbar(pz: () => PanZoom | null, extra: string): HTMLElement {
   const bar = h(
     "div",
     "mmd-bar",
@@ -170,7 +174,7 @@ function toolbar(pz: () => PanZoom | null, extra: string): HTMLElement {
     if (!p || !z) return;
     if (z === "in") p.zoomAt(1.25);
     else if (z === "out") p.zoomAt(0.8);
-    else if (z === "fit") p.fit(bar.closest(".mmd-lightbox") ? 4 : 1);
+    else if (z === "fit") p.fit();
   });
   return bar;
 }
@@ -243,14 +247,14 @@ function openLightbox(svgText: string): void {
   const pct = bar.querySelector<HTMLElement>(".mmd-pct")!;
   box.append(stage, bar, h("div", "mmd-hint", esc(t("docs.mermaid.hintFull"))));
   document.body.append(box);
-  pz = new PanZoom(stage, svg, { wheelNeedsCtrl: false, onChange: () => (pct.textContent = `${Math.round(pz!.scale * 100)}%`) });
-  pz.fit(4);
+  pz = new PanZoom(stage, svg, { wheelNeedsCtrl: false, fitMax: 4, onChange: () => (pct.textContent = `${Math.round(pz!.scale * 100)}%`) });
+  pz.fit();
   const close = () => {
     box.remove();
     document.removeEventListener("keydown", onKey, true);
   };
   const onKey = (e: KeyboardEvent) => {
-    const keys: Record<string, () => void> = { Escape: close, "+": () => pz!.zoomAt(1.25), "=": () => pz!.zoomAt(1.25), "-": () => pz!.zoomAt(0.8), "0": () => pz!.fit(4) };
+    const keys: Record<string, () => void> = { Escape: close, "+": () => pz!.zoomAt(1.25), "=": () => pz!.zoomAt(1.25), "-": () => pz!.zoomAt(0.8), "0": () => pz!.fit() };
     const fn = keys[e.key];
     if (!fn || e.ctrlKey) return;
     e.preventDefault();

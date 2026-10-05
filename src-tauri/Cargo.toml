@@ -44,6 +44,7 @@ keyring = { version = "3", features = ["windows-native"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
+windows-sys = { version = "0.61", features = ["Win32_System_DataExchange", "Win32_System_Ole", "Win32_UI_Shell"] }
 
 [profile.release]
 codegen-units = 1
