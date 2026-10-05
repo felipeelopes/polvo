@@ -143,6 +143,7 @@ export class WorkView {
   private drawerItem: Item | null = null;
   private agentPick: ToolKind | null = null;
   private started = false;
+  private liveMarkup = new WeakMap<HTMLElement, string>();
 
   constructor(private host: WorkHost) {
     this.el.append(this.scroll, this.scrim, this.drawer);
@@ -401,6 +402,13 @@ export class WorkView {
     return this.scroll.querySelector<HTMLElement>(sel);
   }
 
+  /** Preserva o conteúdo quando só a saída do terminal mudou. */
+  private updateLiveMarkup(el: HTMLElement, html: string): void {
+    if (this.liveMarkup.get(el) === html) return;
+    el.innerHTML = html;
+    this.liveMarkup.set(el, html);
+  }
+
   private renderHeader(): void {
     const el = this.part(".wk-hero");
     if (!el || !this.cfg) return;
@@ -481,9 +489,10 @@ export class WorkView {
     const working = store.sessions.filter((s) => s.runtime.status === "working" || s.runtime.status === "starting").length;
     const waiting = store.sessions.filter((s) => s.runtime.status === "waiting").length;
     const nf = new Intl.NumberFormat(localeTag());
-    const kpi = (c: string, label: string, value: string, sub: string, extra = "", attr = "") =>
-      `<div class="wk-kpi" style="--c:${c}" ${attr}><div class="l">${label}</div><div class="v">${value}</div><div class="s">${sub}</div>${extra}</div>`;
-    el.innerHTML = [
+    const kpi = (color: string, label: string, value: string, sub: string, extra = "", attrs: Record<string, string> = {}) => ({
+      color, attrs, html: `<div class="l">${label}</div><div class="v">${value}</div><div class="s">${sub}</div>${extra}`,
+    });
+    const cards = [
       kpi(
         "var(--ok)",
         t(`work.kpi.commits.${this.ui.range}`),
@@ -491,8 +500,8 @@ export class WorkView {
         `<span class="add">+${nf.format(slice.add)}</span> <span class="del">−${nf.format(slice.del)}</span> ${t("work.kpi.lines")}`,
         this.spark(perDay(this.commits(), 7), "var(--ok)"),
       ),
-      kpi("var(--accent)", t("work.kpi.prs"), String(mine.length), failing ? tn("work.kpi.prsFailing", failing) : t("work.kpi.prsAllGood"), "", 'data-prtab="mine"'),
-      kpi("var(--violet)", t("work.kpi.reviews"), String(reviews.length), reviews.length ? t("work.kpi.reviewsOldest", { ago: ago(oldest) }) : t("work.kpi.reviewsNone"), "", 'data-prtab="review"'),
+      kpi("var(--accent)", t("work.kpi.prs"), String(mine.length), failing ? tn("work.kpi.prsFailing", failing) : t("work.kpi.prsAllGood"), "", { "data-prtab": "mine" }),
+      kpi("var(--violet)", t("work.kpi.reviews"), String(reviews.length), reviews.length ? t("work.kpi.reviewsOldest", { ago: ago(oldest) }) : t("work.kpi.reviewsNone"), "", { "data-prtab": "review" }),
       sp
         ? kpi(
             "var(--accent)",
@@ -504,9 +513,18 @@ export class WorkView {
             }),
           )
         : kpi("var(--accent)", t("work.kpi.sprint"), "—", t("work.kpi.sprintNone")),
-      kpi("var(--warn)", t("work.kpi.pending"), String(pending.length), tn("work.kpi.pendingBugs", pending.filter(isBug).length), "", 'data-pending=""'),
-      kpi("var(--ai)", t("work.kpi.agents"), String(working + waiting), t("work.kpi.agentsSub", { working, waiting }), "", 'data-board=""'),
-    ].join("");
+      kpi("var(--warn)", t("work.kpi.pending"), String(pending.length), tn("work.kpi.pendingBugs", pending.filter(isBug).length), "", { "data-pending": "" }),
+      kpi("var(--ai)", t("work.kpi.agents"), String(working + waiting), t("work.kpi.agentsSub", { working, waiting }), "", { "data-board": "" }),
+    ];
+    // Os seis indicadores têm posições fixas. Reutilizar o card evita reiniciar
+    // sua animação de entrada a cada evento de runtime ou atualização das fontes.
+    cards.forEach(({ color, attrs, html }, i) => {
+      const card = (el.children[i] as HTMLElement | undefined) ?? h("div", "wk-kpi");
+      card.style.setProperty("--c", color);
+      for (const [name, value] of Object.entries(attrs)) card.setAttribute(name, value);
+      this.updateLiveMarkup(card, html);
+      if (!card.parentElement) el.append(card);
+    });
   }
 
   // ------------------------------------------------------------ Para fazer
@@ -905,7 +923,7 @@ export class WorkView {
     const usage = store.usage
       .flatMap((u) => u.windows.filter((w) => w.usedPercent !== null).slice(0, 1).map((w) => ({ tool: u.provider, w })))
       .slice(0, 3);
-    el.innerHTML = `<div class="wk-ch"><h3>${t("work.agents.title")}</h3><div class="sp"></div><button class="link" data-board="">${t("work.agents.open")}</button></div>
+    this.updateLiveMarkup(el, `<div class="wk-ch"><h3>${t("work.agents.title")}</h3><div class="sp"></div><button class="link" data-board="">${t("work.agents.open")}</button></div>
       <div class="wk-ags">
         <div class="ag"><div class="k">${t("work.agents.working")}</div><div class="v">${working}</div></div>
         <div class="ag${waiting ? " warn" : ""}"><div class="k">${t("work.agents.waiting")}</div><div class="v">${waiting}</div></div>
@@ -919,7 +937,7 @@ export class WorkView {
               )
               .join("")}</div>`
           : ""
-      }`;
+      }`);
   }
 
   private renderHeat(): void {
