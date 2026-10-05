@@ -162,8 +162,8 @@ button.person:hover { border-color: var(--line2); background: var(--hover); }
 .mlist li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: var(--r-md); border: 1px solid var(--line); font-size: 12.5px; }
 .mlist li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mlist li em { font-style: normal; font-size: 11px; color: var(--warn); }
-.danger { display: inline-flex; align-items: center; justify-content: center; gap: 6px; height: var(--ctl); padding: 0 14px; border-radius: var(--r-sm); background: var(--bad); color: #fff; font-weight: 600; font-size: 12.5px; }
-.danger:hover { filter: brightness(1.08); }
+/* Botão sólido de ação destrutiva. Sozinho, `danger` é só um modificador (texto vermelho em menus, opções e botões do Git). */
+.primary.danger { background: var(--bad-solid); }
 
 /* Versão do CLI no popup de limites. */
 .pv { margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--line); display: grid; gap: 8px; }

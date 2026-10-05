@@ -169,7 +169,7 @@ body.resizing-git, body.resizing-git * { cursor: col-resize !important; user-sel
 .gd-ha { padding: 1px 8px; border-radius: var(--r-sm); background: var(--hover2); color: var(--muted); font: 11px var(--sans); opacity: 0; transition: opacity 0.12s; }
 .gd-hunk:hover .gd-ha, .gd-ha:focus { opacity: 1; }
 .gd-ha:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); color: var(--text); }
-.gd-ha.danger:hover { background: color-mix(in srgb, var(--bad) 20%, transparent); }
+.gd-ha.danger:hover { background: color-mix(in srgb, var(--bad) 20%, transparent); color: var(--bad); }
 .gd.nosel .gd-ha { display: none; }
 .gl { display: flex; min-height: 19px; }
 .gl .gn { width: 44px; flex: none; text-align: right; padding-right: 8px; color: color-mix(in srgb, var(--faint) 75%, transparent); user-select: none; font-size: 11px; }

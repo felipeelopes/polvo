@@ -52,7 +52,7 @@ export function ask(o: AskOpts): Promise<AskResult | null> {
       : "";
     const foot = o.choices
       ? `<div class="mfoot"><span class="hk"></span><button class="ghost" data-c="cancel">${esc(t("git.dialog.cancel"))}</button></div>`
-      : `<div class="mfoot"><span class="hk err" data-err></span><button class="ghost" data-c="cancel">${esc(t("git.dialog.cancel"))}</button><button class="${o.confirm?.danger ? "danger" : "primary"}" data-c="ok">${esc(o.confirm?.label ?? t("git.dialog.ok"))}</button></div>`;
+      : `<div class="mfoot"><span class="hk err" data-err></span><button class="ghost" data-c="cancel">${esc(t("git.dialog.cancel"))}</button><button class="${o.confirm?.danger ? "primary danger" : "primary"}" data-c="ok">${esc(o.confirm?.label ?? t("git.dialog.ok"))}</button></div>`;
     modal.innerHTML = `<div class="mbox gbox"><h2>${esc(o.title)}</h2>${o.sub ? `<div class="sub">${esc(o.sub)}</div>` : ""}${o.html ?? ""}${input}${fields}${input2}${select}${checks}${choices}${foot}</div>`;
     const inEl = modal.querySelector<HTMLInputElement>("[data-in]");
     const done = (choice: string | null) => {

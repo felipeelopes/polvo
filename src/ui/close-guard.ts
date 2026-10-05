@@ -34,7 +34,7 @@ function confirmClose(busy: { title: string; tool: keyof typeof TOOLS; status: s
   modal.innerHTML = `<div class="mbox guard">
     <div class="hero">${logo(56, "idle", { look: true })}<div><h2>${t("guard.title")}</h2><div class="sub" style="margin:0">${tn("guard.busy", busy.length)} ${t("guard.explain")}</div></div></div>
     <ul class="mlist">${list}${busy.length > 6 ? `<li><span>${t("guard.more", { n: busy.length - 6 })}</span></li>` : ""}</ul>
-    <div class="mfoot"><span class="hk"></span><button class="ghost" data-stay>${t("guard.stay")}</button><button class="danger" data-close>${t("guard.close")}</button></div>
+    <div class="mfoot"><span class="hk"></span><button class="ghost" data-stay>${t("guard.stay")}</button><button class="primary danger" data-close>${t("guard.close")}</button></div>
   </div>`;
   modal.addEventListener("click", (e) => {
     const tg = e.target as Element;
