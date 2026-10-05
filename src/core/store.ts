@@ -45,6 +45,7 @@ class Store {
   private listeners = new Set<(topic: Topic) => void>();
   private undoStack: string[] = [];
   private saveTimer: number | undefined;
+  private projectRequest = 0;
 
   on(fn: (topic: Topic) => void): () => void {
     this.listeners.add(fn);
@@ -125,9 +126,15 @@ class Store {
 
   /** Liga/desliga o filtro de projeto e carrega a disposição de painéis dele. */
   async setProject(key: string | null): Promise<void> {
+    const request = ++this.projectRequest;
     if (key === this.project) return;
     clearTimeout(this.saveTimer);
     await ipc.layoutSave(this.layoutKey, clone(this.tree), this.view).catch(() => {});
+    if (request !== this.projectRequest) return;
+    const layoutKey = key ? `${this.label}::${key}` : this.label;
+    const snap = await ipc.snapshot(layoutKey).catch(() => null);
+    if (request !== this.projectRequest) return;
+    // Projeto e árvore mudam juntos: enquanto carrega, a árvore ainda pertence ao projeto atual.
     this.project = key;
     try {
       if (key) localStorage.setItem(`polvo.project.${this.label}`, key);
@@ -135,7 +142,6 @@ class Store {
     } catch {
       /* ignora */
     }
-    const snap = await ipc.snapshot(this.layoutKey).catch(() => null);
     this.tree = snap?.layout ?? null;
     this.undoStack = [];
     this.zoom = null;

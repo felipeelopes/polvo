@@ -45,6 +45,7 @@ export class ChangesPane {
   private busy = false;
   private lastKey = "";
   private nextKey = "";
+  private diffRequest = 0;
 
   constructor(private ctx: GitCtx) {
     this.uView = new DiffView({
@@ -115,12 +116,19 @@ export class ChangesPane {
 
   /** Repositório trocado. */
   reset(): void {
+    this.diffRequest++;
     this.selected = null;
     this.marked.clear();
     this.anchor = null;
     this.known.clear();
     this.lastKey = "";
     this.raw = { u: "", s: "" };
+    this.files = { u: null, s: null };
+    this.uView.selection.clear();
+    this.sView.selection.clear();
+    this.selBar.hidden = true;
+    this.dHead.innerHTML = "";
+    this.dScroll.innerHTML = "";
     this.stashOpen = true;
     this.stashSel = null;
     this.stashShown = "";
@@ -574,7 +582,13 @@ export class ChangesPane {
 
   // ------------------------------------------------------------ diff
 
+  private isCurrentDiff(request: number, repo: string, path: string): boolean {
+    return request === this.diffRequest && repo === this.repo && path === this.selected && !this.stashSel;
+  }
+
   private async loadDiff(force: boolean): Promise<void> {
+    const request = ++this.diffRequest;
+    const repo = this.repo;
     const f = this.file(this.selected);
     if (!f) {
       this.selBar.hidden = true;
@@ -593,14 +607,14 @@ export class ChangesPane {
       return;
     }
     const path = f.path;
-    if (f.conflict) return this.renderConflict(f);
-    const base = { repo: this.repo, path: f.path, orig: f.orig, context: this.context, ignoreWs: this.ws };
+    if (f.conflict) return this.renderConflict(f, request);
+    const base = { repo, path: f.path, orig: f.orig, context: this.context, ignoreWs: this.ws };
     try {
       const [u, s] = await Promise.all([
         f.untracked ? git.diff({ ...base, kind: "untracked" }) : f.y !== "." ? git.diff({ ...base, kind: "worktree" }) : Promise.resolve(""),
         !f.untracked && f.x !== "." ? git.diff({ ...base, kind: "staged" }) : Promise.resolve(""),
       ]);
-      if (this.selected !== path) return;
+      if (!this.isCurrentDiff(request, repo, path)) return;
       if (!force && u === this.raw.u && s === this.raw.s) return;
       const keepU = u === this.raw.u;
       const keepS = s === this.raw.s;
@@ -623,10 +637,11 @@ export class ChangesPane {
         } else view.el.classList.remove("nosel");
         this.dScroll.append(view.el);
       }
-      if (IMAGE_EXT.test(f.path)) void this.renderImages(f);
+      if (IMAGE_EXT.test(f.path)) void this.renderImages(f, request);
       else if (!this.files.u && !this.files.s) this.dScroll.innerHTML = `<div class="g-empty">${esc(t("git.diff.empty"))}</div>`;
       this.onSelection(null);
     } catch (e) {
+      if (!this.isCurrentDiff(request, repo, path)) return;
       this.dScroll.innerHTML = `<div class="g-empty err">${esc(String(e))}</div>`;
     }
   }
@@ -695,25 +710,31 @@ export class ChangesPane {
     void this.loadDiff(true);
   }
 
-  private async renderImages(f: FileChange): Promise<void> {
-    const abs = absPath(this.repo, f.path);
+  private async renderImages(f: FileChange, request: number): Promise<void> {
+    const repo = this.repo;
+    const abs = absPath(repo, f.path);
     const mime = /\.svg$/i.test(f.path) ? "image/svg+xml" : "image/*";
     const url = (b: Uint8Array) => URL.createObjectURL(new Blob([b as BlobPart], { type: mime }));
     const [before, after] = await Promise.all([
-      f.untracked || f.x === "A" ? null : git.fileAt(this.repo, "HEAD", f.orig ?? f.path).then(url, () => null),
+      f.untracked || f.x === "A" ? null : git.fileAt(repo, "HEAD", f.orig ?? f.path).then(url, () => null),
       f.y === "D" || f.x === "D" ? null : ipc.fileBytes(abs).then(url, () => null),
     ]);
-    if (this.selected !== f.path) return;
+    if (!this.isCurrentDiff(request, repo, f.path)) {
+      if (before) URL.revokeObjectURL(before);
+      if (after) URL.revokeObjectURL(after);
+      return;
+    }
     const box = h("div", "gimg");
     box.innerHTML = `${before ? `<figure><img src="${before}"><figcaption>HEAD</figcaption></figure>` : ""}${after ? `<figure><img src="${after}"><figcaption>${esc(t("git.diff.image"))}</figcaption></figure>` : ""}`;
     this.dScroll.replaceChildren(box);
   }
 
-  private async renderConflict(f: FileChange): Promise<void> {
-    const abs = absPath(this.repo, f.path);
+  private async renderConflict(f: FileChange, request: number): Promise<void> {
+    const repo = this.repo;
+    const abs = absPath(repo, f.path);
     this.dHead.innerHTML = `<span class="gst U">U</span><span class="gd-path"><em>${esc(splitPath(f.path).dir)}</em>${esc(splitPath(f.path).name)}</span>`;
     const text = await ipc.fileRead(abs).then((d) => d.content, () => "");
-    if (this.selected !== f.path) return;
+    if (!this.isCurrentDiff(request, repo, f.path)) return;
     let side: "" | "ours" | "theirs" = "";
     const lines = text.split("\n").map((l, i) => {
       if (l.startsWith("<<<<<<<")) side = "ours";

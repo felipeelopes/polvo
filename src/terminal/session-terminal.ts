@@ -95,6 +95,8 @@ export class SessionTerminal {
   private fitAddon = new FitAddon();
   private webgl: WebglAddon | null = null;
   private pending: Uint8Array[] | null = null;
+  private connectRequest = 0;
+  private disposed = false;
   private cols = 0;
   private rows = 0;
   private fitTimer: number | undefined;
@@ -204,12 +206,17 @@ export class SessionTerminal {
 
   /** Conecta à saída do processo, reproduzindo o histórico antes dos dados ao vivo. */
   async connect(since: number): Promise<void> {
-    if (this.connectedTo === since) return;
+    if (this.disposed || this.connectedTo === since) return;
+    const request = ++this.connectRequest;
+    this.connected = false;
     this.connectedTo = since;
     this.stimulus();
     this.pending = [];
     try {
-      const history = await ipc.ptyAttach(this.id, (bytes) => this.onBytes(bytes));
+      const history = await ipc.ptyAttach(this.id, (bytes) => {
+        if (request === this.connectRequest) this.onBytes(bytes);
+      });
+      if (request !== this.connectRequest) return;
       this.term.reset();
       // O CLI pode já ter escrito tudo e estar parado esperando (ex.: Codex
       // retomado antes de a janela abrir): o histórico também conta como saída,
@@ -223,10 +230,11 @@ export class SessionTerminal {
       this.cols = this.rows = 0;
       this.scheduleFit(0);
     } catch {
+      if (request !== this.connectRequest) return;
       this.connected = false;
       this.connectedTo = -1;
     } finally {
-      this.pending = null;
+      if (request === this.connectRequest) this.pending = null;
     }
   }
 
@@ -239,6 +247,12 @@ export class SessionTerminal {
   }
 
   dispose(): void {
+    if (this.disposed) return;
+    this.disposed = true;
+    this.connectRequest++;
+    this.connected = false;
+    this.pending = null;
+    clearTimeout(this.fitTimer);
     live.delete(this);
     this.observer.disconnect();
     if (this.webgl) webglCount--;

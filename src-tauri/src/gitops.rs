@@ -40,7 +40,12 @@ fn command(repo: &str, args: &[&str]) -> Command {
         .env("GIT_EDITOR", "true")
         .env("GIT_SEQUENCE_EDITOR", "true")
         .env("GIT_TERMINAL_PROMPT", "0")
-        .env("GIT_MERGE_AUTOEDIT", "no");
+        .env("GIT_MERGE_AUTOEDIT", "no")
+        // Os caminhos vêm da lista de arquivos, não de padrões de busca.
+        .env_remove("GIT_GLOB_PATHSPECS")
+        .env_remove("GIT_NOGLOB_PATHSPECS")
+        .env_remove("GIT_ICASE_PATHSPECS")
+        .env_remove("GIT_LITERAL_PATHSPECS");
     hide_console(&mut cmd);
     cmd
 }
@@ -121,6 +126,11 @@ fn run(repo: &str, args: &[&str]) -> AppResult<String> {
     run_with(repo, args, None, &[])
 }
 
+/// Seleciona exatamente o arquivo, mesmo se o nome contém colchetes ou magia de pathspec.
+fn literal_path(path: &str) -> String {
+    format!(":(literal){path}")
+}
+
 /// Leitura que não pega o lock do índice (os agentes podem estar usando o git).
 fn read(repo: &str, args: &[&str]) -> AppResult<String> {
     let mut full = vec!["--no-optional-locks"];
@@ -198,6 +208,17 @@ fn parse_status(out: &str) -> Status {
             }
             continue;
         }
+        if let Some(path) = tok.strip_prefix("? ") {
+            st.files.push(FileChange {
+                path: path.into(),
+                orig: None,
+                x: ".".into(),
+                y: "?".into(),
+                untracked: true,
+                conflict: false,
+            });
+            continue;
+        }
         let kind = tok.chars().next().unwrap_or(' ');
         let xy = tok.get(2..4).unwrap_or("..");
         let (x, y) = (xy[..1].to_string(), xy[1..].to_string());
@@ -239,14 +260,6 @@ fn parse_status(out: &str) -> Status {
                     });
                 }
             }
-            '?' => st.files.push(FileChange {
-                path: tok[2..].into(),
-                orig: None,
-                x: ".".into(),
-                y: "?".into(),
-                untracked: true,
-                conflict: false,
-            }),
             _ => {}
         }
     }
@@ -408,9 +421,9 @@ pub async fn git_diff(req: DiffReq) -> AppResult<String> {
         }
         args.push("--".into());
         if let Some(o) = req.orig.filter(|o| o != &req.path) {
-            args.push(o);
+            args.push(literal_path(&o));
         }
-        args.push(req.path);
+        args.push(literal_path(&req.path));
         run(
             &req.repo,
             &args.iter().map(String::as_str).collect::<Vec<_>>(),
@@ -442,6 +455,7 @@ pub async fn git_file_at(
 #[tauri::command]
 pub async fn git_stage(repo: String, paths: Vec<String>) -> AppResult<()> {
     blocking(move || {
+        let paths: Vec<String> = paths.iter().map(|p| literal_path(p)).collect();
         let mut args = vec!["add", "-A", "--"];
         args.extend(paths.iter().map(String::as_str));
         write(&repo, &args).map(|_| ())
@@ -452,9 +466,11 @@ pub async fn git_stage(repo: String, paths: Vec<String>) -> AppResult<()> {
 #[tauri::command]
 pub async fn git_unstage(repo: String, paths: Vec<String>) -> AppResult<()> {
     blocking(move || {
+        let paths: Vec<String> = paths.iter().map(|p| literal_path(p)).collect();
         let unborn = read(&repo, &["rev-parse", "--verify", "-q", "HEAD"]).is_err();
         let mut args = if unborn {
-            vec!["rm", "--cached", "-r", "-q", "--"]
+            // Só remove do índice, mesmo se o arquivo foi editado depois do stage.
+            vec!["rm", "--cached", "-r", "-f", "-q", "--"]
         } else {
             vec!["restore", "--staged", "--"]
         };
@@ -500,6 +516,8 @@ pub async fn git_discard(repo: String, files: Vec<DiscardItem>) -> AppResult<()>
         let lock = repo_lock(&repo);
         let _g = lock.lock();
         for f in files {
+            let path = literal_path(&f.path);
+            let orig = f.orig.as_deref().map(literal_path);
             let abs = root.join(&f.path);
             if abs.exists() {
                 trash::delete(&abs).map_err(|e| AppError::msg(e.to_string()))?;
@@ -508,7 +526,7 @@ pub async fn git_discard(repo: String, files: Vec<DiscardItem>) -> AppResult<()>
                 continue;
             }
             if f.x == "A" {
-                let _ = run(&repo, &["rm", "--cached", "-q", "--", &f.path]);
+                let _ = run(&repo, &["rm", "--cached", "-q", "--", &path]);
                 continue;
             }
             let mut args = vec![
@@ -517,9 +535,9 @@ pub async fn git_discard(repo: String, files: Vec<DiscardItem>) -> AppResult<()>
                 "--staged",
                 "--worktree",
                 "--",
-                f.path.as_str(),
+                path.as_str(),
             ];
-            if let Some(o) = f.orig.as_deref() {
+            if let Some(o) = orig.as_deref() {
                 args.push(o);
             }
             run(&repo, &args)?;
@@ -750,6 +768,7 @@ pub async fn git_log(
         let skip = format!("--skip={skip}");
         let limit = format!("-n{limit}");
         let rev = rev.unwrap_or_else(|| "HEAD".into());
+        let path = path.filter(|p| !p.is_empty()).map(|p| literal_path(&p));
         let mut args = vec![
             "log",
             "-z",
@@ -763,7 +782,7 @@ pub async fn git_log(
             args.extend(["-i", "--fixed-strings", &grep]);
         }
         args.push(&rev);
-        if let Some(p) = path.as_deref().filter(|p| !p.is_empty()) {
+        if let Some(p) = path.as_deref() {
             args.extend(["--follow", "--", p]);
         }
         let out = match read(&repo, &args) {
@@ -1035,22 +1054,23 @@ pub async fn git_action(req: GitAction) -> AppResult<String> {
                 _ => Ok(String::new()),
             },
             "resolve" => {
-                let path = arg(a, 0);
+                let path = literal_path(arg(a, 0));
                 match arg(a, 1) {
                     side @ ("ours" | "theirs") => {
                         let flag = format!("--{side}");
-                        if write(r, &["checkout", &flag, "--", path]).is_err() {
+                        if write(r, &["checkout", &flag, "--", &path]).is_err() {
                             // O lado escolhido apagou o arquivo.
-                            return write(r, &["rm", "-q", "--", path]);
+                            return write(r, &["rm", "-q", "--", &path]);
                         }
-                        write(r, &["add", "--", path])
+                        write(r, &["add", "--", &path])
                     }
-                    _ => write(r, &["add", "--", path]),
+                    _ => write(r, &["add", "--", &path]),
                 }
             }
             "stash-push" => {
                 // [mensagem, opções ("u" novos, "k" manter índice, "s" só o índice), caminhos…]
                 let opts = if a.len() > 1 { arg(a, 1) } else { "u" };
+                let paths: Vec<String> = a.iter().skip(2).map(|p| literal_path(p)).collect();
                 let mut args = vec!["stash", "push"];
                 if opts.contains('s') {
                     args.push("--staged");
@@ -1065,7 +1085,7 @@ pub async fn git_action(req: GitAction) -> AppResult<String> {
                 }
                 if a.len() > 2 {
                     args.push("--");
-                    args.extend(a[2..].iter().map(String::as_str));
+                    args.extend(paths.iter().map(String::as_str));
                 }
                 write(r, &args)
             }
@@ -1472,6 +1492,18 @@ mod tests {
     }
 
     #[test]
+    fn parses_untracked_unicode_filenames() {
+        let st = parse_status("? ação.md\0? é.txt\0? 日本語.md\0? 🐙.md\0");
+        assert_eq!(st.files.len(), 4);
+        assert_eq!(st.files[0].path, "ação.md");
+        assert_eq!(st.files[1].path, "é.txt");
+        assert!(st
+            .files
+            .iter()
+            .all(|f| f.untracked && f.x == "." && f.y == "?"));
+    }
+
+    #[test]
     fn web_urls() {
         assert_eq!(
             web_url("git@github.com:a/b.git").as_deref(),
@@ -1499,6 +1531,104 @@ mod tests {
     }
 
     #[test]
+    fn unstage_on_unborn_branch_preserves_newer_worktree_content() {
+        let repo = temp_repo();
+        let file = Path::new(&repo).join("new.txt");
+        std::fs::write(&file, "staged\n").unwrap();
+        tauri::async_runtime::block_on(git_stage(repo.clone(), vec!["new.txt".into()])).unwrap();
+        std::fs::write(&file, "newer work\n").unwrap();
+
+        let result =
+            tauri::async_runtime::block_on(git_unstage(repo.clone(), vec!["new.txt".into()]));
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "newer work\n");
+        result.unwrap();
+        let st = status_of(&repo).unwrap();
+        assert!(st.files[0].untracked);
+        let _ = std::fs::remove_dir_all(&repo);
+    }
+
+    #[test]
+    fn file_operations_treat_brackets_as_literal_paths() {
+        let repo = temp_repo();
+        for name in ["[ab].txt", "a.txt", "b.txt"] {
+            std::fs::write(Path::new(&repo).join(name), "original\n").unwrap();
+        }
+        run(&repo, &["add", "-A"]).unwrap();
+        run(&repo, &["commit", "-qm", "initial"]).unwrap();
+        for name in ["[ab].txt", "a.txt", "b.txt"] {
+            std::fs::write(Path::new(&repo).join(name), format!("changed {name}\n")).unwrap();
+        }
+
+        let diff = tauri::async_runtime::block_on(git_diff(DiffReq {
+            repo: repo.clone(),
+            path: "[ab].txt".into(),
+            orig: None,
+            kind: "worktree".into(),
+            sha: None,
+            context: None,
+            ignore_ws: None,
+        }))
+        .unwrap();
+        assert!(diff.contains("+changed [ab].txt"));
+        assert!(!diff.contains("+changed a.txt"));
+        assert!(!diff.contains("+changed b.txt"));
+
+        tauri::async_runtime::block_on(git_stage(repo.clone(), vec!["[ab].txt".into()])).unwrap();
+        let st = status_of(&repo).unwrap();
+        assert_eq!(st.files.iter().filter(|f| f.x == "M").count(), 1);
+        assert_eq!(
+            st.files.iter().find(|f| f.x == "M").unwrap().path,
+            "[ab].txt"
+        );
+        run(&repo, &["add", "-A"]).unwrap();
+        tauri::async_runtime::block_on(git_unstage(repo.clone(), vec!["[ab].txt".into()])).unwrap();
+        let st = status_of(&repo).unwrap();
+        assert_eq!(
+            st.files.iter().find(|f| f.path == "[ab].txt").unwrap().x,
+            "."
+        );
+        assert_eq!(st.files.iter().filter(|f| f.x == "M").count(), 2);
+        tauri::async_runtime::block_on(git_unstage(
+            repo.clone(),
+            vec!["a.txt".into(), "b.txt".into()],
+        ))
+        .unwrap();
+
+        tauri::async_runtime::block_on(git_action(GitAction {
+            repo: repo.clone(),
+            action: "stash-push".into(),
+            args: vec!["literal".into(), "u".into(), "[ab].txt".into()],
+        }))
+        .unwrap();
+        assert_eq!(
+            std::fs::read_to_string(Path::new(&repo).join("[ab].txt")).unwrap(),
+            "original\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(Path::new(&repo).join("a.txt")).unwrap(),
+            "changed a.txt\n"
+        );
+        assert_eq!(
+            std::fs::read_to_string(Path::new(&repo).join("b.txt")).unwrap(),
+            "changed b.txt\n"
+        );
+        run(&repo, &["add", "-A"]).unwrap();
+        run(&repo, &["commit", "-qm", "other files"]).unwrap();
+        let log = tauri::async_runtime::block_on(git_log(
+            repo.clone(),
+            0,
+            10,
+            None,
+            None,
+            Some("[ab].txt".into()),
+        ))
+        .unwrap();
+        assert_eq!(log.len(), 1);
+        assert_eq!(log[0].subject, "initial");
+        let _ = std::fs::remove_dir_all(&repo);
+    }
+
+    #[test]
     fn end_to_end_flow() {
         let repo = temp_repo();
         let file = Path::new(&repo).join("a.txt");
@@ -1515,6 +1645,7 @@ mod tests {
             no_verify: false,
             all: true,
             sign_off: false,
+            paths: vec![],
         }))
         .unwrap();
         assert_eq!(done.subject, "primeiro");
@@ -1581,6 +1712,7 @@ mod tests {
             no_verify: false,
             all: false,
             sign_off: false,
+            paths: vec![],
         }))
         .unwrap();
         let log =
@@ -1621,6 +1753,7 @@ mod tests {
             no_verify: false,
             all: true,
             sign_off: false,
+            paths: vec![],
         }))
         .unwrap();
         tauri::async_runtime::block_on(git_action(GitAction {
