@@ -8,8 +8,8 @@ import { Terminal, type ITheme } from "@xterm/xterm";
 import "@xterm/xterm/css/xterm.css";
 import { ipc } from "../core/ipc";
 import type { ToolKind } from "../core/types";
-import { MD_EXT, resolvePath } from "../docs/paths";
-import { installCtrlClick, mdLinkProvider, type FileLinkHost } from "./file-links";
+import { resolvePath } from "../docs/paths";
+import { installCtrlClick, openPath, pathLinkProvider, type FileLinkHost } from "./file-links";
 import { cssVar, isLightTerminal, onThemeChange } from "../ui/theme";
 
 /** Cores ANSI do terminal escuro e do claro; fundo e texto vêm dos tokens --term-bg e --term-fg. */
@@ -127,8 +127,9 @@ export class SessionTerminal {
         allowNonHttpProtocols: true,
         activate: (e, uri) => {
           if (/^https?:/i.test(uri)) ipc.openUrl(uri).catch(() => {});
-          else if (files && /^file:/i.test(uri) && MD_EXT.test(uri.split(/[?#]/)[0]) && (e.ctrlKey || e.metaKey)) {
-            files.open(resolvePath(files.cwd() ?? "C:\\", uri));
+          else if (files && /^file:/i.test(uri) && (e.ctrlKey || e.metaKey)) {
+            const path = resolvePath(files.cwd() ?? "C:\\", uri.split(/[?#]/)[0]);
+            void ipc.pathsKind([path]).then(([kind]) => kind && openPath(files, path, kind as 1 | 2));
           }
         },
       },
@@ -139,7 +140,7 @@ export class SessionTerminal {
     this.term.unicode.activeVersion = "11";
     this.term.loadAddon(new WebLinksAddon((_e, url) => ipc.openUrl(url).catch(() => {})));
     if (files) {
-      this.term.registerLinkProvider(mdLinkProvider(this.term, files));
+      this.term.registerLinkProvider(pathLinkProvider(this.term, files));
       installCtrlClick(this.term, this.host, files);
     }
 

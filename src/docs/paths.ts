@@ -1,4 +1,4 @@
-// Caminhos do Windows no frontend: achar arquivos .md no texto do terminal e
+// Caminhos do Windows no frontend: achar arquivos e pastas no texto do terminal e
 // resolvê-los em relação à pasta da sessão ou do documento aberto.
 
 export const MD_EXT = /\.(?:md|markdown|mdx)$/i;
@@ -27,6 +27,44 @@ export function findMdPaths(text: string): PathMatch[] {
     if (found.some((f) => start < f.index + f.length && start + m[0].length > f.index)) continue;
     const raw = m[0];
     found.push({ index: start, length: raw.length, path: raw.replace(/:\d+(?::\d+)?$/, "") });
+  }
+  return found.sort((a, b) => a.index - b.index);
+}
+
+/** Caractere de um nome (sem espaços, aspas, `:`… nem as molduras e setas dos CLIs). */
+const SEG = String.raw`[^\s"'${"`"}<>|*?()[\]{}:,;\\/\u2190-\u21ff\u23b0-\u23ff\u2500-\u259f]`;
+/** Qualquer caminho solto: prefixo opcional, segmentos e `:linha:coluna` no fim. */
+const ANY_BARE = new RegExp(String.raw`(?:file:\/\/\/?)?(?:[A-Za-z]:[\\/]|\\\\|\.{1,2}[\\/]|[\\/])?(?:${SEG}+[\\/])*${SEG}*(?::\d+(?::\d+)?)?`, "g");
+/** Entre aspas ou crases o caminho pode ter espaços. */
+const ANY_QUOTED = /[`"']([^`"'\n]{2,260}?)[`"']/g;
+const URL = /\b[a-z][\w+.-]*:\/\/\S+/gi;
+const LINE_SUFFIX = /:\d+(?::\d+)?$/;
+/** Tem separador (`src/ui`, `C:\x`) ou extensão (`README.md`). */
+const looksLikePath = (p: string) => /[\\/]/.test(p) || /[^\\/.]\.[A-Za-z0-9]{1,10}$/.test(p);
+const MAX_PATHS = 40;
+
+/**
+ * Menções a arquivos e pastas numa linha (Ctrl + clique no terminal). São só
+ * candidatos: quem confirma é a existência no disco. URLs ficam com o link da web.
+ */
+export function findPaths(text: string): PathMatch[] {
+  const urls = [...text.matchAll(URL)].map((m) => [m.index!, m.index! + m[0].length]);
+  const found: PathMatch[] = [];
+  const free = (a: number, b: number) => !urls.some(([x, y]) => a < y && b > x) && !found.some((f) => a < f.index + f.length && b > f.index);
+  for (const m of text.matchAll(ANY_QUOTED)) {
+    const path = m[1].replace(LINE_SUFFIX, "");
+    const start = m.index! + 1;
+    if (path !== path.trim() || !looksLikePath(path) || !free(start, start + m[1].length)) continue;
+    found.push({ index: start, length: m[1].length, path });
+  }
+  for (const m of text.matchAll(ANY_BARE)) {
+    // Ponto final da frase não faz parte do caminho.
+    const raw = m[0].replace(/\.+$/, "");
+    const path = raw.replace(LINE_SUFFIX, "");
+    const start = m.index!;
+    if (!/\w/.test(path) || !looksLikePath(path) || !free(start, start + raw.length)) continue;
+    found.push({ index: start, length: raw.length, path });
+    if (found.length >= MAX_PATHS) break;
   }
   return found.sort((a, b) => a.index - b.index);
 }

@@ -1,6 +1,7 @@
 {
   "files.notFound": "File not found: {path}",
   "files.notAFile": "Not a file",
+  "files.notAFolder": "Not a folder",
   "files.tooLargeForEditor": "File too large to open in the editor",
   "files.tooLarge": "File too large",
   "projects.gitNotFound": "git was not found in PATH.",

@@ -13,6 +13,9 @@ import "../styles/git-badges.css";
 
 const COLLAPSED_KEY = "polvo.sidebar.collapsed";
 const CLOSED_KEY = "polvo.sidebar.closedGroups";
+const ORDER_KEY = "polvo.sidebar.order";
+/** Distância (px) que o ponteiro anda antes de virar arraste. */
+const DRAG_PX = 5;
 
 export interface SidebarHost {
   /** Clique ou arraste numa sessão. */
@@ -23,6 +26,8 @@ export interface SidebarHost {
   focusProject(key: string | null): void;
   /** Tira um projeto salvo (sem sessões) da barra. */
   removeProject(path: string): void;
+  /** Encerra uma sessão (já confirmada). */
+  closeSession(id: string): void;
   /** A largura mudou (recolher/expandir). */
   resized(): void;
   /** Abre o painel Git num repositório/worktree. */
@@ -65,6 +70,8 @@ interface ProjectGroup {
   saved: boolean;
   /** É um repositório git (mostra branches e worktrees). */
   git: boolean;
+  /** Ainda sem resposta do git: a chave pode mudar (worktree → projeto). */
+  pending: boolean;
 }
 
 const readJson = <T>(key: string, fallback: T): T => {
@@ -76,6 +83,35 @@ const readJson = <T>(key: string, fallback: T): T => {
 };
 
 const norm = normPath;
+
+/** Ordem dos projetos na barra (chaves); só muda quando o usuário arrasta. */
+let order = readJson<string[]>(ORDER_KEY, []);
+
+function saveOrder(next: string[]): void {
+  order = next;
+  try {
+    localStorage.setItem(ORDER_KEY, JSON.stringify(order));
+  } catch {
+    /* ignora */
+  }
+}
+
+/**
+ * Ordem fixa: os conhecidos na posição salva, os novos no fim. Um projeto novo
+ * só entra na lista depois que o git respondeu (antes a chave ainda pode mudar).
+ */
+function sortGroups(groups: ProjectGroup[]): ProjectGroup[] {
+  const fresh = groups.filter((g) => !g.pending && !order.includes(g.key)).map((g) => g.key);
+  if (fresh.length) saveOrder([...order, ...fresh]);
+  const at = (k: string) => {
+    const i = order.indexOf(k);
+    return i < 0 ? Infinity : i;
+  };
+  return groups
+    .map((g, i) => ({ g, i }))
+    .sort((a, b) => at(a.g.key) - at(b.g.key) || a.i - b.i)
+    .map((x) => x.g);
+}
 
 /** Agrupa as sessões desta janela por projeto e worktree (e inclui os projetos salvos). */
 export function groupSessions(sessions: Session[]): ProjectGroup[] {
@@ -98,9 +134,11 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
         })),
         saved: false,
         git: !!info,
+        pending: false,
       };
       groups.set(key, g);
     }
+    g.pending ||= info === undefined;
     const root = norm(info?.root ?? s.cwd);
     let wt = g.worktrees.find((w) => norm(w.path) === root);
     if (!wt) {
@@ -116,6 +154,7 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
     if (g) {
       g.saved = true;
       g.git ||= !!info;
+      g.pending ||= info === undefined;
       continue;
     }
     groups.set(key, {
@@ -126,9 +165,10 @@ export function groupSessions(sessions: Session[]): ProjectGroup[] {
       worktrees: (info?.worktrees ?? [{ path: p.path, branch: null, main: true }]).map((w) => ({ path: w.path, label: w.branch ?? basename(w.path), main: w.main, sessions: [] })),
       saved: true,
       git: !!info,
+      pending: info === undefined,
     });
   }
-  return [...groups.values()];
+  return sortGroups([...groups.values()]);
 }
 
 /** Ferramenta usada mais recentemente no grupo (para o "+" rápido). */
@@ -144,8 +184,16 @@ export class Sidebar {
   private closed = new Set(readJson<string[]>(CLOSED_KEY, []));
   /** Popover de sessões aberto a partir do trilho (atualiza junto com a barra). */
   private railPop: { key: string; render: (el: HTMLDivElement) => void } | null = null;
-  /** Projeto esperando o segundo clique para sair da barra (a barra se redesenha o tempo todo). */
-  private removeArmed: { path: string; timer: number } | null = null;
+  /**
+   * Ação esperando o segundo clique (tirar projeto, encerrar sessão). Fica aqui,
+   * e não no botão, porque a barra se redesenha o tempo todo.
+   */
+  private armed: { what: "remove" | "close"; target: string; timer: number } | null = null;
+  /** Projeto sendo arrastado para mudar a ordem (`on` depois de passar de `DRAG_PX`). */
+  private drag: { key: string; x: number; y: number; on: boolean } | null = null;
+  private dropLine: HTMLDivElement | null = null;
+  /** Engole o clique que o navegador dispara ao soltar um arraste. */
+  private swallowClick = false;
 
   constructor(private host: SidebarHost) {
     const foot = h("div", "sb-foot");
@@ -156,6 +204,12 @@ export class Sidebar {
     this.el.addEventListener("contextmenu", (e) => this.onMenu(e));
     this.el.addEventListener("pointerover", (e) => this.onOver(e));
     this.el.addEventListener("pointerleave", hideTip);
+    // Outra janela reordenou: segue a mesma ordem.
+    window.addEventListener("storage", (e) => {
+      if (e.key !== ORDER_KEY) return;
+      order = readJson<string[]>(ORDER_KEY, []);
+      this.render();
+    });
     this.applyCollapsed();
   }
 
@@ -176,7 +230,8 @@ export class Sidebar {
         const on = all.some((s) => s.id === store.active);
         const out = !!store.project && store.project !== g.key;
         const face = rec?.icon ? projectIcon(rec.icon, 19) : `<span class="rp-ini">${esc(initials(g.name))}</span>`;
-        return `<div class="rp${on ? " on" : ""}${pc ? "" : " plain"}${all.length ? "" : " none"}${out ? " out" : ""}" data-project="${esc(g.key)}" data-pop style="--pc:${pc ?? "var(--muted)"};--acc:${pc ?? "var(--accent)"}">${face}${all.length ? `<span class="rp-n">${all.length}</span>` : ""}${st ? `<i class="sd ${st}"></i>` : ""}</div>`;
+        const dragging = this.drag?.on && this.drag.key === g.key ? " dragging" : "";
+        return `<div class="rp${dragging}${on ? " on" : ""}${pc ? "" : " plain"}${all.length ? "" : " none"}${out ? " out" : ""}" data-project="${esc(g.key)}" data-pop style="--pc:${pc ?? "var(--muted)"};--acc:${pc ?? "var(--accent)"}">${face}${all.length ? `<span class="rp-n">${all.length}</span>` : ""}${st ? `<i class="sd ${st}"></i>` : ""}</div>`;
       })
       .join("")}</div>`;
   }
@@ -228,15 +283,15 @@ export class Sidebar {
             const focused = store.project === g.key;
             const out = !!store.project && !focused;
             const focusBtn = `<button class="sb-tool sb-focus${focused ? " on" : ""}" data-focus="${esc(g.key)}" title="${focused ? t("sidebar.showAll") : t("sidebar.focusProject")}">${ICON.focus}</button>`;
-            const armed = this.removeArmed?.path === g.path;
+            const armed = this.isArmed("remove", g.path);
             const removeBtn = g.saved && !all.length ? `<button class="sb-tool${armed ? " confirm" : ""}" data-remove="${esc(g.path)}" title="${t("sidebar.remove")}">${armed ? t("sidebar.confirmRemove") : ICON.close}</button>` : "";
             const rec = store.projectRecord(g.key);
             const pc = colorValue(rec?.color);
-            const head = `<div class="pg-h${closed ? " closed" : ""}${pc ? " styled" : ""}" data-group="${esc(g.key)}" title="${esc(g.path)}"${pc ? ` style="--pc:${pc}"` : ""}>
+            const head = `<div class="pg-h${closed ? " closed" : ""}${pc ? " styled" : ""}" data-group="${esc(g.key)}" title="${esc(`${g.path}\n${t("sidebar.dragHint")}`)}"${pc ? ` style="--pc:${pc}"` : ""}>
                 <span class="chev">${ICON.chevron}</span>${projectIcon(rec?.icon)}<b>${esc(g.name)}</b>${focused ? `<span class="pg-flag">${t("sidebar.onlyThis")}</span>` : ""}${closed && tree ? gitBadge(g.path) : ""}<span class="cnt">${all.length}</span>
                 <span class="pg-acts">${tools(g.path)}${tree ? gitBtn(g.path) : ""}${focusBtn}${removeBtn}<button class="sb-add" data-new="${esc(g.path)}" data-tool="${lastTool(all)}" title="${t("sidebar.newInProject", { tool: TOOLS[lastTool(all)].short })}">${ICON.plusSm}</button></span></div>`;
-            const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}`;
-            if (closed) return `<div class="${cls}">${head}</div>`;
+            const cls = `pg${focused ? " focus" : ""}${out ? " out" : ""}${this.drag?.on && this.drag.key === g.key ? " dragging" : ""}`;
+            if (closed) return `<div class="${cls}" data-key="${esc(g.key)}">${head}</div>`;
             // Repositório: branch principal primeiro, depois os worktrees, todos sempre visíveis.
             const body = [...g.worktrees]
               .sort((a, b) => Number(b.main) - Number(a.main))
@@ -248,25 +303,121 @@ export class Sidebar {
                   <span class="pg-acts">${tools(w.path)}${gitBtn(w.path)}<button class="sb-add" data-new="${esc(w.path)}" data-tool="${tool}" title="${t("sidebar.newInWorktree", { tool: TOOLS[tool].short, branch: esc(w.label) })}">${ICON.plusSm}</button></span></div>${rows || `<div class="wt-none">${t("sidebar.noSessions")}</div>`}</div>`;
               })
               .join("");
-            return `<div class="${cls}">${head}${body || (all.length ? "" : `<div class="pg-none">${t("sidebar.noSessionsHint")}</div>`)}</div>`;
+            return `<div class="${cls}" data-key="${esc(g.key)}">${head}${body || (all.length ? "" : `<div class="pg-none">${t("sidebar.noSessionsHint")}</div>`)}</div>`;
           })
           .join("");
   }
 
   private row(s: Session): string {
-    return `<div class="si${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}${s.color ? " colored" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
-      ${toolIcon(s.tool, 14)}<span class="si-t">${esc(s.title)}</span>${store.context[s.id] !== undefined ? `<span class="si-ctx">${Math.round(store.context[s.id])}%</span>` : ""}<i class="sd ${s.runtime.status}"></i></div>`;
+    const armed = this.isArmed("close", s.id);
+    const close = `<button class="si-x${armed ? " confirm" : ""}" data-close="${s.id}" title="${esc(t("sidebar.closeSession"))}">${armed ? esc(t("sidebar.confirmClose")) : ICON.close}</button>`;
+    return `<div class="si${s.minimized ? " min" : ""}${store.active === s.id ? " on" : ""}${s.color ? " colored" : ""}${armed ? " armed" : ""}" data-id="${s.id}" style="--acc:${sessionColor(s)}">
+      ${toolIcon(s.tool, 14)}<span class="si-t">${esc(s.title)}</span>${store.context[s.id] !== undefined ? `<span class="si-ctx">${Math.round(store.context[s.id])}%</span>` : ""}<i class="sd ${s.runtime.status}"></i>${close}</div>`;
   }
 
   private onDown(e: PointerEvent): void {
-    const item = (e.target as Element).closest<HTMLElement>(".si");
-    if (!item || (e.target as Element).closest("button")) return;
-    hideTip();
-    this.host.sessionDown(e, item.dataset.id!);
+    const target = e.target as Element;
+    if (target.closest("button")) return;
+    const item = target.closest<HTMLElement>(".si");
+    if (item) {
+      hideTip();
+      this.host.sessionDown(e, item.dataset.id!);
+      return;
+    }
+    const key = target.closest<HTMLElement>("[data-group],[data-project]");
+    if (key && e.button === 0) this.dragStart(e, key.dataset.group ?? key.dataset.project!);
+  }
+
+  // ------------------------------------------------------------ arrastar projetos
+
+  /** Pressionou num projeto: vira arraste só depois de andar alguns pixels (senão é clique). */
+  private dragStart(e: PointerEvent, key: string): void {
+    this.drag = { key, x: e.clientX, y: e.clientY, on: false };
+    const move = (ev: PointerEvent) => this.dragMove(ev);
+    const up = (ev: PointerEvent) => {
+      window.removeEventListener("pointermove", move);
+      window.removeEventListener("pointerup", up);
+      window.removeEventListener("pointercancel", up);
+      this.dragEnd(ev.type === "pointerup" ? ev : null);
+    };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+    window.addEventListener("pointercancel", up);
+  }
+
+  private dragMove(e: PointerEvent): void {
+    const d = this.drag;
+    if (!d) return;
+    if (!d.on) {
+      if (Math.hypot(e.clientX - d.x, e.clientY - d.y) < DRAG_PX) return;
+      d.on = true;
+      hideTip();
+      closePopover();
+      this.el.classList.add("sb-dragging");
+      this.dropLine = h("div", "sb-drop");
+      document.body.appendChild(this.dropLine);
+      this.render();
+    }
+    const slot = this.dropSlot(e.clientY);
+    const line = this.dropLine!;
+    const r = this.body.getBoundingClientRect();
+    line.style.left = `${r.left + 6}px`;
+    line.style.width = `${r.width - 12}px`;
+    line.style.top = `${slot.y - 1}px`;
+  }
+
+  /** Itens da lista (grupos ou ícones do trilho), na ordem da tela. */
+  private dragItems(): HTMLElement[] {
+    return [...this.body.querySelectorAll<HTMLElement>(this.collapsed ? ".rp[data-project]" : ".pg[data-key]")];
+  }
+
+  /** Onde o projeto cairia: índice na lista e a altura da linha de inserção. */
+  private dropSlot(y: number): { index: number; y: number } {
+    const items = this.dragItems();
+    const gap = this.collapsed ? 4 : 1;
+    for (let i = 0; i < items.length; i++) {
+      const r = items[i].getBoundingClientRect();
+      if (y < r.top + r.height / 2) return { index: i, y: r.top - gap };
+    }
+    const last = items[items.length - 1]?.getBoundingClientRect();
+    return { index: items.length, y: last ? last.bottom + gap : this.body.getBoundingClientRect().top };
+  }
+
+  private dragEnd(e: PointerEvent | null): void {
+    const d = this.drag;
+    this.drag = null;
+    this.dropLine?.remove();
+    this.dropLine = null;
+    this.el.classList.remove("sb-dragging");
+    if (!d?.on) return;
+    // O clique que vem logo depois de soltar não abre/fecha o grupo.
+    this.swallowClick = true;
+    setTimeout(() => (this.swallowClick = false), 0);
+    if (e) {
+      const keys = this.dragItems().map((el) => el.dataset.key ?? el.dataset.project!);
+      const { index } = this.dropSlot(e.clientY);
+      const from = keys.indexOf(d.key);
+      if (from >= 0) {
+        keys.splice(from, 1);
+        keys.splice(index > from ? index - 1 : index, 0, d.key);
+        saveOrder([...keys, ...order.filter((k) => !keys.includes(k))]);
+      }
+    }
+    this.render();
   }
 
   private onClick(e: MouseEvent): void {
+    if (this.swallowClick) {
+      this.swallowClick = false;
+      e.stopPropagation();
+      return;
+    }
     const t = e.target as Element;
+    const close = t.closest<HTMLElement>("[data-close]")?.dataset.close;
+    if (close) {
+      e.stopPropagation();
+      return this.confirm("close", close, () => this.host.closeSession(close));
+    }
     const gitPath = t.closest<HTMLElement>("[data-git]")?.dataset.git;
     if (gitPath) {
       e.stopPropagation();
@@ -286,7 +437,7 @@ export class Sidebar {
     const remove = t.closest<HTMLElement>("[data-remove]")?.dataset.remove;
     if (remove) {
       e.stopPropagation();
-      return this.confirmRemove(remove);
+      return this.confirm("remove", remove, () => this.host.removeProject(remove));
     }
     const railItem = t.closest<HTMLElement>("[data-project]");
     if (railItem) return this.openRailProject(railItem, railItem.dataset.project!);
@@ -306,16 +457,24 @@ export class Sidebar {
     }
   }
 
-  /** Tirar um projeto da barra pede um segundo clique, como o "Encerrar?" dos painéis. */
-  private confirmRemove(path: string): void {
-    const armed = this.removeArmed;
+  private isArmed(what: "remove" | "close", target: string): boolean {
+    return this.armed?.what === what && this.armed.target === target;
+  }
+
+  /** Tirar um projeto ou encerrar uma sessão pede um segundo clique, como o "Encerrar?" dos painéis. */
+  private confirm(what: "remove" | "close", target: string, run: () => void): void {
+    const armed = this.armed;
     if (armed) clearTimeout(armed.timer);
-    this.removeArmed = null;
-    if (armed?.path === path) return this.host.removeProject(path);
-    this.removeArmed = {
-      path,
+    this.armed = null;
+    if (armed?.what === what && armed.target === target) {
+      this.render();
+      return run();
+    }
+    this.armed = {
+      what,
+      target,
       timer: window.setTimeout(() => {
-        this.removeArmed = null;
+        this.armed = null;
         this.render();
       }, CONFIRM_MS),
     };

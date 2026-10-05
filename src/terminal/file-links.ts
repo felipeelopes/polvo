@@ -1,9 +1,11 @@
-// Caminhos de arquivos Markdown no terminal viram links: Ctrl + clique abre
-// o documento no visualizador do Polvo. Só sublinha arquivos que existem.
+// Caminhos de arquivos e pastas no terminal viram links (como no VS Code):
+// Ctrl + clique abre a pasta no Explorer, mostra o arquivo selecionado nele ou,
+// se for Markdown, abre no visualizador do Polvo. Só sublinha o que existe.
 import type { IBufferCellPosition, ILink, ILinkProvider, Terminal } from "@xterm/xterm";
 import { ipc } from "../core/ipc";
 import { t } from "../i18n";
-import { findMdPaths, resolvePath } from "../docs/paths";
+import { findPaths, MD_EXT, resolvePath } from "../docs/paths";
+import { toast } from "../ui/feedback";
 
 export interface FileLinkHost {
   /** Pasta da sessão, base dos caminhos relativos. */
@@ -11,26 +13,37 @@ export interface FileLinkHost {
   open(path: string): void;
 }
 
-const EXISTS_TTL = 5000;
-const exists = new Map<string, { ok: boolean; at: number }>();
+/** 0 não existe, 1 arquivo, 2 pasta (como `paths_kind` no backend). */
+type Kind = 0 | 1 | 2;
 
-async function existing(paths: string[]): Promise<boolean[]> {
+const KIND_TTL = 5000;
+const kinds = new Map<string, { kind: Kind; at: number }>();
+
+async function kindsOf(paths: string[]): Promise<Kind[]> {
   const now = Date.now();
-  const missing = [...new Set(paths.filter((p) => !(now - (exists.get(p)?.at ?? 0) < EXISTS_TTL)))];
+  const missing = [...new Set(paths.filter((p) => !(now - (kinds.get(p)?.at ?? 0) < KIND_TTL)))];
   if (missing.length) {
-    const res = await ipc.filesExist(missing).catch(() => missing.map(() => false));
-    missing.forEach((p, i) => exists.set(p, { ok: res[i], at: now }));
+    const res = await ipc.pathsKind(missing).catch(() => missing.map(() => 0));
+    missing.forEach((p, i) => kinds.set(p, { kind: (res[i] ?? 0) as Kind, at: now }));
   }
-  return paths.map((p) => exists.get(p)?.ok ?? false);
+  return paths.map((p) => kinds.get(p)?.kind ?? 0);
+}
+
+/** Abre conforme o tipo: pasta no Explorer, Markdown no Polvo, outro arquivo selecionado no Explorer. */
+export function openPath(host: FileLinkHost, path: string, kind: Kind): void {
+  if (kind === 2) ipc.folderOpen(path).catch((e) => toast(String(e)));
+  else if (MD_EXT.test(path)) host.open(path);
+  else if (kind === 1) ipc.fileReveal(path).catch((e) => toast(String(e)));
 }
 
 let hint: HTMLDivElement | null = null;
 
-function showHint(e: MouseEvent): void {
+function showHint(e: MouseEvent, path: string, kind: Kind): void {
   hideHint();
+  const what = kind === 2 ? "openInExplorer" : MD_EXT.test(path) ? "openInPolvo" : "revealInExplorer";
   hint = document.createElement("div");
   hint.className = "tip";
-  hint.innerHTML = `<kbd>Ctrl</kbd> + ${t("terminal.ctrlClick.click")} <span>${t("terminal.ctrlClick.openInPolvo")}</span>`;
+  hint.innerHTML = `<kbd>Ctrl</kbd> + ${t("terminal.ctrlClick.click")} <span>${t(`terminal.ctrlClick.${what}`)}</span>`;
   hint.style.left = `${e.clientX + 12}px`;
   hint.style.top = `${e.clientY + 16}px`;
   document.body.appendChild(hint);
@@ -64,19 +77,20 @@ function logicalLine(term: Terminal, row: number): { text: string; cells: IBuffe
   return { text, cells };
 }
 
-export function mdLinkProvider(term: Terminal, host: FileLinkHost): ILinkProvider {
+export function pathLinkProvider(term: Terminal, host: FileLinkHost): ILinkProvider {
   return {
     provideLinks(row, callback) {
       const cwd = host.cwd();
       if (!cwd) return callback(undefined);
       const { text, cells } = logicalLine(term, row - 1);
-      const matches = findMdPaths(text);
+      const matches = findPaths(text);
       if (!matches.length) return callback(undefined);
       const resolved = matches.map((m) => resolvePath(cwd, m.path));
-      void existing(resolved).then((ok) => {
+      void kindsOf(resolved).then((found) => {
         const links: ILink[] = [];
         matches.forEach((m, i) => {
-          if (!ok[i]) return;
+          const kind = found[i];
+          if (!kind) return;
           const from = cells[m.index];
           const to = cells[m.index + m.length - 1];
           if (!from || !to || (from.y !== row && to.y !== row && !(from.y < row && to.y > row))) return;
@@ -88,7 +102,7 @@ export function mdLinkProvider(term: Terminal, host: FileLinkHost): ILinkProvide
             // ativaria no `mouseup`, e o redesenho do CLI ao ganhar foco
             // apaga o link no meio do clique.
             activate: hideHint,
-            hover: (e) => showHint(e),
+            hover: (e) => showHint(e, resolved[i], kind),
             leave: hideHint,
           });
         });
@@ -110,7 +124,7 @@ function cellAt(term: Terminal, e: MouseEvent): { x: number; y: number } | null 
 }
 
 /**
- * Ctrl + clique abre o arquivo já no `mousedown`, sem depender do estado de
+ * Ctrl + clique abre o caminho já no `mousedown`, sem depender do estado de
  * links do xterm (que se perde quando o CLI redesenha a tela ao ganhar foco).
  */
 export function installCtrlClick(term: Terminal, el: HTMLElement, host: FileLinkHost): void {
@@ -122,20 +136,19 @@ export function installCtrlClick(term: Terminal, el: HTMLElement, host: FileLink
       const at = cellAt(term, e);
       if (!cwd || !at) return;
       const { text, cells } = logicalLine(term, at.y - 1);
-      const m = findMdPaths(text).find((m) =>
-        cells.slice(m.index, m.index + m.length).some((c) => c.x === at.x && c.y === at.y),
-      );
+      const m = findPaths(text).find((m) => cells.slice(m.index, m.index + m.length).some((c) => c.x === at.x && c.y === at.y));
       if (!m) return;
       const path = resolvePath(cwd, m.path);
       // Já visto ao passar o mouse: abre e não deixa o clique ir para o CLI.
-      if (exists.get(path)?.ok) {
+      const seen = kinds.get(path)?.kind;
+      if (seen) {
         e.preventDefault();
         e.stopPropagation();
         hideHint();
-        host.open(path);
+        openPath(host, path, seen);
         return;
       }
-      void existing([path]).then(([ok]) => ok && host.open(path));
+      void kindsOf([path]).then(([kind]) => kind && openPath(host, path, kind));
     },
     true,
   );

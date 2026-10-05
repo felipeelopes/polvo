@@ -1,6 +1,7 @@
 {
   "files.notFound": "未找到文件:{path}",
   "files.notAFile": "不是文件",
+  "files.notAFolder": "不是文件夹",
   "files.tooLargeForEditor": "文件太大,无法在编辑器中打开",
   "files.tooLarge": "文件太大",
   "projects.gitNotFound": "在 PATH 中未找到 git。",

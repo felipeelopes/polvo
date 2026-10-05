@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "このプロジェクトのみ表示 (パネルとボード)",
     remove: "サイドバーから外す (フォルダーは削除しません)",
     confirmRemove: "外しますか?",
+    closeSession: "セッションを終了",
+    confirmClose: "終了?",
+    dragHint: "ドラッグで並べ替え",
     onlyThis: "これのみ",
     newInProject: "このプロジェクトで新しい {tool} セッション",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "クリック",
       openInPolvo: "→ Polvo で開く",
+      openInExplorer: "→ エクスプローラーで開く",
+      revealInExplorer: "→ エクスプローラーに表示",
     },
   },
   docs: {

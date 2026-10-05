@@ -401,6 +401,9 @@ const ru = {
     focusProject: "Показать только этот проект (Панели и Доска)",
     remove: "Убрать с панели (папка не удаляется)",
     confirmRemove: "Убрать?",
+    closeSession: "Завершить сеанс",
+    confirmClose: "Завершить?",
+    dragHint: "Перетащите, чтобы изменить порядок",
     onlyThis: "только этот",
     newInProject: "Новая сессия {tool} в этом проекте",
     worktree: "worktree",
@@ -480,6 +483,8 @@ const ru = {
     ctrlClick: {
       click: "щелчок",
       openInPolvo: "— открыть в Polvo",
+      openInExplorer: "чтобы открыть в Проводнике",
+      revealInExplorer: "чтобы показать в Проводнике",
     },
   },
   docs: {

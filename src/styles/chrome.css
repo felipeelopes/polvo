@@ -85,6 +85,17 @@
 .si-t { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .si-ctx { font-size: 11px; color: var(--faint); font-variant-numeric: tabular-nums; min-width: 26px; text-align: right; }
 .si .sd { width: 7px; height: 7px; border-radius: 50%; background: var(--faint); flex: none; }
+/* encerrar a sessão: o X aparece no lugar do status ao passar o mouse; segundo clique confirma ("Encerrar?") */
+.si-x { display: none; width: 18px; height: 18px; margin-right: -4px; border-radius: var(--r-xs); place-items: center; flex: none; color: var(--muted); }
+.si-x svg { width: 12px; height: 12px; }
+.si:hover .si-x, .si.armed .si-x { display: grid; }
+.si:hover .sd, .si.armed .sd, .si.armed .si-ctx { display: none; }
+.si-x:hover, .si-x.confirm { background: color-mix(in srgb, var(--bad) 14%, transparent); color: var(--bad); }
+.si-x.confirm { width: auto; padding: 0 6px; font-size: 11px; font-weight: 600; font-style: normal; white-space: nowrap; }
+/* arrastar projetos para mudar a ordem */
+.sb-dragging, .sb-dragging * { cursor: grabbing !important; user-select: none; }
+.pg.dragging, .rp.dragging { opacity: 0.45; }
+.sb-drop { position: fixed; z-index: 400; height: 2px; border-radius: 1px; background: var(--accent); pointer-events: none; box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 30%, transparent); }
 .sb-foot { display: flex; gap: 4px; padding: 6px 6px 0 0; margin-top: 4px; }
 .sidebar.collapsed .sb-foot { flex-direction: column; align-items: center; padding: 6px 0 0; border: 0; }
 .sb-new { flex: 1; height: var(--ctl); border-radius: var(--r-sm); border: 1px dashed var(--line2); color: var(--muted); font-size: 12.5px; }

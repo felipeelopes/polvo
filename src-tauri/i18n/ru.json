@@ -1,6 +1,7 @@
 {
   "files.notFound": "Файл не найден: {path}",
   "files.notAFile": "Это не файл",
+  "files.notAFolder": "Это не папка",
   "files.tooLargeForEditor": "Файл слишком большой для редактора",
   "files.tooLarge": "Файл слишком большой",
   "projects.gitNotFound": "git не найден в PATH.",

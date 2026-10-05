@@ -1,6 +1,7 @@
 {
   "files.notFound": "Fichier introuvable : {path}",
   "files.notAFile": "Ce n'est pas un fichier",
+  "files.notAFolder": "Ce n'est pas un dossier",
   "files.tooLargeForEditor": "Fichier trop volumineux pour l'éditeur",
   "files.tooLarge": "Fichier trop volumineux",
   "projects.gitNotFound": "git est introuvable dans le PATH.",

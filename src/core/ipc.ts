@@ -77,9 +77,11 @@ export const ipc = {
   fileRead: (path: string) => invoke<{ path: string; content: string; mtime: number }>("file_read", { path }),
   fileWrite: (path: string, content: string) => invoke<number>("file_write", { path, content }),
   fileMtime: (path: string) => invoke<number | null>("file_mtime", { path }),
-  filesExist: (paths: string[]) => invoke<boolean[]>("files_exist", { paths }),
   fileBytes: async (path: string) => toBytes(await invoke<ArrayBuffer | number[]>("file_bytes", { path })),
   fileReveal: (path: string) => invoke<void>("file_reveal", { path }),
+  /** Tipo de cada caminho: 0 não existe, 1 arquivo, 2 pasta. */
+  pathsKind: (paths: string[]) => invoke<number[]>("paths_kind", { paths }),
+  folderOpen: (path: string) => invoke<void>("folder_open", { path }),
 };
 
 function toBytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {

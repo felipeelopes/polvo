@@ -1,6 +1,7 @@
 {
   "files.notFound": "파일을 찾을 수 없음: {path}",
   "files.notAFile": "파일이 아닙니다",
+  "files.notAFolder": "폴더가 아닙니다",
   "files.tooLargeForEditor": "파일이 너무 커서 편집기에서 열 수 없습니다",
   "files.tooLarge": "파일이 너무 큽니다",
   "projects.gitNotFound": "PATH에서 git을 찾을 수 없습니다.",

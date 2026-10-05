@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "이 프로젝트만 보기 (패널과 보드)",
     remove: "사이드바에서 제거 (폴더는 삭제되지 않음)",
     confirmRemove: "제거할까요?",
+    closeSession: "세션 종료",
+    confirmClose: "종료?",
+    dragHint: "끌어서 순서 변경",
     onlyThis: "이것만",
     newInProject: "이 프로젝트에서 새 {tool} 세션",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "클릭",
       openInPolvo: "→ Polvo에서 열기",
+      openInExplorer: "→ 탐색기에서 열기",
+      revealInExplorer: "→ 탐색기에서 표시",
     },
   },
   docs: {

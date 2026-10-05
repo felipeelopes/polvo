@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "Show only this project (Tiles and Board)",
     remove: "Remove from the sidebar (doesn't delete the folder)",
     confirmRemove: "Remove?",
+    closeSession: "End session",
+    confirmClose: "End?",
+    dragHint: "Drag to reorder",
     onlyThis: "only this",
     newInProject: "New {tool} session in this project",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "click",
       openInPolvo: "to open in Polvo",
+      openInExplorer: "to open in Explorer",
+      revealInExplorer: "to show in Explorer",
     },
   },
   docs: {

@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "Mostra solo questo progetto (Pannelli e Bacheca)",
     remove: "Togli dalla barra (non elimina la cartella)",
     confirmRemove: "Togliere?",
+    closeSession: "Chiudi sessione",
+    confirmClose: "Chiudere?",
+    dragHint: "Trascina per riordinare",
     onlyThis: "solo questo",
     newInProject: "Nuova sessione {tool} in questo progetto",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "clic",
       openInPolvo: "per aprire in Polvo",
+      openInExplorer: "per aprire in Esplora file",
+      revealInExplorer: "per mostrare in Esplora file",
     },
   },
   docs: {

@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "Ver solo este proyecto (Paneles y Tablero)",
     remove: "Quitar de la barra (no borra la carpeta)",
     confirmRemove: "¿Quitar?",
+    closeSession: "Cerrar sesión",
+    confirmClose: "¿Cerrar?",
+    dragHint: "Arrastra para reordenar",
     onlyThis: "solo este",
     newInProject: "Nueva sesión de {tool} en este proyecto",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "clic",
       openInPolvo: "para abrir en Polvo",
+      openInExplorer: "para abrir en el Explorador",
+      revealInExplorer: "para mostrar en el Explorador",
     },
   },
   docs: {

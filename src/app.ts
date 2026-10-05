@@ -103,6 +103,7 @@ export class App {
       newIn: (cwd, tool) => void this.newIn(cwd, tool),
       focusProject: (key) => void store.setProject(key),
       removeProject: (path) => void ipc.projectRemove(path),
+      closeSession: (id) => void ipc.sessionClose(id),
       openGit: (path) => this.openGit(path),
       resized: () => this.tiles.layout(),
     });
@@ -326,7 +327,8 @@ export class App {
     if (!paths.length) return;
     try {
       const info = await ipc.gitInfo(paths);
-      if (JSON.stringify(info) !== JSON.stringify(Object.fromEntries(paths.map((p) => [p, store.git[p] ?? null])))) {
+      // Pasta ainda não consultada conta como mudança: a barra só fixa a ordem de um projeto já resolvido.
+      if (paths.some((p) => !(p in store.git)) || JSON.stringify(info) !== JSON.stringify(Object.fromEntries(paths.map((p) => [p, store.git[p] ?? null])))) {
         Object.assign(store.git, info);
         store.emit("git");
         void this.refreshSummaries();

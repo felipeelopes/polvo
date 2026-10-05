@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { findMdPaths, resolvePath } from "../src/docs/paths";
+import { findMdPaths, findPaths, resolvePath } from "../src/docs/paths";
 
 describe("findMdPaths", () => {
   it("acha caminhos relativos e absolutos", () => {
@@ -37,5 +37,31 @@ describe("resolvePath", () => {
     expect(resolvePath(base, "/d/Projetos/z.md")).toBe("D:\\Projetos\\z.md");
     expect(resolvePath(base, "file:///D:/Meus%20Docs/z.md")).toBe("D:\\Meus Docs\\z.md");
     expect(resolvePath(base, "\\raiz.md")).toBe("D:\\raiz.md");
+  });
+});
+
+describe("findPaths", () => {
+  const paths = (text: string) => findPaths(text).map((m) => m.path);
+
+  it("acha arquivos e pastas com separador ou extensão", () => {
+    const dir = String.raw`D:\Projetos\api` + "\\";
+    expect(paths(`⏺ Update(src/ui/sidebar.ts) e a pasta ${dir} e README.md.`)).toEqual(["src/ui/sidebar.ts", dir, "README.md"]);
+  });
+
+  it("marca o trecho com :linha e tira o ponto final", () => {
+    const text = "veja src/app.ts:12:4.";
+    const [m] = findPaths(text);
+    expect(m.path).toBe("src/app.ts");
+    expect(text.slice(m.index, m.index + m.length)).toBe("src/app.ts:12:4");
+  });
+
+  it("aceita espaços entre aspas e ignora palavras soltas e URLs", () => {
+    expect(paths(String.raw`abra "C:\Program Files\Git" agora`)).toEqual([String.raw`C:\Program Files\Git`]);
+    expect(paths("rodando os testes agora")).toEqual([]);
+    expect(paths("https://github.com/x/y.md")).toEqual([]);
+  });
+
+  it("não engole as molduras do CLI", () => {
+    expect(paths("│src/x.ts│ ⎿ docs/a.md")).toEqual(["src/x.ts", "docs/a.md"]);
   });
 });

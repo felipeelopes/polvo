@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "仅查看此项目 (面板和看板)",
     remove: "从侧边栏移除 (不会删除文件夹)",
     confirmRemove: "移除?",
+    closeSession: "结束会话",
+    confirmClose: "结束?",
+    dragHint: "拖动以调整顺序",
     onlyThis: "仅此项",
     newInProject: "在此项目中新建 {tool} 会话",
     worktree: "worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "单击",
       openInPolvo: "在 Polvo 中打开",
+      openInExplorer: "在资源管理器中打开",
+      revealInExplorer: "在资源管理器中显示",
     },
   },
   docs: {

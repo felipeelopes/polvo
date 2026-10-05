@@ -389,6 +389,9 @@ const messages: Messages = {
     focusProject: "Nur dieses Projekt anzeigen (Kacheln und Board)",
     remove: "Aus der Leiste entfernen (löscht den Ordner nicht)",
     confirmRemove: "Entfernen?",
+    closeSession: "Sitzung beenden",
+    confirmClose: "Beenden?",
+    dragHint: "Ziehen zum Sortieren",
     onlyThis: "nur dieses",
     newInProject: "Neue {tool}-Sitzung in diesem Projekt",
     worktree: "Worktree",
@@ -466,6 +469,8 @@ const messages: Messages = {
     ctrlClick: {
       click: "Klick",
       openInPolvo: "zum Öffnen in Polvo",
+      openInExplorer: "um im Explorer zu öffnen",
+      revealInExplorer: "um im Explorer anzuzeigen",
     },
   },
   docs: {

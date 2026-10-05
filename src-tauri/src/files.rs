@@ -89,12 +89,18 @@ pub fn file_mtime(path: String) -> Option<u64> {
     mtime_of(&absolute(&path).ok()?).ok()
 }
 
-/// Quais destes caminhos são arquivos existentes (para sublinhar links no terminal).
+/// Tipo de cada caminho: 0 não existe, 1 arquivo, 2 pasta (links do terminal).
 #[tauri::command]
-pub fn files_exist(paths: Vec<String>) -> Vec<bool> {
+pub fn paths_kind(paths: Vec<String>) -> Vec<u8> {
     paths
         .iter()
-        .map(|p| absolute(p).map(|p| p.is_file()).unwrap_or(false))
+        .map(
+            |p| match absolute(p).and_then(|p| std::fs::metadata(p).map_err(Into::into)) {
+                Ok(m) if m.is_dir() => 2,
+                Ok(m) if m.is_file() => 1,
+                _ => 0,
+            },
+        )
         .collect()
 }
 
@@ -115,6 +121,17 @@ pub fn file_reveal(path: String) -> AppResult<()> {
     std::process::Command::new("explorer")
         .arg(format!("/select,{}", p.display()))
         .spawn()?;
+    Ok(())
+}
+
+/// Abre a pasta no Explorer.
+#[tauri::command]
+pub fn folder_open(path: String) -> AppResult<()> {
+    let p = absolute(&path)?;
+    if !p.is_dir() {
+        return Err(AppError::msg(crate::i18n::tr("files.notAFolder", &[])));
+    }
+    std::process::Command::new("explorer").arg(&p).spawn()?;
     Ok(())
 }
 
