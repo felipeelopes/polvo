@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.4",
+    notes: {
+      pt: [
+        "**Visual plano e temas claro e escuro**: siga o Windows ou escolha o tema em Ajustes. Terminais, editor e diagramas acompanham o tema; você também pode manter o terminal escuro.",
+        "**Painel Git mais confortável**: arraste a divisória entre a lista de arquivos e o diff em Alterações. O botão Buscar mantém sua posição durante a busca.",
+        "**Confirmação ao encerrar e remover**: o X da gaveta do Quadro pede um segundo clique para encerrar a sessão. Clique novamente no cartão para fechar apenas a gaveta. Tirar um projeto da barra também pede confirmação.",
+        "**Nova janela pelo menu do monitor**: abra outra janela no menu “Levar esta janela para outro monitor”, como mostra a dica do onboarding.",
+      ],
+      en: [
+        "**Flat design and light and dark themes**: follow Windows or choose a theme in Settings. Terminals, the editor and diagrams follow the theme; you can also keep terminals dark.",
+        "**A more comfortable Git panel**: drag the divider between the file list and diff in Changes. The Fetch button stays in place while fetching.",
+        "**Confirm before closing and removing**: the Board drawer's X requires a second click to end the session. Click the selected card again to close only the drawer. Removing a project from the sidebar also requires confirmation.",
+        "**New window from the monitor menu**: open another window from “Move this window to another monitor”, as shown in the onboarding hint.",
+      ],
+      es: [
+        "**Diseño plano y temas claro y oscuro**: sigue Windows o elige el tema en Ajustes. Las terminales, el editor y los diagramas siguen el tema; también puedes mantener la terminal oscura.",
+        "**Panel Git más cómodo**: arrastra el separador entre la lista de archivos y el diff en Cambios. El botón Buscar mantiene su posición durante la búsqueda.",
+        "**Confirmación al cerrar y quitar**: la X del panel del Tablero requiere un segundo clic para terminar la sesión. Haz clic de nuevo en la tarjeta seleccionada para cerrar solo el panel. Quitar un proyecto de la barra lateral también requiere confirmación.",
+        "**Nueva ventana desde el menú del monitor**: abre otra ventana desde el menú para mover esta ventana a otro monitor, como muestra la ayuda inicial.",
+      ],
+      fr: [
+        "**Design plat et thèmes clair et sombre** : suivez Windows ou choisissez le thème dans les Réglages. Les terminaux, l'éditeur et les diagrammes suivent le thème ; vous pouvez aussi garder les terminaux sombres.",
+        "**Panneau Git plus confortable** : faites glisser le séparateur entre la liste des fichiers et le diff dans Modifications. Le bouton Récupérer reste en place pendant la récupération.",
+        "**Confirmation avant de fermer ou retirer** : le X du volet du Tableau demande un second clic pour terminer la session. Cliquez à nouveau sur la carte sélectionnée pour fermer uniquement le volet. Retirer un projet de la barre latérale demande aussi confirmation.",
+        "**Nouvelle fenêtre depuis le menu du moniteur** : ouvrez une autre fenêtre depuis le menu pour déplacer cette fenêtre vers un autre moniteur, comme indiqué dans l'accueil.",
+      ],
+      de: [
+        "**Flaches Design sowie helles und dunkles Thema**: Folge Windows oder wähle das Thema in den Einstellungen. Terminals, Editor und Diagramme folgen dem Thema; Terminals können auch dunkel bleiben.",
+        "**Komfortableres Git-Panel**: Ziehe die Trennlinie zwischen Dateiliste und Diff in Änderungen. Die Abrufen-Schaltfläche bleibt während des Abrufens an ihrem Platz.",
+        "**Bestätigung beim Beenden und Entfernen**: Das X der Board-Schublade braucht einen zweiten Klick zum Beenden der Sitzung. Klicke erneut auf die ausgewählte Karte, um nur die Schublade zu schließen. Auch das Entfernen eines Projekts aus der Seitenleiste verlangt eine Bestätigung.",
+        "**Neues Fenster im Monitor-Menü**: Öffne ein weiteres Fenster im Menü zum Verschieben dieses Fensters auf einen anderen Monitor, wie im Einführungshinweis gezeigt.",
+      ],
+      it: [
+        "**Design piatto e temi chiaro e scuro**: segui Windows o scegli il tema nelle Impostazioni. Terminali, editor e diagrammi seguono il tema; puoi anche mantenere il terminale scuro.",
+        "**Pannello Git più comodo**: trascina il divisore tra l'elenco dei file e il diff in Modifiche. Il pulsante Fetch resta al suo posto durante il recupero.",
+        "**Conferma prima di chiudere o rimuovere**: la X del pannello della Bacheca richiede un secondo clic per terminare la sessione. Fai di nuovo clic sulla scheda selezionata per chiudere solo il pannello. Anche rimuovere un progetto dalla barra laterale richiede conferma.",
+        "**Nuova finestra dal menu del monitor**: apri un'altra finestra dal menu per spostare questa finestra su un altro monitor, come indica il suggerimento iniziale.",
+      ],
+      ja: [
+        "**フラットなデザインとライト・ダークテーマ**：Windows に合わせるか、設定でテーマを選べます。ターミナル、エディター、図もテーマに合わせて変わり、ターミナルだけを暗く保つこともできます。",
+        "**使いやすくなった Git パネル**：変更画面でファイル一覧と差分の間の仕切りをドラッグできます。取得ボタンは取得中も同じ位置に表示されます。",
+        "**終了・削除前の確認**：ボードの詳細パネルの X は、もう一度クリックするとセッションを終了します。選択中のカードを再度クリックするとパネルだけを閉じます。サイドバーからプロジェクトを外す際も確認が必要です。",
+        "**モニターメニューから新しいウィンドウ**：初期設定のヒントにあるように、別のモニターへウィンドウを移動するメニューから新しいウィンドウを開けます。",
+      ],
+      zh: [
+        "**扁平设计与浅色、深色主题**：跟随 Windows，或在设置中选择主题。终端、编辑器和图表会跟随主题，也可以让终端始终保持深色。",
+        "**更舒适的 Git 面板**：在更改页面拖动文件列表与差异视图之间的分隔线。获取按钮在获取期间保持原位。",
+        "**结束和移除前确认**：看板详情面板的 X 需要再次点击才会结束会话。再次点击已选中的卡片只会关闭面板。将项目从侧边栏移除时也需要确认。",
+        "**从显示器菜单打开新窗口**：按照首次使用提示，从将此窗口移到另一台显示器的菜单中打开新窗口。",
+      ],
+      ko: [
+        "**평면 디자인과 밝은·어두운 테마**: Windows 설정을 따르거나 설정에서 테마를 고르세요. 터미널, 편집기, 다이어그램도 테마를 따르며 터미널만 어둡게 유지할 수도 있습니다.",
+        "**더 편리한 Git 패널**: 변경 사항에서 파일 목록과 diff 사이의 구분선을 드래그하세요. 가져오기 버튼은 작업 중에도 같은 위치에 표시됩니다.",
+        "**종료·제거 전 확인**: 보드 상세 패널의 X를 다시 클릭해야 세션이 종료됩니다. 선택한 카드를 다시 클릭하면 패널만 닫힙니다. 사이드바에서 프로젝트를 제거할 때도 확인이 필요합니다.",
+        "**모니터 메뉴에서 새 창 열기**: 시작 안내에 표시된 대로 창을 다른 모니터로 옮기는 메뉴에서 새 창을 열 수 있습니다.",
+      ],
+      ru: [
+        "**Плоский дизайн, светлая и тёмная темы**: следуйте настройкам Windows или выберите тему в настройках. Терминалы, редактор и диаграммы следуют теме; терминал можно оставить тёмным.",
+        "**Более удобная панель Git**: перетаскивайте разделитель между списком файлов и diff в Изменениях. Кнопка Fetch остаётся на месте во время загрузки.",
+        "**Подтверждение завершения и удаления**: X в панели Доски требует второго щелчка для завершения сессии. Повторный щелчок по выбранной карточке закрывает только панель. Удаление проекта из боковой панели тоже требует подтверждения.",
+        "**Новое окно из меню монитора**: открывайте ещё одно окно из меню переноса окна на другой монитор, как показано в подсказке при первом запуске.",
+      ],
+    },
+  },
+  {
     version: "0.3.3",
     notes: {
       pt: [

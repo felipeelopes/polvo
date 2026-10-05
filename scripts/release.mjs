@@ -4,6 +4,7 @@
 //   pnpm release            → publica vX.Y.Z (versão do package.json)
 //   pnpm release --draft    → cria como rascunho
 //   pnpm release --no-build → reaproveita os instaladores já gerados
+//   pnpm release --no-build --bundle-dir <pasta> → usa os artefatos do build-signed.ps1
 //
 // Precisa da chave privada de assinatura: TAURI_SIGNING_PRIVATE_KEY (conteúdo
 // ou caminho) ou o arquivo padrão ~/.tauri/polvo.key.
@@ -13,7 +14,13 @@ import { homedir } from "node:os";
 import { join } from "node:path";
 
 const REPO = "felipeelopes/polvo";
-const args = new Set(process.argv.slice(2));
+const argv = process.argv.slice(2);
+const args = new Set(argv);
+const bundleIndex = argv.indexOf("--bundle-dir");
+if (bundleIndex !== -1 && (!args.has("--no-build") || !argv[bundleIndex + 1] || argv[bundleIndex + 1].startsWith("--"))) {
+  console.error("Use --bundle-dir <pasta> junto de --no-build.");
+  process.exit(1);
+}
 const run = (cmd, env = {}) => execSync(cmd, { stdio: "inherit", env: { ...process.env, ...env } });
 
 const version = JSON.parse(readFileSync("package.json", "utf8")).version;
@@ -39,7 +46,7 @@ if (!args.has("--no-build")) {
   });
 }
 
-const bundle = "src-tauri/target/release/bundle";
+const bundle = bundleIndex === -1 ? "src-tauri/target/release/bundle" : argv[bundleIndex + 1];
 const setup = `${bundle}/nsis/Polvo_${version}_x64-setup.exe`;
 const msi = `${bundle}/msi/Polvo_${version}_x64_en-US.msi`;
 for (const f of [setup, `${setup}.sig`, msi, `${msi}.sig`]) {
@@ -48,6 +55,9 @@ for (const f of [setup, `${setup}.sig`, msi, `${msi}.sig`]) {
     process.exit(1);
   }
 }
+
+// Só publique pacotes que o atualizador aceita com a chave pública do app.
+execFileSync(process.execPath, ["scripts/verify-updater-signature.mjs", "src-tauri/tauri.conf.json", setup, msi], { stdio: "inherit" });
 
 // Notas: seção da versão no CHANGELOG.md, se existir.
 let notes = `Polvo ${tag}`;
@@ -72,7 +82,8 @@ const latestFile = `${bundle}/latest.json`;
 writeFileSync(latestFile, JSON.stringify(latest, null, 2));
 writeFileSync(`${bundle}/release-notes.md`, `${notes}\n\nBaixe o **Polvo_${version}_x64-setup.exe** (recomendado) ou o **.msi**. Quem já tem o Polvo instalado recebe esta versão automaticamente.\n`);
 
-const ghArgs = ["release", "create", tag, setup, `${setup}.sig`, msi, `${msi}.sig`, latestFile, "--repo", REPO, "--title", `Polvo ${tag}`, "--notes-file", `${bundle}/release-notes.md`];
+const commit = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+const ghArgs = ["release", "create", tag, setup, `${setup}.sig`, msi, `${msi}.sig`, latestFile, "--repo", REPO, "--target", commit, "--title", `Polvo ${tag}`, "--notes-file", `${bundle}/release-notes.md`];
 if (args.has("--draft")) ghArgs.push("--draft");
 execFileSync("gh", ghArgs, { stdio: "inherit" });
 console.log(`\nRelease ${tag} publicada: https://github.com/${REPO}/releases/tag/${tag}`);

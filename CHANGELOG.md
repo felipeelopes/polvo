@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+- **Visual plano e temas claro e escuro**: escolha seguir o Windows ou fixar o tema em Ajustes. Terminais, editor e diagramas acompanham o tema, com a opção de manter o terminal escuro.
+- **Painel Git mais confortável**: arraste a divisória entre a lista de arquivos e o diff em Alterações. O botão Buscar mantém sua posição durante a busca.
+- **Confirmação ao encerrar e remover**: o X da gaveta do Quadro pede confirmação antes de encerrar a sessão; clicar novamente no cartão fecha apenas a gaveta. Tirar um projeto da barra lateral também pede um segundo clique.
+- **Nova janela pelo menu do monitor**: a opção de abrir outra janela funciona no menu “Levar esta janela para outro monitor”, com a dica correspondente no onboarding.
+- **Build Windows assinado**: novo script PowerShell para gerar os instaladores, validar a assinatura do atualizador e registrar os hashes SHA-256, usando a chave original fora do repositório.
+
 ## 0.3.3
 
 - **Filtro por estado** no “Para fazer” (tecla E): escolha um ou vários estados reais, como New e Committed, com as cores do Azure DevOps.
