@@ -73,12 +73,28 @@ let hint: HTMLDivElement | null = null;
 function showHint(e: MouseEvent, action: ReturnType<typeof actionOf>): void {
   hideHint();
   hint = document.createElement("div");
-  hint.className = "tip";
+  hint.className = "tip tip-wrap";
   const click = t("terminal.ctrlClick.click");
   hint.innerHTML = `<kbd>Ctrl</kbd> + ${click} <span>${t(`terminal.ctrlClick.${action}`)}</span> · <kbd>Ctrl</kbd> + <kbd>Shift</kbd> + ${click} <span>${t("terminal.ctrlClick.reveal")}</span>`;
-  hint.style.left = `${e.clientX + 12}px`;
-  hint.style.top = `${e.clientY + 16}px`;
   document.body.appendChild(hint);
+  placeHint(hint, e.clientX, e.clientY);
+}
+
+/**
+ * Ao lado do cursor (direita e abaixo); perto da borda da janela vira para a
+ * esquerda ou para cima, e nunca sai da tela.
+ */
+export function placeHint(el: HTMLElement, x: number, y: number): void {
+  const gap = 8;
+  const { width, height } = el.getBoundingClientRect();
+  const vw = window.innerWidth;
+  const vh = window.innerHeight;
+  let left = x + 12;
+  if (left + width > vw - gap) left = x - 12 - width;
+  let top = y + 16;
+  if (top + height > vh - gap) top = y - 10 - height;
+  el.style.left = `${Math.max(gap, Math.min(left, vw - width - gap))}px`;
+  el.style.top = `${Math.max(gap, Math.min(top, vh - height - gap))}px`;
 }
 
 function hideHint(): void {

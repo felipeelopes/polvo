@@ -11,7 +11,7 @@ vi.mock("../src/i18n", () => ({ t: (k: string) => k }));
 
 import { ipc } from "../src/core/ipc";
 import { openImage } from "../src/docs/image-viewer";
-import { fileLinkProvider, installCtrlClick, openFileLink } from "../src/terminal/file-links";
+import { fileLinkProvider, installCtrlClick, openFileLink, placeHint } from "../src/terminal/file-links";
 import { toast } from "../src/ui/feedback";
 
 const flush = () => new Promise((r) => setTimeout(r, 0));
@@ -157,5 +157,36 @@ describe("caminho quebrado pelo CLI em várias linhas", () => {
     click(1, 2);
     await flush();
     expect(ipc.fileOpen).toHaveBeenCalledTimes(2);
+  });
+});
+
+describe("placeHint (dica do Ctrl + clique)", () => {
+  // Janela de 1000 × 600 e dica de 300 × 30.
+  function hintAt(x: number, y: number) {
+    vi.stubGlobal("innerWidth", 1000);
+    vi.stubGlobal("innerHeight", 600);
+    const el = document.createElement("div");
+    el.getBoundingClientRect = () => ({ width: 300, height: 30 }) as DOMRect;
+    placeHint(el, x, y);
+    return { left: parseFloat(el.style.left), top: parseFloat(el.style.top) };
+  }
+
+  it("fica à direita e abaixo do cursor quando cabe", () => {
+    expect(hintAt(100, 100)).toEqual({ left: 112, top: 116 });
+  });
+
+  it("vira para a esquerda perto da borda direita", () => {
+    expect(hintAt(900, 100)).toEqual({ left: 588, top: 116 });
+  });
+
+  it("sobe perto da borda de baixo", () => {
+    expect(hintAt(100, 590)).toEqual({ left: 112, top: 550 });
+  });
+
+  it("nunca sai da janela, nem no canto", () => {
+    const { left, top } = hintAt(990, 598);
+    expect(left + 300).toBeLessThanOrEqual(1000 - 8);
+    expect(top + 30).toBeLessThanOrEqual(600 - 8);
+    expect(hintAt(5, 5)).toEqual({ left: 17, top: 21 });
   });
 });

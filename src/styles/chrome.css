@@ -34,6 +34,8 @@
 .sd.exited, .sd.error { background: var(--bad); }
 .tip { position: fixed; z-index: 500; pointer-events: none; padding: 6px 10px; border-radius: var(--r-sm); background: var(--raised); border: 1px solid var(--line); box-shadow: var(--shadow); font-size: 12px; white-space: nowrap; animation: rise 0.12s; }
 .tip span { color: var(--muted); }
+/* Dica longa (links do terminal): só quebra a linha se não couber na janela. */
+.tip.tip-wrap { white-space: normal; max-width: calc(100vw - 16px); }
 .brand:hover { background: var(--hover); }
 .empty .polvo { margin-bottom: 8px; }
 
