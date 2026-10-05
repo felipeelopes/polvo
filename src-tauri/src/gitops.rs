@@ -71,7 +71,18 @@ fn run_with(
     stdin: Option<&[u8]>,
     ok_codes: &[i32],
 ) -> AppResult<String> {
+    run_cmd(repo, args, stdin, ok_codes, &[])
+}
+
+fn run_cmd(
+    repo: &str,
+    args: &[&str],
+    stdin: Option<&[u8]>,
+    ok_codes: &[i32],
+    env: &[(&str, &str)],
+) -> AppResult<String> {
     let mut cmd = command(repo, args);
+    cmd.envs(env.iter().copied());
     cmd.stdin(if stdin.is_some() {
         Stdio::piped()
     } else {
@@ -94,6 +105,16 @@ fn run_with(
     } else {
         Err(git_error(&out.stderr, &out.stdout))
     }
+}
+
+/// Como `run_with`, com variáveis de ambiente a mais (ex.: outro índice).
+fn run_env(
+    repo: &str,
+    args: &[&str],
+    stdin: Option<&[u8]>,
+    env: &[(&str, &str)],
+) -> AppResult<String> {
+    run_cmd(repo, args, stdin, &[], env)
 }
 
 fn run(repo: &str, args: &[&str]) -> AppResult<String> {
@@ -518,6 +539,9 @@ pub struct CommitReq {
     /// Sem nada no índice: inclui todas as alterações.
     all: bool,
     sign_off: bool,
+    /// Arquivos marcados na lista: o commit leva só eles (vazio = o índice inteiro).
+    #[serde(default)]
+    paths: Vec<String>,
 }
 
 #[derive(Serialize)]
@@ -532,7 +556,19 @@ pub async fn git_commit(req: CommitReq) -> AppResult<CommitDone> {
     blocking(move || {
         let lock = repo_lock(&req.repo);
         let _g = lock.lock();
-        if req.all {
+        // Só os marcados: um índice temporário com o HEAD + esses arquivos,
+        // sem mexer no que os outros têm no índice de verdade.
+        let tmp = if req.paths.is_empty() {
+            None
+        } else {
+            Some(selected_index(&req.repo, &req.paths)?)
+        };
+        let tmp_s = tmp.as_ref().map(|p| p.to_string_lossy().into_owned());
+        let env: Vec<(&str, &str)> = tmp_s
+            .as_deref()
+            .map(|p| vec![("GIT_INDEX_FILE", p)])
+            .unwrap_or_default();
+        if req.all && tmp.is_none() {
             run(&req.repo, &["add", "-A"])?;
         }
         let mut args = vec!["commit", "--cleanup=strip"];
@@ -545,13 +581,17 @@ pub async fn git_commit(req: CommitReq) -> AppResult<CommitDone> {
         if req.sign_off {
             args.push("--signoff");
         }
-        if req.amend && req.message.trim().is_empty() {
+        let done = if req.amend && req.message.trim().is_empty() {
             args.push("--no-edit");
-            run(&req.repo, &args)?;
+            run_env(&req.repo, &args, None, &env)
         } else {
             args.extend(["-F", "-"]);
-            run_with(&req.repo, &args, Some(req.message.as_bytes()), &[])?;
+            run_env(&req.repo, &args, Some(req.message.as_bytes()), &env)
+        };
+        if let Some(p) = &tmp {
+            let _ = std::fs::remove_file(p);
         }
+        done?;
         let out = run(&req.repo, &["log", "-1", "--format=%h%x1f%s"])?;
         let (sha, subject) = out.trim().split_once('\x1f').unwrap_or((out.trim(), ""));
         Ok(CommitDone {
@@ -560,6 +600,83 @@ pub async fn git_commit(req: CommitReq) -> AppResult<CommitDone> {
         })
     })
     .await
+}
+
+/// Índice temporário para o commit dos arquivos marcados: parte do HEAD e
+/// recebe a versão de cada arquivo no índice real. Quem estava todo fora do
+/// índice entra inteiro antes; quem já tinha algo no índice (linhas escolhidas
+/// no diff) vai do jeito que está. Chamar com o lock do repositório.
+fn selected_index(repo: &str, paths: &[String]) -> AppResult<PathBuf> {
+    let lit = [("GIT_LITERAL_PATHSPECS", "1")];
+    let refs: Vec<&str> = paths.iter().map(String::as_str).collect();
+    let unborn = read(repo, &["rev-parse", "--verify", "-q", "HEAD"]).is_err();
+
+    // Marcados sem nada no índice (novos ou só na pasta) entram inteiros.
+    let mut a = if unborn {
+        vec!["ls-files", "-z", "--"]
+    } else {
+        vec![
+            "diff",
+            "--cached",
+            "--no-renames",
+            "--name-only",
+            "-z",
+            "--",
+        ]
+    };
+    a.extend(&refs);
+    let staged = run_env(repo, &a, None, &lit)?;
+    let staged: Vec<&str> = staged.split('\0').filter(|p| !p.is_empty()).collect();
+    let whole: Vec<&str> = refs
+        .iter()
+        .copied()
+        .filter(|p| !staged.contains(p))
+        .collect();
+    if !whole.is_empty() {
+        let mut a = vec!["add", "-A", "--"];
+        a.extend(&whole);
+        run_env(repo, &a, None, &lit)?;
+    }
+
+    let git_dir = read(repo, &["rev-parse", "--absolute-git-dir"])?;
+    let tmp = PathBuf::from(git_dir.trim()).join("polvo-commit-index");
+    let tmp_s = tmp.to_string_lossy().into_owned();
+    let env = [("GIT_INDEX_FILE", tmp_s.as_str()), lit[0]];
+    let fill = || -> AppResult<()> {
+        let base = if unborn { "--empty" } else { "HEAD" };
+        run_env(repo, &["read-tree", base], None, &env)?;
+        let mut a = vec!["ls-files", "-s", "-z", "--"];
+        a.extend(&refs);
+        let entries = run_env(repo, &a, None, &lit)?;
+        if !entries.is_empty() {
+            run_env(
+                repo,
+                &["update-index", "-z", "--index-info"],
+                Some(entries.as_bytes()),
+                &env,
+            )?;
+        }
+        let present: Vec<&str> = entries
+            .split('\0')
+            .filter_map(|e| e.split_once('\t').map(|(_, p)| p))
+            .collect();
+        let gone: Vec<&str> = refs
+            .iter()
+            .copied()
+            .filter(|p| !present.contains(p))
+            .collect();
+        if !gone.is_empty() {
+            let mut a = vec!["update-index", "--force-remove", "--"];
+            a.extend(&gone);
+            run_env(repo, &a, None, &env)?;
+        }
+        Ok(())
+    };
+    if let Err(e) = fill() {
+        let _ = std::fs::remove_file(&tmp);
+        return Err(e);
+    }
+    Ok(tmp)
 }
 
 /// Desfaz o último commit, mantendo as alterações no índice. Devolve a mensagem dele.

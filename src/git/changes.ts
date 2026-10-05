@@ -12,6 +12,7 @@ import { ask, branchError, slugBranch } from "./dialog";
 import { absPath, GI, IMAGE_EXT, letterOf, menu, pref, setPref, splitPath, splitter, stagedState, type GitCtx } from "./ui";
 
 const PROTECTED = /^(main|master|develop|trunk|release.*)$/;
+
 /** Quem estava trabalhando quando cada arquivo apareceu (por repositório). */
 const agentOf = new Map<string, Map<string, string>>();
 
@@ -26,6 +27,9 @@ export class ChangesPane {
   private dScroll = h("div", "gd-scroll");
   private selBar = h("div", "gd-selbar");
   private selected: string | null = null;
+  /** Arquivos marcados na lista: alvo do botão direito e do commit (só na interface, sem mexer no índice). */
+  private marked = new Set<string>();
+  private anchor: string | null = null;
   private filter = "";
   private mode = pref("mode", "unified") as DiffMode;
   private ws = pref("ws", "0") === "1";
@@ -112,6 +116,8 @@ export class ChangesPane {
   /** Repositório trocado. */
   reset(): void {
     this.selected = null;
+    this.marked.clear();
+    this.anchor = null;
     this.known.clear();
     this.lastKey = "";
     this.raw = { u: "", s: "" };
@@ -128,6 +134,7 @@ export class ChangesPane {
     const listChanged = key !== this.lastKey;
     this.lastKey = key;
     if (this.selected && !this.file(this.selected)) this.selected = null;
+    for (const p of [...this.marked]) if (!this.all.some((f) => f.path === p && !f.conflict)) this.marked.delete(p);
     if (!this.selected && !this.stashSel) this.selected = this.all.find((f) => f.conflict)?.path ?? this.all[0]?.path ?? null;
     if (listChanged) this.renderList();
     this.renderStash();
@@ -162,9 +169,7 @@ export class ChangesPane {
   private renderList(): void {
     const files = this.visible();
     const all = this.all;
-    const staged = all.filter((f) => stagedState(f) !== "off").length;
-    const allBox = this.head.querySelector<HTMLElement>("[data-all]")!;
-    allBox.className = `cb ${staged === 0 ? "" : staged === all.length && all.every((f) => stagedState(f) === "on") ? "on" : "part"}`;
+    this.renderMarks();
     this.head.querySelector<HTMLElement>(".gc-count")!.textContent = all.length ? tn("git.changes.count", all.length) : "";
     if (!all.length) {
       this.list.innerHTML = `<div class="g-empty">${GI.check}<b>${esc(t("git.changes.none"))}</b><span>${esc(t("git.changes.noneHint"))}</span></div>`;
@@ -180,9 +185,43 @@ export class ChangesPane {
         const hdr = f.conflict && !conflictHeader ? ((conflictHeader = true), `<div class="gf-h">${esc(t("git.changes.conflicted"))}</div>`) : "";
         const after = !f.conflict && conflictHeader ? ((conflictHeader = false), `<div class="gf-h">${esc(t("git.tabs.changes"))}</div>`) : "";
         return `${hdr}${after}<div class="gf${f.path === this.selected ? " on" : ""}" data-p="${esc(f.path)}" title="${esc(f.path)}${f.orig ? `\n${esc(t("git.changes.renamed", { from: f.orig }))}` : ""}">
-          <span class="cb ${f.conflict ? "dis" : stagedState(f)}" data-cb></span><span class="gf-p"><em>${esc(dir)}</em>${esc(name)}</span>${who ? `<span class="gf-who" title="${esc(t("git.changes.agent", { name: who }))}">${esc(who.slice(0, 18))}</span>` : ""}<span class="gst ${L}">${L}</span></div>`;
+          <span class="cb ${f.conflict ? "dis" : this.marked.has(f.path) ? "on" : ""}" data-cb></span><span class="gf-p"><em>${esc(dir)}</em>${esc(name)}</span>${ix(f)}${who ? `<span class="gf-who" title="${esc(t("git.changes.agent", { name: who }))}">${esc(who.slice(0, 18))}</span>` : ""}<span class="gst ${L}">${L}</span></div>`;
       })
       .join("");
+  }
+
+  /** Caixa "todos" do topo e caixa de commit, depois de marcar/desmarcar. */
+  private renderMarks(): void {
+    const n = this.marked.size;
+    const all = this.all.filter((f) => !f.conflict).length;
+    const allBox = this.head.querySelector<HTMLElement>("[data-all]")!;
+    allBox.className = `cb ${n === 0 ? "" : n === all ? "on" : "part"}`;
+    this.renderCommitState();
+  }
+
+  /** Marca/desmarca na hora, só na interface. `range` (Shift) vai do último clicado até este. */
+  private mark(paths: string[], on: boolean, range = false): void {
+    if (range && this.anchor && paths.length === 1) {
+      const files = this.visible().filter((f) => !f.conflict);
+      const i = files.findIndex((f) => f.path === this.anchor);
+      const j = files.findIndex((f) => f.path === paths[0]);
+      if (i >= 0 && j >= 0) paths = files.slice(Math.min(i, j), Math.max(i, j) + 1).map((f) => f.path);
+    } else if (paths.length === 1) this.anchor = paths[0];
+    for (const p of paths) {
+      if (on) this.marked.add(p);
+      else this.marked.delete(p);
+    }
+    const set = new Set(paths);
+    this.list.querySelectorAll<HTMLElement>(".gf").forEach((r) => {
+      if (set.has(r.dataset.p!)) r.querySelector(".cb")?.classList.toggle("on", on);
+    });
+    this.renderMarks();
+  }
+
+  /** Alvo de uma ação sobre a linha: os marcados, se ela for um deles; senão só ela. */
+  private targets(f: FileChange): FileChange[] {
+    if (!this.marked.has(f.path)) return [f];
+    return this.all.filter((x) => this.marked.has(x.path));
   }
 
   private select(path: string | null): void {
@@ -211,10 +250,8 @@ export class ChangesPane {
   private onHead(e: MouseEvent): void {
     const tg = e.target as Element;
     if (tg.closest("[data-all]")) {
-      const all = this.all.filter((f) => !f.conflict);
-      const everything = all.length && all.every((f) => stagedState(f) === "on");
-      void this.ctx.act(() => (everything ? git.unstage(this.repo, ["."]) : git.stage(this.repo, ["."])));
-      return;
+      const all = this.all.filter((f) => !f.conflict).map((f) => f.path);
+      return this.mark(all, this.marked.size < all.length);
     }
     if (tg.closest("[data-stash]")) return void this.stash();
     if (tg.closest("[data-find]")) return this.toggleFind(this.find.hidden);
@@ -240,9 +277,8 @@ export class ChangesPane {
     if (!row) return;
     const f = this.file(row.dataset.p!);
     if (!f) return;
-    if ((e.target as Element).closest("[data-cb]") && !f.conflict) {
-      void this.toggle([f]);
-      return;
+    if (((e.target as Element).closest("[data-cb]") || e.ctrlKey || e.shiftKey) && !f.conflict) {
+      return this.mark([f.path], !this.marked.has(f.path), e.shiftKey);
     }
     this.select(f.path);
   }
@@ -252,11 +288,14 @@ export class ChangesPane {
     if (!row) return;
     const f = this.file(row.dataset.p!);
     if (!f) return;
+    const many = this.targets(f);
+    if (many.length > 1) return this.marksMenu(e, many);
     this.select(f.path);
     const { dir } = splitPath(f.path);
     const ext = /\.([^./]+)$/.exec(f.path)?.[1];
     const st = stagedState(f);
     menu("git-file", e, [
+      { id: "mark", label: t(this.marked.has(f.path) ? "git.changes.ctx.unmarkOne" : "git.changes.ctx.markOne"), disabled: f.conflict },
       { id: st === "on" ? "unstage" : "stage", label: t(st === "on" ? "git.changes.ctx.unstage" : "git.changes.ctx.stage"), disabled: f.conflict },
       { id: "discard", label: t("git.changes.ctx.discard"), danger: true },
       "-",
@@ -273,10 +312,33 @@ export class ChangesPane {
     ], (id) => void this.fileAction(id, f));
   }
 
+  /** Botão direito sobre um dos marcados: as ações valem para todos eles. */
+  private marksMenu(e: MouseEvent, files: FileChange[]): void {
+    const clean = files.filter((f) => !f.conflict);
+    const unstage = clean.length > 0 && clean.every((f) => stagedState(f) === "on");
+    menu("git-file", e, [
+      { header: tn("git.changes.marked", files.length) },
+      { id: "stage", label: t(unstage ? "git.changes.ctx.unstage" : "git.changes.ctx.stage"), disabled: !clean.length },
+      { id: "discard", label: t("git.changes.ctx.discard"), danger: true },
+      { id: "stash", label: t("git.changes.ctx.stashMarked"), disabled: !clean.length },
+      "-",
+      { id: "copyRel", label: t("git.changes.ctx.copyRel") },
+      { id: "unmark", label: t("git.changes.ctx.unmarkAll") },
+    ], (id) => {
+      if (id === "stage") void this.toggle(clean);
+      if (id === "discard") void this.discard(files);
+      if (id === "stash") void this.stash(clean);
+      if (id === "copyRel") void navigator.clipboard.writeText(files.map((f) => f.path).join("\n")).then(() => toast(t("docs.panel.pathCopied")));
+      if (id === "unmark") this.mark([...this.marked], false);
+    });
+  }
+
   private async fileAction(id: string, f: FileChange): Promise<void> {
     const abs = absPath(this.repo, f.path);
     const { dir } = splitPath(f.path);
     switch (id) {
+      case "mark":
+        return this.mark([f.path], !this.marked.has(f.path));
       case "stage":
       case "unstage":
         return this.toggle([f]);
@@ -326,8 +388,8 @@ export class ChangesPane {
     if (e.key === "ArrowDown" || e.key === "ArrowUp") {
       const next = files[Math.max(0, Math.min(files.length - 1, i + (e.key === "ArrowDown" ? 1 : -1)))];
       if (next) this.select(next.path);
-    } else if (e.key === " " && cur && !cur.conflict) void this.toggle([cur]);
-    else if (e.key === "Delete" && cur) void this.discard([cur]);
+    } else if (e.key === " " && cur && !cur.conflict) this.mark([cur.path], !this.marked.has(cur.path));
+    else if (e.key === "Delete" && cur) void this.discard(this.targets(cur));
     else if (e.key === "Enter" && cur) this.openSelected();
     else return;
     e.preventDefault();
@@ -360,7 +422,12 @@ export class ChangesPane {
     const list = files ?? [];
     const hasStaged = this.all.some((f) => !f.untracked && f.x !== ".");
     const r = await ask({
-      title: list.length ? t("git.changes.stashFilesTitle", { name: splitPath(list[0].path).name }) : t("git.changes.stashNew"),
+      title:
+        list.length > 1
+          ? tn("git.changes.stashMarkedTitle", list.length)
+          : list.length
+            ? t("git.changes.stashFilesTitle", { name: splitPath(list[0].path).name })
+            : t("git.changes.stashNew"),
       sub: t("git.changes.stashSub"),
       input: { value: "", placeholder: t("git.changes.stashMessage") },
       checks: [
@@ -883,6 +950,7 @@ export class ChangesPane {
     const branch = st.branch ?? t("git.branch.detached");
     const staged = this.all.filter((f) => !f.untracked && f.x !== ".").length;
     const total = this.all.length;
+    const marked = this.marked.size;
     const amend = this.amending;
     const len = this.sum.value.length;
     const lenEl = this.box.querySelector<HTMLElement>(".gc-len")!;
@@ -894,10 +962,11 @@ export class ChangesPane {
     if (amend) am.innerHTML = `${GI.refresh}<span>${esc(t("git.commit.amending"))}</span><button data-c="noamend">${esc(t("git.dialog.cancel"))}</button>`;
     let label: string;
     if (amend) label = t("git.commit.buttonAmend", { branch });
+    else if (marked) label = tn("git.commit.buttonMarked", marked, { branch });
     else if (!staged && total) label = tn("git.commit.buttonAll", total, { branch });
     else label = t("git.commit.button", { branch });
     this.btn.innerHTML = `<span>${esc(label)}</span><kbd>${t("git.commit.shortcut")}</kbd>`;
-    this.btn.title = !staged && total && !amend ? t("git.commit.allHint") : "";
+    this.btn.title = !marked && !staged && total && !amend ? t("git.commit.allHint") : "";
     const conflicts = this.all.some((f) => f.conflict);
     this.btn.disabled = conflicts || (!total && !amend) || (!amend && !this.sum.value.trim());
     const prot = this.box.querySelector<HTMLElement>(".gc-prot")!;
@@ -945,12 +1014,16 @@ export class ChangesPane {
     const trailers = this.coauthors.map((c) => `Co-authored-by: ${c}`).join("\n");
     const message = [summary, body, trailers].filter(Boolean).join("\n\n");
     const staged = this.all.some((f) => !f.untracked && f.x !== ".");
+    const paths = this.all.filter((f) => this.marked.has(f.path)).flatMap((f) => (f.orig ? [f.path, f.orig] : [f.path]));
     const repo = this.repo;
     this.btn.disabled = true;
     const res = await this.ctx.act(() =>
-      git.commit({ repo, message, amend: this.amending, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged && !this.amending }),
+      git.commit({ repo, message, amend: this.amending, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged && !this.amending, paths }),
     );
     if (!res) return this.renderCommitState();
+    this.marked.clear();
+    this.anchor = null;
+    this.renderList();
     this.sum.value = this.desc.value = "";
     this.amending = false;
     this.coauthors = [];
@@ -1006,6 +1079,12 @@ export class ChangesPane {
       if (id === "web" && this.ctx.webUrl) return void ipc.openUrl(this.ctx.webUrl).catch(() => {});
     });
   }
+}
+
+/** Selo de quanto do arquivo já está no índice (staged): a caixa agora é só a marcação. */
+function ix(f: FileChange): string {
+  const st = f.conflict ? "off" : stagedState(f);
+  return st === "off" ? "" : `<span class="gf-ix ${st}" title="${esc(t(st === "on" ? "git.changes.inIndex" : "git.changes.inIndexPart"))}"></span>`;
 }
 
 /** "On main: polvo:main" / "WIP on main: abc123 msg" → texto amigável. */

@@ -104,7 +104,7 @@ export const git = {
   unstage: (repo: string, paths: string[]) => invoke<void>("git_unstage", { repo, paths }),
   apply: (repo: string, patch: string, cached: boolean, reverse: boolean) => invoke<void>("git_apply", { repo, patch, cached, reverse }),
   discard: (repo: string, files: { path: string; orig: string | null; x: string; untracked: boolean }[]) => invoke<void>("git_discard", { repo, files }),
-  commit: (req: { repo: string; message: string; amend: boolean; noVerify: boolean; all: boolean; signOff: boolean }) =>
+  commit: (req: { repo: string; message: string; amend: boolean; noVerify: boolean; all: boolean; signOff: boolean; paths: string[] }) =>
     invoke<{ sha: string; subject: string }>("git_commit", { req }),
   undoCommit: (repo: string) => invoke<string>("git_undo_commit", { repo }),
   ignore: (repo: string, pattern: string) => invoke<void>("git_ignore", { repo, pattern }),
