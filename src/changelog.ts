@@ -9,6 +9,81 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.7",
+    notes: {
+      pt: [
+        "**Ctrl + clique abre qualquer arquivo do terminal**: Markdown no visualizador do Polvo, imagens numa prévia em tela cheia e o resto no programa padrão do Windows. Para mostrar o arquivo ou a pasta no Explorer, use **Ctrl + Shift + clique**. Executáveis e scripts nunca rodam: só aparecem selecionados no Explorer.",
+        "**Prévia de imagens**: zoom com a roda, arrastar para mover, + − 0 e 1 para 100%. Abra no programa padrão, mostre no Explorer, copie a imagem (Ctrl+C) ou o caminho.",
+        "**Caminhos quebrados em várias linhas**: quando o Claude Code ou outro CLI corta um caminho longo no fim da linha, o Ctrl + clique em qualquer pedaço abre o arquivo inteiro.",
+        "**Ctrl + V cola arquivos no chat**: arquivos copiados no Explorer vão para `.polvo/pasted` do projeto (fora do Git) e entram como `@caminho`; os que já estão no projeto só são referenciados. Um print no Claude Code vira o Alt + V dele; nos outros CLIs é salvo como PNG e referenciado.",
+        "**Novos atalhos na Ajuda**: Ctrl + clique, Ctrl + Shift + clique e Ctrl + V.",
+      ],
+      en: [
+        "**Ctrl + click opens any file from the terminal**: Markdown in Polvo's viewer, images in a full-screen preview and everything else in the Windows default app. To show the file or folder in Explorer, use **Ctrl + Shift + click**. Executables and scripts never run: they're only selected in Explorer.",
+        "**Image preview**: wheel to zoom, drag to pan, + − 0 and 1 for 100%. Open in the default app, show in Explorer, copy the image (Ctrl+C) or its path.",
+        "**Paths broken across lines**: when Claude Code or another CLI cuts a long path at the end of a line, Ctrl + click on any piece opens the whole file.",
+        "**Ctrl + V pastes files into the chat**: files copied in Explorer go to the project's `.polvo/pasted` (ignored by Git) and come in as `@path`; files already in the project are just referenced. A screenshot in Claude Code becomes its Alt + V; in other CLIs it's saved as PNG and referenced.",
+        "**New shortcuts in Help**: Ctrl + click, Ctrl + Shift + click and Ctrl + V.",
+      ],
+      es: [
+        "**Ctrl + clic abre cualquier archivo del terminal**: Markdown en el visor de Polvo, imágenes en una vista previa a pantalla completa y el resto en la aplicación predeterminada de Windows. Para mostrar el archivo o la carpeta en el Explorador, usa **Ctrl + Mayús + clic**. Los ejecutables y scripts nunca se ejecutan: solo se seleccionan en el Explorador.",
+        "**Vista previa de imágenes**: rueda para zoom, arrastrar para mover, + − 0 y 1 para 100%. Abre en la app predeterminada, muestra en el Explorador, copia la imagen (Ctrl+C) o la ruta.",
+        "**Rutas partidas en varias líneas**: cuando Claude Code u otro CLI corta una ruta larga al final de la línea, Ctrl + clic en cualquier parte abre el archivo completo.",
+        "**Ctrl + V pega archivos en el chat**: los archivos copiados en el Explorador van a `.polvo/pasted` del proyecto (fuera de Git) y entran como `@ruta`; los que ya están en el proyecto solo se referencian. Una captura en Claude Code se convierte en su Alt + V; en los otros CLIs se guarda como PNG y se referencia.",
+        "**Nuevos atajos en la Ayuda**: Ctrl + clic, Ctrl + Mayús + clic y Ctrl + V.",
+      ],
+      fr: [
+        "**Ctrl + clic ouvre n'importe quel fichier du terminal** : le Markdown dans la visionneuse de Polvo, les images dans un aperçu plein écran et le reste dans l'application par défaut de Windows. Pour afficher le fichier ou le dossier dans l'Explorateur, utilisez **Ctrl + Maj + clic**. Les exécutables et scripts ne sont jamais lancés : ils sont seulement sélectionnés dans l'Explorateur.",
+        "**Aperçu des images** : molette pour zoomer, glisser pour déplacer, + − 0 et 1 pour 100 %. Ouvrez dans l'application par défaut, affichez dans l'Explorateur, copiez l'image (Ctrl+C) ou son chemin.",
+        "**Chemins coupés sur plusieurs lignes** : quand Claude Code ou un autre CLI coupe un long chemin en fin de ligne, Ctrl + clic sur n'importe quel morceau ouvre le fichier entier.",
+        "**Ctrl + V colle des fichiers dans le chat** : les fichiers copiés dans l'Explorateur vont dans `.polvo/pasted` du projet (hors de Git) et arrivent sous la forme `@chemin` ; ceux déjà dans le projet sont simplement référencés. Une capture dans Claude Code devient son Alt + V ; dans les autres CLI, elle est enregistrée en PNG et référencée.",
+        "**Nouveaux raccourcis dans l'Aide** : Ctrl + clic, Ctrl + Maj + clic et Ctrl + V.",
+      ],
+      de: [
+        "**Strg + Klick öffnet jede Datei aus dem Terminal**: Markdown im Polvo-Viewer, Bilder in einer Vollbildvorschau und alles andere in der Windows-Standard-App. Um Datei oder Ordner im Explorer anzuzeigen, nutze **Strg + Umschalt + Klick**. Ausführbare Dateien und Skripte werden nie gestartet, nur im Explorer markiert.",
+        "**Bildvorschau**: Mausrad zum Zoomen, Ziehen zum Verschieben, + − 0 und 1 für 100 %. In der Standard-App öffnen, im Explorer anzeigen, Bild (Strg+C) oder Pfad kopieren.",
+        "**Über mehrere Zeilen umgebrochene Pfade**: Wenn Claude Code oder ein anderes CLI einen langen Pfad am Zeilenende umbricht, öffnet Strg + Klick auf ein beliebiges Stück die ganze Datei.",
+        "**Strg + V fügt Dateien in den Chat ein**: Im Explorer kopierte Dateien landen in `.polvo/pasted` des Projekts (von Git ignoriert) und kommen als `@pfad` an; Dateien, die schon im Projekt liegen, werden nur referenziert. Ein Screenshot wird in Claude Code zu dessen Alt + V; in anderen CLIs wird er als PNG gespeichert und referenziert.",
+        "**Neue Tastenkürzel in der Hilfe**: Strg + Klick, Strg + Umschalt + Klick und Strg + V.",
+      ],
+      it: [
+        "**Ctrl + clic apre qualsiasi file dal terminale**: il Markdown nel visualizzatore di Polvo, le immagini in un'anteprima a schermo intero e il resto nell'app predefinita di Windows. Per mostrare il file o la cartella in Esplora file, usa **Ctrl + Maiusc + clic**. Eseguibili e script non vengono mai eseguiti: vengono solo selezionati in Esplora file.",
+        "**Anteprima delle immagini**: rotellina per lo zoom, trascina per spostare, + − 0 e 1 per il 100%. Apri nell'app predefinita, mostra in Esplora file, copia l'immagine (Ctrl+C) o il percorso.",
+        "**Percorsi spezzati su più righe**: quando Claude Code o un altro CLI taglia un percorso lungo a fine riga, Ctrl + clic su qualsiasi pezzo apre il file intero.",
+        "**Ctrl + V incolla file nella chat**: i file copiati in Esplora file finiscono in `.polvo/pasted` del progetto (escluso da Git) ed entrano come `@percorso`; quelli già nel progetto vengono solo citati. Uno screenshot in Claude Code diventa il suo Alt + V; negli altri CLI viene salvato come PNG e citato.",
+        "**Nuove scorciatoie nella Guida**: Ctrl + clic, Ctrl + Maiusc + clic e Ctrl + V.",
+      ],
+      ja: [
+        "**Ctrl + クリックでターミナル内のファイルを開く**：Markdown は Polvo のビューアー、画像は全画面プレビュー、それ以外は Windows の既定のアプリで開きます。エクスプローラーで表示するには **Ctrl + Shift + クリック**。実行ファイルやスクリプトは実行されず、エクスプローラーで選択されるだけです。",
+        "**画像プレビュー**：ホイールでズーム、ドラッグで移動、+ − 0、1 で 100%。既定のアプリで開く、エクスプローラーで表示、画像 (Ctrl+C) やパスのコピーができます。",
+        "**複数行に分かれたパス**：Claude Code などの CLI が長いパスを行末で折り返しても、どの部分を Ctrl + クリックしてもファイル全体が開きます。",
+        "**Ctrl + V でファイルをチャットに貼り付け**：エクスプローラーでコピーしたファイルはプロジェクトの `.polvo/pasted`（Git の対象外）に置かれ、`@パス` として入力されます。プロジェクト内のファイルは参照だけです。スクリーンショットは Claude Code では Alt + V として渡され、他の CLI では PNG として保存・参照されます。",
+        "**ヘルプに新しいショートカット**：Ctrl + クリック、Ctrl + Shift + クリック、Ctrl + V。",
+      ],
+      zh: [
+        "**Ctrl + 点击打开终端中的任意文件**：Markdown 在 Polvo 查看器中打开，图片以全屏预览显示，其他文件用 Windows 默认应用打开。要在资源管理器中显示文件或文件夹，请使用 **Ctrl + Shift + 点击**。可执行文件和脚本永远不会运行，只会在资源管理器中被选中。",
+        "**图片预览**：滚轮缩放、拖动平移，+ − 0 以及 1 恢复 100%。可用默认应用打开、在资源管理器中显示、复制图片 (Ctrl+C) 或路径。",
+        "**跨行断开的路径**：Claude Code 等 CLI 在行尾截断长路径时，按住 Ctrl 点击任意部分都会打开完整文件。",
+        "**Ctrl + V 将文件粘贴到聊天**：在资源管理器中复制的文件会放入项目的 `.polvo/pasted`（不纳入 Git），并以 `@路径` 输入；已在项目中的文件只做引用。截图在 Claude Code 中会转为它的 Alt + V；在其他 CLI 中保存为 PNG 并引用。",
+        "**帮助中新增快捷键**：Ctrl + 点击、Ctrl + Shift + 点击和 Ctrl + V。",
+      ],
+      ko: [
+        "**Ctrl + 클릭으로 터미널의 파일 열기**: Markdown은 Polvo 뷰어에서, 이미지는 전체 화면 미리 보기로, 나머지는 Windows 기본 앱으로 엽니다. 탐색기에서 파일이나 폴더를 표시하려면 **Ctrl + Shift + 클릭**을 사용하세요. 실행 파일과 스크립트는 실행되지 않고 탐색기에서 선택만 됩니다.",
+        "**이미지 미리 보기**: 휠로 확대/축소, 드래그로 이동, + − 0, 1은 100%. 기본 앱으로 열기, 탐색기에서 표시, 이미지(Ctrl+C)나 경로 복사가 가능합니다.",
+        "**여러 줄로 나뉜 경로**: Claude Code 등 CLI가 긴 경로를 줄 끝에서 자르더라도 아무 부분이나 Ctrl + 클릭하면 전체 파일이 열립니다.",
+        "**Ctrl + V로 파일을 채팅에 붙여넣기**: 탐색기에서 복사한 파일은 프로젝트의 `.polvo/pasted`(Git 제외)로 복사되어 `@경로`로 입력됩니다. 이미 프로젝트에 있는 파일은 참조만 합니다. 스크린샷은 Claude Code에서는 Alt + V로 전달되고, 다른 CLI에서는 PNG로 저장되어 참조됩니다.",
+        "**도움말에 새 단축키**: Ctrl + 클릭, Ctrl + Shift + 클릭, Ctrl + V.",
+      ],
+      ru: [
+        "**Ctrl + клик открывает любой файл из терминала**: Markdown — во встроенном просмотрщике Polvo, изображения — в полноэкранном просмотре, остальное — в приложении Windows по умолчанию. Чтобы показать файл или папку в Проводнике, используйте **Ctrl + Shift + клик**. Исполняемые файлы и скрипты никогда не запускаются, а только выделяются в Проводнике.",
+        "**Просмотр изображений**: колесо для масштаба, перетаскивание для перемещения, + − 0 и 1 для 100 %. Откройте в приложении по умолчанию, покажите в Проводнике, скопируйте изображение (Ctrl+C) или путь.",
+        "**Пути, разбитые на несколько строк**: если Claude Code или другой CLI обрезал длинный путь в конце строки, Ctrl + клик по любой части откроет весь файл.",
+        "**Ctrl + V вставляет файлы в чат**: файлы, скопированные в Проводнике, попадают в `.polvo/pasted` проекта (вне Git) и вставляются как `@путь`; файлы, уже лежащие в проекте, просто упоминаются. Скриншот в Claude Code превращается в его Alt + V; в других CLI сохраняется как PNG и упоминается.",
+        "**Новые сочетания клавиш в Справке**: Ctrl + клик, Ctrl + Shift + клик и Ctrl + V.",
+      ],
+    },
+  },
+  {
     version: "0.3.6",
     notes: {
       pt: [

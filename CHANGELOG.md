@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.7
+
+- **Ctrl + clique abre qualquer arquivo do terminal**: Markdown no visualizador do Polvo, imagens numa prévia em tela cheia e o resto no programa padrão do Windows. Para mostrar o arquivo ou a pasta no Explorer, use **Ctrl + Shift + clique**. Executáveis e scripts nunca rodam: só aparecem selecionados no Explorer.
+- **Prévia de imagens**: zoom com a roda, arrastar para mover, + − 0 e 1 para 100%. Abra no programa padrão, mostre no Explorer, copie a imagem (Ctrl+C) ou o caminho.
+- **Caminhos quebrados em várias linhas**: quando o Claude Code ou outro CLI corta um caminho longo no fim da linha, o Ctrl + clique em qualquer pedaço abre o arquivo inteiro.
+- **Ctrl + V cola arquivos no chat**: arquivos copiados no Explorer vão para `.polvo/pasted` do projeto (fora do Git) e entram como `@caminho`; os que já estão no projeto só são referenciados. Um print no Claude Code vira o Alt + V dele; nos outros CLIs é salvo como PNG e referenciado.
+- **Novos atalhos na Ajuda**: Ctrl + clique, Ctrl + Shift + clique e Ctrl + V.
+
 ## 0.3.6
 
 - **Ordem dos projetos fixa**: a barra lateral não reordena mais os projetos conforme as sessões abrem e fecham. Arraste um projeto (ou o ícone, com a barra recolhida) para mudar a posição; todas as janelas seguem a mesma ordem.
