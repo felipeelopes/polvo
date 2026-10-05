@@ -47,8 +47,8 @@ function avatar(name: string, email: string, cls = ""): string {
 
 /** Põe as fotos nos avatares de `root` (os que não têm foto ficam com as iniciais). */
 function loadPhotos(root: HTMLElement): void {
-  root.querySelectorAll<HTMLElement>(".gav[data-e]:not(.ph)").forEach((el) => {
-    el.classList.add("ph");
+  root.querySelectorAll<HTMLElement>(".gav[data-e]:not([data-ph])").forEach((el) => {
+    el.dataset.ph = "";
     void photoOf(el.dataset.e!).then((url) => {
       if (!url || failed.has(url)) return;
       const img = new Image();

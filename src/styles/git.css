@@ -393,8 +393,8 @@ body.resizing-git, body.resizing-git * { cursor: col-resize !important; user-sel
 .g-card:hover { border-color: var(--line2); background: var(--hover); }
 .g-card b { font-size: 13px; font-weight: 600; }
 .g-card small { font-size: 12px; color: var(--muted); line-height: 1.45; }
-.g-card.primary { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
-.g-card.primary b { color: var(--accent); }
+.g-card.lead { border-color: color-mix(in srgb, var(--accent) 45%, transparent); background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.g-card.lead b { color: var(--accent); }
 
 /* branches: comparação */
 .gb-cnt { margin-left: 4px; padding: 0 6px; border-radius: var(--r-xs); background: var(--hover2); color: var(--muted); font-size: 10px; letter-spacing: 0; }

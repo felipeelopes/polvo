@@ -1112,7 +1112,7 @@ export class ChangesPane {
     if (this.ctx.webUrl) cards.push({ id: "web", title: t("git.next.web"), desc: t("git.next.webDesc") });
     this.dHead.innerHTML = "";
     this.dScroll.innerHTML = `<div class="g-next"><div class="g-next-h">${GI.check}<b>${esc(t("git.next.title"))}</b><span>${esc(t("git.changes.noneHint"))}</span></div>
-      <div class="g-cards">${cards.map((c) => `<button class="g-card${c.primary ? " primary" : ""}" data-next="${c.id}"><b>${esc(c.title)}</b><small>${esc(c.desc)}</small></button>`).join("")}</div></div>`;
+      <div class="g-cards">${cards.map((c) => `<button class="g-card${c.primary ? " lead" : ""}" data-next="${c.id}"><b>${esc(c.title)}</b><small>${esc(c.desc)}</small></button>`).join("")}</div></div>`;
     this.dScroll.querySelector(".g-cards")!.addEventListener("click", (e) => {
       const id = (e.target as Element).closest<HTMLElement>("[data-next]")?.dataset.next;
       if (!id) return;
