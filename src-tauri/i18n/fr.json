@@ -48,6 +48,7 @@
   "git.ghMissing": "GitHub CLI (gh) est introuvable. Installez-le depuis https://cli.github.com et lancez « gh auth login ».",
   "git.claudeMissing": "Claude Code est introuvable dans le PATH.",
   "git.nothingToCommit": "Aucune modification à commiter.",
+  "git.headMoved": "Le dernier commit a changé (un autre commit est arrivé après). Actualisez et réessayez.",
   "work.network": "Erreur réseau : {error}",
   "work.vault": "Impossible d’utiliser le Gestionnaire d’identification Windows : {error}",
   "work.cliMissing": "La commande « {name} » est introuvable.",

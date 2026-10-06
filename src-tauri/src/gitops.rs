@@ -698,14 +698,23 @@ fn selected_index(repo: &str, paths: &[String]) -> AppResult<PathBuf> {
 }
 
 /// Desfaz o último commit, mantendo as alterações no índice. Devolve a mensagem dele.
+/// Com `expect`, só desfaz se o HEAD ainda for aquele commit (um agente pode ter feito outro).
 #[tauri::command]
-pub async fn git_undo_commit(repo: String) -> AppResult<String> {
+pub async fn git_undo_commit(repo: String, expect: Option<String>) -> AppResult<String> {
     blocking(move || {
+        let lock = repo_lock(&repo);
+        let _g = lock.lock();
+        if let Some(sha) = expect.as_deref().filter(|s| !s.is_empty()) {
+            let head = read(&repo, &["rev-parse", "HEAD"])?;
+            if !head.trim().starts_with(sha) {
+                return Err(AppError::msg(tr("git.headMoved", &[])));
+            }
+        }
         let msg = read(&repo, &["log", "-1", "--format=%B"])?;
         if read(&repo, &["rev-parse", "--verify", "-q", "HEAD~1"]).is_ok() {
-            write(&repo, &["reset", "--soft", "HEAD~1"])?;
+            run(&repo, &["reset", "--soft", "HEAD~1"])?;
         } else {
-            write(&repo, &["update-ref", "-d", "HEAD"])?;
+            run(&repo, &["update-ref", "-d", "HEAD"])?;
         }
         Ok(msg.trim().to_string())
     })
@@ -1629,6 +1638,53 @@ mod tests {
     }
 
     #[test]
+    fn commit_of_marked_files_and_undo_checks_head() {
+        let repo = temp_repo();
+        let p = |name: &str| Path::new(&repo).join(name);
+        std::fs::write(p("a.txt"), "um\n").unwrap();
+        std::fs::write(p("b.txt"), "um\n").unwrap();
+        run(&repo, &["add", "-A"]).unwrap();
+        run(&repo, &["commit", "-qm", "inicial"]).unwrap();
+        std::fs::write(p("a.txt"), "dois\n").unwrap();
+        std::fs::write(p("b.txt"), "dois\n").unwrap();
+        std::fs::write(p("c.txt"), "novo\n").unwrap();
+
+        // Só os marcados (a.txt e o novo c.txt) vão no commit; b.txt continua na lista.
+        let done = tauri::async_runtime::block_on(git_commit(CommitReq {
+            repo: repo.clone(),
+            message: "marcados".into(),
+            amend: false,
+            no_verify: false,
+            all: false,
+            sign_off: false,
+            paths: vec!["a.txt".into(), "c.txt".into()],
+        }))
+        .unwrap();
+        let st = status_of(&repo).unwrap();
+        let paths: Vec<&str> = st.files.iter().map(|f| f.path.as_str()).collect();
+        assert_eq!(paths, ["b.txt"]);
+        assert_eq!(st.files[0].x, ".");
+        assert!(st.head.as_deref().unwrap().starts_with(&done.sha));
+
+        // Desfazer confere o HEAD: se outro commit entrou, recusa.
+        let moved =
+            tauri::async_runtime::block_on(git_undo_commit(repo.clone(), Some("0000000".into())));
+        assert!(moved.is_err());
+        let msg =
+            tauri::async_runtime::block_on(git_undo_commit(repo.clone(), Some(done.sha.clone())))
+                .unwrap();
+        assert_eq!(msg, "marcados");
+        let st = status_of(&repo).unwrap();
+        assert_eq!(st.files.len(), 3);
+        let x = |name: &str| st.files.iter().find(|f| f.path == name).unwrap().x.clone();
+        assert_eq!(
+            (x("a.txt"), x("b.txt"), x("c.txt")),
+            ("M".into(), ".".into(), "A".into())
+        );
+        let _ = std::fs::remove_dir_all(&repo);
+    }
+
+    #[test]
     fn end_to_end_flow() {
         let repo = temp_repo();
         let file = Path::new(&repo).join("a.txt");
@@ -1778,7 +1834,7 @@ mod tests {
         .unwrap();
 
         // Desfazer o último commit devolve a mensagem e mantém as alterações no índice.
-        let msg = tauri::async_runtime::block_on(git_undo_commit(repo.clone())).unwrap();
+        let msg = tauri::async_runtime::block_on(git_undo_commit(repo.clone(), None)).unwrap();
         assert!(msg.starts_with("segundo"));
         assert_eq!(status_of(&repo).unwrap().files[0].x, "M");
 

@@ -48,6 +48,7 @@
   "git.ghMissing": "未找到 GitHub CLI (gh)。请从 https://cli.github.com 安装，并运行“gh auth login”。",
   "git.claudeMissing": "在 PATH 中未找到 Claude Code。",
   "git.nothingToCommit": "没有可提交的更改。",
+  "git.headMoved": "最后一个提交已变化（之后又有新的提交）。请刷新后重试。",
   "work.network": "网络错误：{error}",
   "work.vault": "无法使用 Windows 凭据管理器：{error}",
   "work.cliMissing": "找不到“{name}”命令。",

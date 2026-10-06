@@ -48,6 +48,7 @@
   "git.ghMissing": "GitHub CLI (gh) が見つかりません。https://cli.github.com からインストールし、「gh auth login」を実行してください。",
   "git.claudeMissing": "Claude Code が PATH に見つかりません。",
   "git.nothingToCommit": "コミットする変更がありません。",
+  "git.headMoved": "最後のコミットが変わりました（その後に別のコミットが追加されました）。更新してからもう一度お試しください。",
   "work.network": "ネットワークエラー: {error}",
   "work.vault": "Windows 資格情報マネージャーを使用できませんでした: {error}",
   "work.cliMissing": "「{name}」コマンドが見つかりません。",

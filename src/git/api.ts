@@ -106,7 +106,8 @@ export const git = {
   discard: (repo: string, files: { path: string; orig: string | null; x: string; untracked: boolean }[]) => invoke<void>("git_discard", { repo, files }),
   commit: (req: { repo: string; message: string; amend: boolean; noVerify: boolean; all: boolean; signOff: boolean; paths: string[] }) =>
     invoke<{ sha: string; subject: string }>("git_commit", { req }),
-  undoCommit: (repo: string) => invoke<string>("git_undo_commit", { repo }),
+  /** Com `expect`, só desfaz se o HEAD ainda for aquele commit. */
+  undoCommit: (repo: string, expect?: string) => invoke<string>("git_undo_commit", { repo, expect: expect ?? null }),
   ignore: (repo: string, pattern: string) => invoke<void>("git_ignore", { repo, pattern }),
   init: (path: string) => invoke<void>("git_init", { path }),
   log: (repo: string, skip: number, limit: number, search?: string, rev?: string, path?: string) =>

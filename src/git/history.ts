@@ -284,7 +284,7 @@ export class HistoryPane {
       case "revert":
         return void this.ctx.act(() => git.action(repo, "revert", [c.sha]), t("git.history.reverted"));
       case "undo":
-        return void this.ctx.act(() => git.undoCommit(repo), t("git.commit.undone"));
+        return void this.ctx.act(() => git.undoCommit(repo, c.sha), t("git.commit.undone"));
       case "reword": {
         const r = await ask({
           title: t("git.history.rewordTitle"),

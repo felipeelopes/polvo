@@ -5,7 +5,7 @@ import { normPath, store } from "../core/store";
 import { t, tn } from "../i18n";
 import { ago, esc, h } from "../ui/dom";
 import { toast } from "../ui/feedback";
-import { git, type FileChange, type Stash } from "./api";
+import { git, type FileChange, type GitStatus, type Stash } from "./api";
 import { buildPatch, hunkSelection, parseDiff, type FileDiff } from "./diff";
 import { DiffView, selectionLabel, type DiffMode } from "./diffview";
 import { ask, branchError, slugBranch } from "./dialog";
@@ -16,6 +16,36 @@ const PROTECTED = /^(main|master|develop|trunk|release.*)$/;
 /** Quem estava trabalhando quando cada arquivo apareceu (por repositório). */
 const agentOf = new Map<string, Map<string, string>>();
 
+/** Último commit feito pelo painel: a linha com "Desfazer" abaixo do botão. */
+export interface LastCommit {
+  sha: string;
+  summary: string;
+  at: number;
+  amend: boolean;
+}
+
+/** Último commit de cada repositório (sobrevive à troca de repositório no painel). */
+const lastCommits = new Map<string, LastCommit>();
+
+/** A linha do último commit fica enquanto ele for o HEAD e ainda não tiver sido enviado. */
+export function lastCommitLive(st: Pick<GitStatus, "head" | "upstream" | "ahead"> | null, c: LastCommit | undefined): boolean {
+  return !!c && !!st?.head && st.head.startsWith(c.sha) && !(st.upstream && st.ahead === 0);
+}
+
+/** Separa os coautores da mensagem de um commit desfeito (e tira o Signed-off-by, que o commit põe de novo). */
+export function splitMessage(msg: string): { summary: string; body: string; coauthors: string[] } {
+  const coauthors: string[] = [];
+  const text = msg
+    .replace(/^Co-authored-by:[ \t]*(.+)$/gim, (_, who: string) => {
+      coauthors.push(who.trim());
+      return "";
+    })
+    .replace(/^Signed-off-by:.*$/gim, "")
+    .trim();
+  const [first = "", ...rest] = text.split("\n");
+  return { summary: first.trim(), body: rest.join("\n").trim(), coauthors };
+}
+
 export class ChangesPane {
   readonly el = h("div", "gp gp-changes");
   private list = h("div", "gc-list");
@@ -23,6 +53,8 @@ export class ChangesPane {
   private find = h("div", "gc-find");
   private stashEl = h("div", "gc-stash");
   private box = h("div", "gc-commit");
+  private lastEl = h("div", "gc-last");
+  private lastHtml = "";
   private dHead = h("div", "gd-head");
   private dScroll = h("div", "gd-scroll");
   private selBar = h("div", "gd-selbar");
@@ -822,6 +854,8 @@ export class ChangesPane {
   private desc!: HTMLTextAreaElement;
   private btn!: HTMLButtonElement;
   private amending = false;
+  /** Commit em andamento (hooks podem levar segundos): o polling não reabilita o botão. */
+  private committing = false;
   private coauthors: string[] = [];
 
   private buildCommitBox(): void {
@@ -836,6 +870,8 @@ export class ChangesPane {
       </div>
       <div class="gc-prot" hidden></div>
       <button class="gc-btn" data-c="commit"></button>`;
+    this.lastEl.hidden = true;
+    this.box.append(this.lastEl);
     this.sum = this.box.querySelector(".gc-sum")!;
     this.desc = this.box.querySelector(".gc-desc")!;
     this.btn = this.box.querySelector(".gc-btn")!;
@@ -875,6 +911,8 @@ export class ChangesPane {
       switch (c.dataset.c) {
         case "commit":
           return void this.commit();
+        case "undo":
+          return void this.undoLast();
         case "ai":
           return void this.generate(c as HTMLButtonElement);
         case "branch":
@@ -906,8 +944,8 @@ export class ChangesPane {
     this.desc.style.height = `${Math.min(180, Math.max(58, this.desc.scrollHeight))}px`;
   }
 
-  private draftKey(): string {
-    return `draft.${normPath(this.repo)}`;
+  private draftKey(repo = this.repo): string {
+    return `draft.${normPath(repo)}`;
   }
 
   private saveDraft(): void {
@@ -984,19 +1022,62 @@ export class ChangesPane {
     am.hidden = !amend;
     if (amend) am.innerHTML = `${GI.refresh}<span>${esc(t("git.commit.amending"))}</span><button data-c="noamend">${esc(t("git.dialog.cancel"))}</button>`;
     let label: string;
-    if (amend) label = t("git.commit.buttonAmend", { branch });
+    if (this.committing) label = t("git.commit.committing", { branch });
+    else if (amend) label = t("git.commit.buttonAmend", { branch });
     else if (marked) label = tn("git.commit.buttonMarked", marked, { branch });
     else if (!staged && total) label = tn("git.commit.buttonAll", total, { branch });
     else label = t("git.commit.button", { branch });
-    this.btn.innerHTML = `<span>${esc(label)}</span><kbd>${t("git.commit.shortcut")}</kbd>`;
-    this.btn.title = !marked && !staged && total && !amend ? t("git.commit.allHint") : "";
+    this.btn.innerHTML = this.committing ? `<span class="g-spin"></span><span>${esc(label)}</span>` : `<span>${esc(label)}</span><kbd>${t("git.commit.shortcut")}</kbd>`;
+    this.btn.title = !marked && !staged && total && !amend && !this.committing ? t("git.commit.allHint") : "";
+    this.btn.classList.toggle("busy", this.committing);
+    this.sum.readOnly = this.desc.readOnly = this.committing;
     const conflicts = this.all.some((f) => f.conflict);
-    this.btn.disabled = conflicts || (!total && !amend) || (!amend && !this.sum.value.trim() && !auto);
+    this.btn.disabled = this.committing || conflicts || (!total && !amend) || (!amend && !this.sum.value.trim() && !auto);
     const prot = this.box.querySelector<HTMLElement>(".gc-prot")!;
     const isProt = !!st.branch && PROTECTED.test(st.branch) && total > 0 && !amend;
     prot.hidden = !isProt;
     if (isProt) prot.innerHTML = `${GI.warn}<span>${esc(t("git.commit.protected", { branch: st.branch! }))}</span><button data-c="branch">${esc(t("git.commit.createBranch"))}</button>`;
     this.box.classList.toggle("gc-idle", !total && !amend);
+    this.renderLast();
+  }
+
+  /** Linha "Commit feito agora · resumo · Desfazer" abaixo do botão (como o GitHub Desktop). */
+  private renderLast(): void {
+    const key = normPath(this.repo);
+    const c = lastCommits.get(key);
+    const live = lastCommitLive(this.ctx.status, c);
+    // O HEAD mudou (outro commit, checkout, envio): a linha não volta mais.
+    if (c && !live) lastCommits.delete(key);
+    const undo = c && !c.amend ? `<button class="gbtn" data-c="undo" title="${esc(t("git.commit.undoHint"))}"${this.committing ? " disabled" : ""}>${esc(t("git.commit.undo"))}</button>` : "";
+    const html =
+      live && c
+        ? `${GI.check}<span class="gc-last-t" title="${esc(t("git.commit.done", { sha: c.sha }))}"><small>${esc(t(c.amend ? "git.commit.lastAmend" : "git.commit.last", { ago: ago(c.at) }))}</small><b>${esc(c.summary)}</b></span>${undo}`
+        : "";
+    this.lastEl.hidden = !html;
+    // Só redesenha quando muda: o polling não pode trocar o botão no meio de um clique.
+    if (html !== this.lastHtml) this.lastEl.innerHTML = this.lastHtml = html;
+  }
+
+  /** Desfaz o último commit: as alterações voltam para a lista e a mensagem volta para a caixa. */
+  private async undoLast(): Promise<void> {
+    const repo = this.repo;
+    const key = normPath(repo);
+    const c = lastCommits.get(key);
+    if (!c || c.amend || this.committing) return;
+    const msg = await this.ctx.act(() => git.undoCommit(repo, c.sha), t("git.commit.undone"));
+    if (msg === undefined) return;
+    lastCommits.delete(key);
+    if (repo !== this.repo) return;
+    // Não apaga o que já foi digitado depois do commit.
+    if (!this.sum.value.trim() && !this.desc.value.trim()) {
+      const m = splitMessage(msg);
+      this.sum.value = m.summary;
+      this.desc.value = m.body;
+      this.coauthors = m.coauthors;
+      this.renderCoauthors();
+      this.fitDesc();
+    }
+    this.renderCommitState();
   }
 
   /** Arquivos que vão no commit: os marcados; sem marcados, o índice; sem índice, tudo. */
@@ -1061,11 +1142,17 @@ export class ChangesPane {
     const staged = this.all.some((f) => !f.untracked && f.x !== ".");
     const paths = this.all.filter((f) => this.marked.has(f.path)).flatMap((f) => (f.orig ? [f.path, f.orig] : [f.path]));
     const repo = this.repo;
-    this.btn.disabled = true;
+    const amend = this.amending;
+    this.committing = true;
+    this.renderCommitState();
     const res = await this.ctx.act(() =>
-      git.commit({ repo, message, amend: this.amending, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged && !this.amending, paths }),
+      git.commit({ repo, message, amend, noVerify: pref("noVerify", "0") === "1", signOff: pref("signOff", "0") === "1", all: !staged && !amend, paths }),
     );
+    this.committing = false;
     if (!res) return this.renderCommitState();
+    lastCommits.set(normPath(repo), { sha: res.sha, summary: res.subject || summary, at: Date.now(), amend });
+    // Trocou de repositório durante o commit: só limpa o rascunho do repositório certo.
+    if (repo !== this.repo) return setPref(this.draftKey(repo), "");
     this.marked.clear();
     this.anchor = null;
     this.renderList();
@@ -1075,19 +1162,6 @@ export class ChangesPane {
     this.renderCoauthors();
     this.fitDesc();
     this.renderCommitState();
-    toast(t("git.commit.done", { sha: res.sha }), {
-      label: t("git.commit.undo"),
-      run: () =>
-        void this.ctx.act(async () => {
-          const msg = await git.undoCommit(repo);
-          const [first, ...rest] = msg.split("\n");
-          this.sum.value = first;
-          this.desc.value = rest.join("\n").replace(/\n*Co-authored-by:.*$/gim, "").trim();
-          this.fitDesc();
-          this.saveDraft();
-          return msg;
-        }, t("git.commit.undone")),
-    });
   }
 
   /** Foco direto no resumo (atalho). */

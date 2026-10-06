@@ -9,7 +9,7 @@ vi.mock("../src/ui/dom", () => ({ h: vi.fn(), esc: (s: string) => s, ago: vi.fn(
 vi.mock("../src/ui/feedback", () => ({ toast: vi.fn(), popover: vi.fn(), closePopover: vi.fn() }));
 vi.mock("../src/git/api", () => ({ git: { diff: vi.fn() } }));
 
-import { ChangesPane } from "../src/git/changes";
+import { ChangesPane, lastCommitLive, splitMessage } from "../src/git/changes";
 import { git } from "../src/git/api";
 import { ipc } from "../src/core/ipc";
 
@@ -124,5 +124,28 @@ describe("async Git diffs", () => {
 
     expect(pane.dScroll.innerHTML).not.toContain("old repository");
     expect(pane.raw.u).toBe(diff("repo-b"));
+  });
+});
+
+describe("último commit (linha com Desfazer)", () => {
+  const c = { sha: "abc1234", summary: "Corrige x", at: 0, amend: false };
+  const st = (head: string | null, upstream: string | null, ahead: number) => ({ head, upstream, ahead });
+
+  it("aparece enquanto o commit é o HEAD e ainda não foi enviado", () => {
+    expect(lastCommitLive(st("abc1234ffff", "origin/main", 1), c)).toBe(true);
+    expect(lastCommitLive(st("abc1234ffff", null, 0), c)).toBe(true);
+  });
+
+  it("some quando o HEAD muda ou o commit é enviado", () => {
+    expect(lastCommitLive(st("def5678ffff", "origin/main", 2), c)).toBe(false);
+    expect(lastCommitLive(st("abc1234ffff", "origin/main", 0), c)).toBe(false);
+    expect(lastCommitLive(null, c)).toBe(false);
+    expect(lastCommitLive(st("abc1234ffff", null, 0), undefined)).toBe(false);
+  });
+
+  it("devolve resumo, descrição e coautores do commit desfeito", () => {
+    const m = splitMessage("Corrige x\n\nDetalhe 1\nDetalhe 2\n\nCo-authored-by: Ana <ana@x.com>\nSigned-off-by: Eu <eu@x.com>\nco-authored-by: Bia <bia@x.com>");
+    expect(m).toEqual({ summary: "Corrige x", body: "Detalhe 1\nDetalhe 2", coauthors: ["Ana <ana@x.com>", "Bia <bia@x.com>"] });
+    expect(splitMessage("Só o resumo")).toEqual({ summary: "Só o resumo", body: "", coauthors: [] });
   });
 });

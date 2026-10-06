@@ -376,6 +376,16 @@ body.resizing-git, body.resizing-git * { cursor: col-resize !important; user-sel
 .gc-prot { padding: 7px 10px; border-radius: var(--r-sm); }
 .gc-btn { height: 36px; border-radius: var(--r-sm); font-size: 13px; }
 .gc-commit.gc-idle .gc-msg { opacity: 0.55; }
+.gc-btn.busy:disabled { opacity: 0.85; cursor: progress; }
+.gc-btn .g-spin { border-color: var(--on-accent); border-right-color: transparent; }
+
+/* último commit, com "Desfazer" (como o GitHub Desktop) */
+.gc-last { display: flex; align-items: center; gap: 9px; padding: 6px 6px 6px 10px; border-radius: var(--r-sm); background: color-mix(in srgb, var(--ok) 10%, transparent); animation: rise 0.15s; }
+.gc-last > svg { color: var(--ok); flex: none; }
+.gc-last-t { flex: 1; min-width: 0; display: flex; flex-direction: column; line-height: 1.3; }
+.gc-last-t small { font-size: 10.5px; color: var(--faint); }
+.gc-last-t b { font-size: 12px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gc-last .gbtn { flex: none; }
 
 /* cabeçalho do diff */
 .gd-flag { height: 22px; padding: 0 8px; border-radius: var(--r-xs); background: color-mix(in srgb, var(--warn) 14%, transparent); color: var(--warn); font-size: 11px; white-space: nowrap; }

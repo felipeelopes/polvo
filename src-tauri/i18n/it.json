@@ -48,6 +48,7 @@
   "git.ghMissing": "GitHub CLI (gh) non trovata. Installala da https://cli.github.com ed esegui “gh auth login”.",
   "git.claudeMissing": "Claude Code non è stato trovato nel PATH.",
   "git.nothingToCommit": "Non ci sono modifiche da committare.",
+  "git.headMoved": "L'ultimo commit è cambiato (dopo è arrivato un altro commit). Aggiorna e riprova.",
   "work.network": "Errore di rete: {error}",
   "work.vault": "Impossibile usare Gestione credenziali di Windows: {error}",
   "work.cliMissing": "Il comando “{name}” non è stato trovato.",

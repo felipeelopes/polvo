@@ -43,6 +43,9 @@ export class GitView implements GitCtx {
   private stashKey = "";
   private notRepo = false;
   private timer: number | undefined;
+  /** Ordem das leituras de status: uma resposta atrasada não sobrescreve uma mais nova. */
+  private refreshSeq = 0;
+  private appliedSeq = 0;
   private lastJson = "";
   private shape = "";
 
@@ -181,14 +184,20 @@ export class GitView implements GitCtx {
   async refresh(force = false): Promise<void> {
     if (!this.repo) return this.renderNone();
     const repo = this.repo;
+    const seq = ++this.refreshSeq;
     let st: GitStatus | null = null;
+    let notRepo = false;
     try {
       st = await git.status(repo);
-      this.notRepo = false;
     } catch {
-      this.notRepo = true;
+      notRepo = true;
     }
     if (repo !== this.repo) return;
+    // Uma leitura mais nova já chegou (ex.: o polling começou antes do commit e
+    // terminou depois): não volta para o status velho. Se esta era forçada, lê de novo.
+    if (seq < this.appliedSeq) return force ? this.refresh(true) : undefined;
+    this.appliedSeq = seq;
+    this.notRepo = notRepo;
     if (this.notRepo || !st) {
       this.status = null;
       return this.renderNone();
