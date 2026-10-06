@@ -636,6 +636,10 @@ const ru = {
     sync: {
       fetch: "Fetch",
       fetchHint: "Получить изменения с удалённого репозитория",
+      fetchAll: "Выполнить fetch во всех репозиториях",
+      fetchAllWorking: { one: "{n} репозиторий…", few: "{n} репозитория…", many: "{n} репозиториев…", other: "{n} репозитория…" },
+      fetchAllDone: { one: "Fetch выполнен в {n} репозитории", few: "Fetch выполнен в {n} репозиториях", many: "Fetch выполнен в {n} репозиториях", other: "Fetch выполнен в {n} репозитория" },
+      fetchAllFailed: "Не удалось выполнить fetch: {names}",
       pull: "Pull",
       push: "Push",
       publish: "Опубликовать ветку",

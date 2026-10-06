@@ -6,7 +6,8 @@ use std::collections::HashMap;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::process::{Command, Stdio};
-use std::sync::OnceLock;
+use std::sync::{Arc, OnceLock};
+use std::time::{Duration, Instant, SystemTime};
 
 use parking_lot::Mutex;
 use serde::{Deserialize, Serialize};
@@ -19,15 +20,29 @@ use crate::i18n::tr;
 /// Diffs maiores que isso são cortados (o painel avisa).
 const MAX_DIFF: usize = 6 * 1024 * 1024;
 
-/// Uma escrita por repositório de cada vez (dois cliques rápidos não brigam pelo índice).
-fn repo_lock(repo: &str) -> std::sync::Arc<Mutex<()>> {
-    static LOCKS: OnceLock<Mutex<HashMap<String, std::sync::Arc<Mutex<()>>>>> = OnceLock::new();
-    LOCKS
+type Locks = Mutex<HashMap<String, Arc<Mutex<()>>>>;
+
+fn lock_in(locks: &'static OnceLock<Locks>, key: &str) -> Arc<Mutex<()>> {
+    locks
         .get_or_init(Default::default)
         .lock()
-        .entry(repo.to_lowercase())
+        .entry(key.to_lowercase())
         .or_default()
         .clone()
+}
+
+/// Uma escrita por repositório de cada vez (dois cliques rápidos não brigam pelo índice).
+fn repo_lock(repo: &str) -> Arc<Mutex<()>> {
+    static LOCKS: OnceLock<Locks> = OnceLock::new();
+    lock_in(&LOCKS, repo)
+}
+
+/// Um fetch/pull/push por repositório de cada vez, contando os worktrees (eles
+/// compartilham as referências remotas). Separado do `repo_lock`: o fetch em
+/// segundo plano não toca o índice e não pode segurar um commit enquanto espera a rede.
+fn fetch_lock(key: &str) -> Arc<Mutex<()>> {
+    static LOCKS: OnceLock<Locks> = OnceLock::new();
+    lock_in(&LOCKS, key)
 }
 
 fn command(repo: &str, args: &[&str]) -> Command {
@@ -183,6 +198,8 @@ pub struct Status {
     pub stashes: u32,
     /// Branch sem nenhum commit ainda.
     pub unborn: bool,
+    /// Último fetch do remoto (ms desde 1970), por qualquer caminho: painel, pull, terminal.
+    pub fetched_at: Option<u64>,
 }
 
 fn parse_status(out: &str) -> Status {
@@ -266,9 +283,51 @@ fn parse_status(out: &str) -> Status {
     st
 }
 
+/// Pastas do git: a deste worktree (`--git-dir`) e a compartilhada (`--git-common-dir`).
+fn git_dirs(repo: &str) -> Option<(PathBuf, PathBuf)> {
+    let out = read(repo, &["rev-parse", "--git-dir", "--git-common-dir"]).ok()?;
+    let mut lines = out.lines().map(str::trim);
+    let dir = Path::new(repo).join(lines.next()?);
+    let common = Path::new(repo).join(lines.next()?);
+    Some((dir, common))
+}
+
+/// Chave estável de um repositório (a pasta compartilhada), igual vista de qualquer worktree.
+fn repo_key(common: &Path) -> String {
+    std::fs::canonicalize(common)
+        .unwrap_or_else(|_| common.to_path_buf())
+        .to_string_lossy()
+        .replace('\\', "/")
+        .to_lowercase()
+}
+
+fn epoch_ms(t: SystemTime) -> u64 {
+    t.duration_since(SystemTime::UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
+}
+
+/// Quando o repositório buscou do remoto pela última vez: o `FETCH_HEAD` é
+/// reescrito a cada fetch e pull. Num worktree ele pode estar na pasta dele ou
+/// na compartilhada; vale o mais recente.
+fn fetched_at((dir, common): &(PathBuf, PathBuf)) -> Option<u64> {
+    [dir, common]
+        .iter()
+        .filter_map(|d| {
+            std::fs::metadata(d.join("FETCH_HEAD"))
+                .ok()?
+                .modified()
+                .ok()
+        })
+        .max()
+        .map(epoch_ms)
+}
+
 fn operation(repo: &str) -> Option<String> {
-    let dir = read(repo, &["rev-parse", "--git-dir"]).ok()?;
-    let dir = Path::new(repo).join(dir.trim());
+    operation_in(&git_dirs(repo)?.0)
+}
+
+fn operation_in(dir: &Path) -> Option<String> {
     [
         ("rebase-merge", "rebase"),
         ("rebase-apply", "rebase"),
@@ -296,7 +355,9 @@ fn status_of(repo: &str) -> AppResult<Status> {
     )?;
     let mut st = parse_status(&out);
     st.root = root.trim().replace('/', "\\");
-    st.operation = operation(repo);
+    let dirs = git_dirs(repo);
+    st.operation = dirs.as_ref().and_then(|d| operation_in(&d.0));
+    st.fetched_at = dirs.as_ref().and_then(fetched_at);
     st.stashes = read(repo, &["stash", "list"])
         .map(|s| s.lines().count() as u32)
         .unwrap_or(0);
@@ -1223,6 +1284,9 @@ pub async fn git_remote(repo: String, op: String, progress: Channel<String>) -> 
             "push-tags" => vec!["push", "--progress", "--tags"],
             _ => return Err(AppError::msg(op)),
         };
+        let key = git_dirs(&repo).map_or_else(|| repo.clone(), |(_, c)| repo_key(&c));
+        let fetching = fetch_lock(&key);
+        let _f = fetching.lock();
         let lock = repo_lock(&repo);
         let _g = lock.lock();
         let mut child = command(&repo, &args)
@@ -1263,6 +1327,90 @@ pub async fn git_remote(repo: String, op: String, progress: Channel<String>) -> 
         }
     })
     .await
+}
+
+/// Fetch em segundo plano que trava (VPN caída, servidor sem resposta) é abandonado.
+const BACKGROUND_FETCH_TIMEOUT: Duration = Duration::from_secs(90);
+
+/// Fetch silencioso, sem pedir login e com prazo. `true` se deu certo.
+fn background_fetch(repo: &str) -> bool {
+    let mut cmd = command(repo, &["fetch", "--all", "--prune", "--quiet"]);
+    // O Gerenciador de Credenciais abriria uma janela de login do nada.
+    cmd.env("GCM_INTERACTIVE", "never")
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null());
+    let Ok(mut child) = cmd.spawn() else {
+        return false;
+    };
+    let start = Instant::now();
+    loop {
+        match child.try_wait() {
+            Ok(Some(status)) => return status.success(),
+            Ok(None) if start.elapsed() < BACKGROUND_FETCH_TIMEOUT => {
+                std::thread::sleep(Duration::from_millis(200));
+            }
+            _ => {
+                let _ = child.kill();
+                let _ = child.wait();
+                return false;
+            }
+        }
+    }
+}
+
+#[derive(Serialize, Default, Debug)]
+pub struct FetchAll {
+    fetched: Vec<String>,
+    /// Tinham remoto e o fetch falhou (sem rede, sem login, prazo esgotado).
+    failed: Vec<String>,
+}
+
+/// Busca do remoto em segundo plano: um repositório de cada vez, só os que não
+/// buscaram há `max_age` segundos (0 = todos agora). Várias janelas podem pedir
+/// juntas: cada repositório é tentado uma vez por período, mesmo se o fetch falhar
+/// (sem rede ou sem login, o `FETCH_HEAD` não muda). Os pulados (buscados há
+/// pouco, sem remoto, com outro fetch rodando) não entram no resultado.
+#[tauri::command]
+pub async fn git_fetch_all(paths: Vec<String>, max_age: u64) -> FetchAll {
+    static TRIED: OnceLock<Mutex<HashMap<String, Instant>>> = OnceLock::new();
+    blocking(move || {
+        let max_age = Duration::from_secs(max_age);
+        let now = epoch_ms(SystemTime::now());
+        let mut res = FetchAll::default();
+        for repo in paths {
+            let Some(dirs) = git_dirs(&repo) else {
+                continue;
+            };
+            let key = repo_key(&dirs.1);
+            {
+                let mut tried = TRIED.get_or_init(Default::default).lock();
+                let recent = tried.get(&key).is_some_and(|t| t.elapsed() < max_age);
+                let fresh = fetched_at(&dirs)
+                    .is_some_and(|at| now.saturating_sub(at) < max_age.as_millis() as u64);
+                if recent || fresh {
+                    continue;
+                }
+                tried.insert(key.clone(), Instant::now());
+            }
+            if read(&repo, &["remote"]).map_or(true, |r| r.trim().is_empty()) {
+                continue;
+            }
+            // Já tem um fetch/pull/push rodando neste repositório: não espera.
+            let fetching = fetch_lock(&key);
+            let Some(_f) = fetching.try_lock() else {
+                continue;
+            };
+            if background_fetch(&repo) {
+                res.fetched.push(repo);
+            } else {
+                res.failed.push(repo);
+            }
+        }
+        Ok(res)
+    })
+    .await
+    .unwrap_or_default()
 }
 
 /// Endereço web do repositório remoto (GitHub, GitLab, Azure…).
@@ -1635,6 +1783,57 @@ mod tests {
         assert_eq!(log.len(), 1);
         assert_eq!(log[0].subject, "initial");
         let _ = std::fs::remove_dir_all(&repo);
+    }
+
+    #[test]
+    fn background_fetch_brings_remote_commits_and_skips_fresh_repos() {
+        let a = temp_repo();
+        std::fs::write(Path::new(&a).join("a.txt"), "um\n").unwrap();
+        run(&a, &["add", "-A"]).unwrap();
+        run(&a, &["commit", "-qm", "inicial"]).unwrap();
+        let origin = format!("{a}-origin.git");
+        let b = format!("{a}-b");
+        run(&a, &["clone", "-q", "--bare", ".", &origin]).unwrap();
+        run(&a, &["remote", "add", "origin", &origin]).unwrap();
+        run(&a, &["fetch", "-q", "origin"]).unwrap();
+        run(&a, &["branch", "-q", "-u", "origin/main"]).unwrap();
+
+        // Outro clone envia um commit; \`a\` ainda não sabe dele.
+        run(&a, &["clone", "-q", &origin, &b]).unwrap();
+        run(&b, &["config", "user.email", "t@t"]).unwrap();
+        run(&b, &["config", "user.name", "Teste"]).unwrap();
+        std::fs::write(Path::new(&b).join("b.txt"), "novo\n").unwrap();
+        run(&b, &["add", "-A"]).unwrap();
+        run(&b, &["commit", "-qm", "remoto"]).unwrap();
+        run(&b, &["push", "-q"]).unwrap();
+        assert_eq!(status_of(&a).unwrap().behind, 0);
+
+        // Buscou agora há pouco: o fetch em segundo plano pula.
+        let fresh = tauri::async_runtime::block_on(git_fetch_all(vec![a.clone()], 300));
+        assert!(fresh.fetched.is_empty() && fresh.failed.is_empty());
+        // Pedido para buscar todos agora: traz o commit do remoto.
+        let done = tauri::async_runtime::block_on(git_fetch_all(vec![a.clone()], 0));
+        assert_eq!(done.fetched, [a.clone()]);
+        assert!(done.failed.is_empty());
+        let st = status_of(&a).unwrap();
+        assert_eq!(st.behind, 1);
+        let age = epoch_ms(SystemTime::now()).saturating_sub(st.fetched_at.unwrap());
+        assert!(age < 60_000);
+        // Repositório sem remoto não é buscado.
+        let solo = temp_repo();
+        let skipped = tauri::async_runtime::block_on(git_fetch_all(vec![solo.clone()], 0));
+        assert!(skipped.fetched.is_empty() && skipped.failed.is_empty());
+        // Remoto que não existe: falha, sem travar nem pedir nada.
+        run(
+            &solo,
+            &["remote", "add", "origin", &format!("{solo}-nada.git")],
+        )
+        .unwrap();
+        let broken = tauri::async_runtime::block_on(git_fetch_all(vec![solo.clone()], 0));
+        assert_eq!(broken.failed, [solo.clone()]);
+        for d in [a, origin, b, solo] {
+            let _ = std::fs::remove_dir_all(d);
+        }
     }
 
     #[test]

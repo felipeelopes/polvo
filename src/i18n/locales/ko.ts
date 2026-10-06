@@ -612,6 +612,10 @@ const messages: Messages = {
     sync: {
       fetch: "페치",
       fetchHint: "원격의 변경 사항 페치",
+      fetchAll: "모든 저장소 페치",
+      fetchAllWorking: { one: "저장소 {n}개…", other: "저장소 {n}개…" },
+      fetchAllDone: { one: "저장소 {n}개 페치 완료", other: "저장소 {n}개 페치 완료" },
+      fetchAllFailed: "페치할 수 없음: {names}",
       pull: "풀",
       push: "푸시",
       publish: "브랜치 게시",

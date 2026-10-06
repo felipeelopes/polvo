@@ -612,6 +612,10 @@ const messages: Messages = {
     sync: {
       fetch: "フェッチ",
       fetchHint: "リモートの変更をフェッチ",
+      fetchAll: "すべてのリポジトリをフェッチ",
+      fetchAllWorking: { one: "{n} 個のリポジトリ…", other: "{n} 個のリポジトリ…" },
+      fetchAllDone: { one: "{n} 個のリポジトリをフェッチしました", other: "{n} 個のリポジトリをフェッチしました" },
+      fetchAllFailed: "フェッチできませんでした: {names}",
       pull: "プル",
       push: "プッシュ",
       publish: "ブランチを発行",

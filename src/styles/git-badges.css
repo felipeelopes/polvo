@@ -1,7 +1,7 @@
 /* Selos de git na barra lateral e o chip de branch na barra de título. */
 /* Ciano de "para puxar": cor de dado, com um tom para cada tema. */
-.sb-git, .gchip { --pull: #56c7d9; }
-@media (prefers-color-scheme: light) { .sb-git, .gchip { --pull: #0f7b8a; } }
+.sb-git, .gchip, .g-rs { --pull: #56c7d9; }
+@media (prefers-color-scheme: light) { .sb-git, .gchip, .g-rs { --pull: #0f7b8a; } }
 .sb-git { display: inline-flex; align-items: center; gap: 3px; margin-left: 4px; padding: 1px 5px; border-radius: var(--r-xs); background: var(--hover); font-size: 10px; font-style: normal; font-variant-numeric: tabular-nums; cursor: pointer; flex: none; line-height: 1.5; }
 .sb-git:hover { background: color-mix(in srgb, var(--accent) 16%, transparent); }
 .sb-git i { font-style: normal; }
@@ -10,6 +10,14 @@
 .sb-git .b, .gchip .b { color: var(--pull); }
 .sb-git.bad { background: color-mix(in srgb, var(--bad) 18%, transparent); }
 .wt-h:hover .sb-git, .pg-h:hover .sb-git { display: none; }
+
+/* Selos no seletor de repositório do painel Git: ● alterações, ↑ para enviar, ↓ para puxar. */
+.gmenu button .g-rs { display: inline-flex; align-items: center; gap: 6px; flex: none; overflow: visible; margin-left: -3px; font-size: 11px; font-variant-numeric: tabular-nums; }
+.g-rs i { font-style: normal; }
+.g-rs .c { width: 7px; height: 7px; border-radius: 50%; background: var(--warn); }
+.g-rs.bad .c { background: var(--bad); }
+.g-rs .a { color: var(--accent); }
+.g-rs .b { color: var(--pull); }
 
 .gchip { display: inline-flex; align-items: center; gap: 6px; height: 30px; max-width: 260px; padding: 0 10px; border-radius: var(--r-sm); background: none; border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 .gchip:hover { border-color: var(--line2); background: var(--hover); color: var(--text); }

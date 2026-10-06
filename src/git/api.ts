@@ -23,6 +23,8 @@ export interface GitStatus {
   operation: Operation | null;
   stashes: number;
   unborn: boolean;
+  /** Último fetch do remoto (ms), por qualquer caminho: painel, pull, terminal. */
+  fetchedAt: number | null;
 }
 
 export interface GitSummary {
@@ -88,6 +90,9 @@ export interface PullRequest {
 export type DiffKind = "worktree" | "staged" | "untracked" | "commit";
 export type RemoteOp = "fetch" | "pull" | "push" | "publish" | "force-push" | "push-tags";
 
+/** Fetch automático: cada repositório busca do remoto quando está há mais que isso sem fetch. */
+export const AUTO_FETCH_S = 5 * 60;
+
 function bytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {
   if (data instanceof Uint8Array) return data;
   if (data instanceof ArrayBuffer) return new Uint8Array(data);
@@ -121,6 +126,8 @@ export const git = {
     progress.onmessage = onProgress;
     return invoke<string>("git_remote", { repo, op, progress });
   },
+  /** Fetch em segundo plano dos que não buscaram há `maxAge` segundos (0 = todos agora). Os pulados não voltam. */
+  fetchAll: (paths: string[], maxAge: number) => invoke<{ fetched: string[]; failed: string[] }>("git_fetch_all", { paths, maxAge }),
   webUrl: (repo: string) => invoke<string | null>("git_web_url", { repo }),
   prs: (repo: string) => invoke<PullRequest[]>("gh_prs", { repo }),
   prCreate: (repo: string) => invoke<void>("gh_pr_create", { repo }),

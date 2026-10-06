@@ -24,7 +24,7 @@ import { TOOLS } from "./ui/icons";
 import type { DocsPanel } from "./docs/panel";
 import type { GitView } from "./git/view";
 import type { WorkView } from "./work/view";
-import { git as gitApi } from "./git/api";
+import { AUTO_FETCH_S, git as gitApi } from "./git/api";
 import { defaultTool } from "./ui/projects";
 import { t, tn } from "./i18n";
 
@@ -45,6 +45,9 @@ function gitWasOpen(): boolean {
     return false;
   }
 }
+
+/** Leitura completa dos selos de git (com os projetos salvos sem sessão). */
+const SUMMARIES_FULL_MS = 30_000;
 
 const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRight: [1, 0], ArrowUp: [0, -1], ArrowDown: [0, 1] };
 
@@ -221,11 +224,18 @@ export class App {
     return id;
   }
 
-  /** Selos de git (alterados, à frente, atrás) dos worktrees desta janela. */
-  private async refreshSummaries(): Promise<void> {
+  private summariesAt = 0;
+
+  /**
+   * Selos de git (alterados, à frente, atrás) dos worktrees desta janela. Os
+   * projetos salvos sem sessão (seletor do painel Git) entram a cada 30 s, ou
+   * com `full` (depois de um fetch): repositórios grandes demoram no status.
+   */
+  private async refreshSummaries(full = false): Promise<void> {
+    full ||= Date.now() - this.summariesAt > SUMMARIES_FULL_MS;
     const roots = new Set<string>();
-    for (const s of store.mine) {
-      const info = store.git[s.cwd];
+    for (const cwd of [...store.mine.map((s) => s.cwd), ...(full ? store.projects.map((p) => p.path) : [])]) {
+      const info = store.git[cwd];
       if (!info) continue;
       roots.add(info.root);
       for (const w of info.worktrees) roots.add(w.path);
@@ -233,7 +243,10 @@ export class App {
     if (!roots.size) return;
     try {
       const res = await gitApi.summaries([...roots]);
-      const next = Object.fromEntries(Object.entries(res).map(([k, v]) => [normPath(k), v]));
+      if (full) this.summariesAt = Date.now();
+      const fresh = Object.fromEntries(Object.entries(res).map(([k, v]) => [normPath(k), v]));
+      // Parcial: mantém os projetos da última leitura completa.
+      const next = full ? fresh : { ...store.gitSummary, ...fresh };
       if (JSON.stringify(next) !== JSON.stringify(store.gitSummary)) {
         store.gitSummary = next;
         store.emit("git");
@@ -241,6 +254,14 @@ export class App {
     } catch {
       /* ignora */
     }
+  }
+
+  /** Fetch em segundo plano de todos os repositórios conhecidos: as setas ↑↓ do painel Git e da barra lateral. */
+  private async fetchAll(): Promise<void> {
+    const repos = this.knownRepos();
+    if (!repos.length) return;
+    const res = await gitApi.fetchAll(repos, AUTO_FETCH_S).catch(() => null);
+    if (res?.fetched.length) void this.refreshSummaries(true);
   }
 
   /** Abre um arquivo Markdown no painel de documentos (Ctrl + clique no terminal). */
@@ -273,6 +294,9 @@ export class App {
     void this.refreshGit();
     window.setInterval(() => void this.refreshGit(), 30_000);
     window.setInterval(() => document.hasFocus() && void this.refreshSummaries(), 6000);
+    // O backend só busca o que está há mais de AUTO_FETCH_S sem fetch (e uma vez só, com várias janelas).
+    window.setTimeout(() => void this.fetchAll(), 20_000);
+    window.setInterval(() => void this.fetchAll(), 60_000);
     window.addEventListener("focus", () => void this.refreshSummaries());
     versionActions.restart = (tool) => this.restartOutdated(tool);
     versionActions.update = (tool) => void this.runToolUpdate(tool);

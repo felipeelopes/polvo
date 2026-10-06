@@ -612,6 +612,10 @@ const messages: Messages = {
     sync: {
       fetch: "获取",
       fetchHint: "从远程获取更改",
+      fetchAll: "获取所有仓库",
+      fetchAllWorking: { one: "{n} 个仓库…", other: "{n} 个仓库…" },
+      fetchAllDone: { one: "已获取 {n} 个仓库", other: "已获取 {n} 个仓库" },
+      fetchAllFailed: "无法获取：{names}",
       pull: "拉取",
       push: "推送",
       publish: "发布分支",

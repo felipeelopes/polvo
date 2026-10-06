@@ -612,6 +612,10 @@ const messages: Messages = {
     sync: {
       fetch: "Fetch",
       fetchHint: "Traer cambios del remoto",
+      fetchAll: "Hacer fetch en todos los repositorios",
+      fetchAllWorking: { one: "{n} repositorio…", other: "{n} repositorios…" },
+      fetchAllDone: { one: "Fetch completado en {n} repositorio", other: "Fetch completado en {n} repositorios" },
+      fetchAllFailed: "No se pudo hacer fetch: {names}",
       pull: "Pull",
       push: "Push",
       publish: "Publicar rama",

@@ -6,9 +6,9 @@ import { normPath, store } from "../core/store";
 import type { ToolKind } from "../core/types";
 import { t, tn } from "../i18n";
 import { ago, basename, esc, h } from "../ui/dom";
-import { closePopover, popover, toast } from "../ui/feedback";
+import { closePopover, popover, refreshPopover, toast } from "../ui/feedback";
 import { TOOLS } from "../ui/icons";
-import { git, type GitStatus, type RemoteOp, type Stash } from "./api";
+import { AUTO_FETCH_S, git, type GitStatus, type GitSummary, type RemoteOp, type Stash } from "./api";
 import { BranchesPane } from "./branches";
 import { ChangesPane } from "./changes";
 import { ask, branchError, slugBranch } from "./dialog";
@@ -18,8 +18,24 @@ import { GI, menu, type GitCtx, type GitHost } from "./ui";
 
 type Sub = "changes" | "history" | "branches" | "prs";
 const POLL_MS = 2000;
-const AUTO_FETCH_MS = 5 * 60_000;
-const lastFetch = new Map<string, number>();
+/** Último pedido de fetch automático por repositório (o backend decide se busca; isto só evita pedir a cada leitura). */
+const autoAsked = new Map<string, number>();
+
+/** Selos de um repositório no seletor: ● alterações, ↑ para enviar, ↓ para puxar. */
+function repoMarks(g: GitSummary | undefined): string {
+  if (!g || (!g.changed && !g.ahead && !g.behind)) return "";
+  return `<span class="g-rs${g.conflicts ? " bad" : ""}">${g.changed ? '<i class="c"></i>' : ""}${g.ahead ? `<i class="a">↑${g.ahead}</i>` : ""}${g.behind ? `<i class="b">↓${g.behind}</i>` : ""}</span>`;
+}
+
+function repoTips(g: GitSummary | undefined): string[] {
+  if (!g) return [];
+  return [
+    g.conflicts ? t("git.badge.conflicts") : "",
+    g.changed ? tn("git.badge.changed", g.changed) : "",
+    g.ahead ? t("git.badge.ahead", { n: g.ahead }) : "",
+    g.behind ? t("git.badge.behind", { n: g.behind }) : "",
+  ].filter(Boolean);
+}
 
 export class GitView implements GitCtx {
   readonly tab = h("button", "dtab dtab-git");
@@ -279,7 +295,7 @@ export class GitView implements GitCtx {
       icon = GI.up;
       count = String(st.ahead);
     }
-    const when = lastFetch.get(normPath(this.repo));
+    const when = st.fetchedAt;
     const small = op === "fetch" ? (when ? t("git.sync.lastFetch", { ago: ago(when) }) : t("git.sync.never")) : st.upstream ?? "origin";
     return `<div class="g-sync${op !== "fetch" ? " hot" : ""}"><button data-t="sync" data-op="${op}" title="${esc(op === "publish" ? t("git.sync.publishHint") : label)}">${icon}<span><small>${esc(small)}</small><b>${esc(label)}${count ? ` <i>${count}</i>` : ""}</b></span></button><button class="g-caret" data-t="syncmenu" data-pop title="${esc(t("git.sync.menu"))}">${GI.caret}</button></div>`;
   }
@@ -314,7 +330,8 @@ export class GitView implements GitCtx {
     this.history.setPath(path ?? null);
   }
 
-  private pickRepo(anchor: HTMLElement): void {
+  /** Repositórios e worktrees conhecidos (sessões e projetos salvos), para o seletor. */
+  private repoList(): { path: string; label: string; branch: string | null }[] {
     const seen = new Map<string, { path: string; label: string; branch: string | null }>();
     for (const info of Object.values(store.git)) {
       if (!info) continue;
@@ -324,24 +341,43 @@ export class GitView implements GitCtx {
       }
     }
     for (const p of store.projects) if (!seen.has(normPath(p.path))) seen.set(normPath(p.path), { path: p.path, label: basename(p.path), branch: null });
-    const list = [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
-    popover(
-      "git-repo",
-      anchor,
-      (el) => {
-        el.innerHTML = `<button data-r="__follow" class="${this.follow ? "cur" : ""}">${this.follow ? GI.check : '<i class="g-ic"></i>'}<span>${esc(t("git.repo.follow"))}</span></button><hr><div class="mh">${esc(t("git.repo.label"))}</div>${list
-          .map((r) => `<button data-r="${esc(r.path)}" class="${normPath(r.path) === normPath(this.repo) ? "cur" : ""}" title="${esc(r.path)}">${GI.repo}<span>${esc(r.label)}</span>${r.branch ? `<small>${esc(r.branch)}</small>` : ""}</button>`)
-          .join("")}`;
-        el.onclick = (ev) => {
-          const r = (ev.target as Element).closest<HTMLElement>("[data-r]")?.dataset.r;
-          if (!r) return;
-          closePopover();
-          if (r === "__follow") this.setFollow();
-          else this.setRepo(r, true);
-        };
-      },
-      "menu gmenu",
-    );
+    return [...seen.values()].sort((a, b) => a.label.localeCompare(b.label));
+  }
+
+  private pickRepo(anchor: HTMLElement): void {
+    const list = this.repoList();
+    const render = (el: HTMLDivElement) => {
+      el.innerHTML = `<button data-r="__follow" class="${this.follow ? "cur" : ""}">${this.follow ? GI.check : '<i class="g-ic"></i>'}<span>${esc(t("git.repo.follow"))}</span></button><hr><div class="mh">${esc(t("git.repo.label"))}</div>${list
+        .map((r) => {
+          const g = store.gitSummary[normPath(r.path)];
+          return `<button data-r="${esc(r.path)}" class="${normPath(r.path) === normPath(this.repo) ? "cur" : ""}" title="${esc([r.path, ...repoTips(g)].join("\n"))}">${GI.repo}<span>${esc(r.label)}</span>${repoMarks(g)}${r.branch ? `<small>${esc(r.branch)}</small>` : ""}</button>`;
+        })
+        .join("")}`;
+      el.onclick = (ev) => {
+        const r = (ev.target as Element).closest<HTMLElement>("[data-r]")?.dataset.r;
+        if (!r) return;
+        closePopover();
+        if (r === "__follow") this.setFollow();
+        else this.setRepo(r, true);
+      };
+    };
+    popover("git-repo", anchor, render, "menu gmenu");
+    // Mostra o que já se sabe e atualiza com uma leitura fresca de todos da lista.
+    void this.refreshMarks(list.map((r) => r.path)).then((changed) => changed && refreshPopover("git-repo", render));
+  }
+
+  /** Relê os selos (alterados, ↑, ↓) dos caminhos dados; `true` se algum mudou. */
+  private async refreshMarks(paths: string[]): Promise<boolean> {
+    const res = await git.summaries(paths).catch(() => ({}) as Record<string, GitSummary>);
+    let changed = false;
+    for (const [k, v] of Object.entries(res)) {
+      const key = normPath(k);
+      if (JSON.stringify(store.gitSummary[key]) === JSON.stringify(v)) continue;
+      store.gitSummary[key] = v;
+      changed = true;
+    }
+    if (changed) store.emit("git");
+    return changed;
   }
 
   private moreMenu(anchor: HTMLElement): void {
@@ -499,6 +535,7 @@ export class GitView implements GitCtx {
     if (!st) return;
     menu("git-sync", anchor, [
       { id: "fetch", label: t("git.sync.fetch"), hint: t("git.sync.fetchHint") },
+      { id: "fetch-all", label: t("git.sync.fetchAll") },
       { id: "pull", label: t("git.sync.pull"), hint: st.behind ? `↓${st.behind}` : "", disabled: !st.upstream },
       { id: st.upstream ? "push" : "publish", label: t(st.upstream ? "git.sync.push" : "git.sync.publish"), hint: st.ahead ? `↑${st.ahead}` : "" },
       "-",
@@ -510,6 +547,7 @@ export class GitView implements GitCtx {
       ...(this.webUrl && st.branch ? ["-" as const, { id: "pr", label: t("git.branches.createPr") }] : []),
     ], (id) => {
       if (id === "pr") void this.act(() => git.prCreate(this.repo));
+      else if (id === "fetch-all") void this.fetchEverything();
       else if (id === "update") void this.updateFromDefault();
       else void this.sync(id as RemoteOp);
     });
@@ -567,7 +605,6 @@ export class GitView implements GitCtx {
         const b = this.top.querySelector(".g-sync.busy b");
         if (b) b.textContent = this.syncing.line;
       });
-      if (op === "fetch" || op === "pull") lastFetch.set(normPath(repo), Date.now());
       if (!silent) {
         if (op === "publish" && this.webUrl && /github/i.test(this.webUrl)) toast(t("git.sync.done", { op: label }), { label: t("git.branches.createPr"), run: () => void this.act(() => git.prCreate(repo)) });
         else toast(t("git.sync.done", { op: label }));
@@ -579,14 +616,39 @@ export class GitView implements GitCtx {
     if (repo === this.repo) await this.refresh(true);
   }
 
+  /** Fetch automático do repositório aberto, pelo mesmo caminho do fetch global (o backend não repete). */
   private autoFetch(): void {
     const st = this.status;
     if (!st?.upstream || this.syncing) return;
-    const k = normPath(this.repo);
-    const last = lastFetch.get(k) ?? 0;
-    if (Date.now() - last < AUTO_FETCH_MS) return;
-    lastFetch.set(k, Date.now());
-    void this.sync("fetch", true);
+    if (st.fetchedAt && Date.now() - st.fetchedAt < AUTO_FETCH_S * 1000) return;
+    const repo = this.repo;
+    const k = normPath(repo);
+    if (Date.now() - (autoAsked.get(k) ?? 0) < 60_000) return;
+    autoAsked.set(k, Date.now());
+    void git.fetchAll([repo], AUTO_FETCH_S).then(
+      (res) => res.fetched.length && repo === this.repo && void this.refresh(true),
+      () => {},
+    );
+  }
+
+  /** "Buscar em todos os repositórios": fetch agora de cada projeto conhecido, com o progresso no topo. */
+  private async fetchEverything(): Promise<void> {
+    if (this.syncing) return;
+    const projects = new Map<string, string>();
+    for (const info of Object.values(store.git)) if (info) projects.set(normPath(info.project), info.project);
+    const repos = [...projects.values()];
+    if (!repos.length) return;
+    this.syncing = { op: "fetch", line: tn("git.sync.fetchAllWorking", repos.length) };
+    this.renderTop();
+    const res = await git.fetchAll(repos, 0).catch((e) => (toast(String(e)), null));
+    this.syncing = null;
+    if (res) {
+      const failed = res.failed.map((p) => basename(p)).join(", ");
+      const msg = res.fetched.length || !failed ? tn("git.sync.fetchAllDone", res.fetched.length) : "";
+      toast([msg, failed && t("git.sync.fetchAllFailed", { names: failed })].filter(Boolean).join(" · "));
+    }
+    await this.refreshMarks(this.repoList().map((r) => r.path));
+    await this.refresh(true);
   }
 
   // ------------------------------------------------------------ faixas

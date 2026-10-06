@@ -617,6 +617,10 @@ const messages: Messages = {
     sync: {
       fetch: "Fetch",
       fetchHint: "Scarica le modifiche dal remoto",
+      fetchAll: "Esegui fetch in tutti i repository",
+      fetchAllWorking: { one: "{n} repository…", other: "{n} repository…" },
+      fetchAllDone: { one: "Fetch completato in {n} repository", other: "Fetch completato in {n} repository" },
+      fetchAllFailed: "Impossibile eseguire il fetch: {names}",
       pull: "Pull",
       push: "Push",
       publish: "Pubblica branch",

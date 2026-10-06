@@ -60,6 +60,10 @@ export default {
   sync: {
     fetch: "Buscar",
     fetchHint: "Buscar alterações do remoto",
+    fetchAll: "Buscar em todos os repositórios",
+    fetchAllWorking: { one: "{n} repositório…", other: "{n} repositórios…" },
+    fetchAllDone: { one: "Busca concluída em {n} repositório", other: "Busca concluída em {n} repositórios" },
+    fetchAllFailed: "Não foi possível buscar: {names}",
     pull: "Puxar",
     push: "Enviar",
     publish: "Publicar branch",

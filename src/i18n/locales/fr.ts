@@ -612,6 +612,10 @@ const messages: Messages = {
     sync: {
       fetch: "Fetch",
       fetchHint: "Récupérer les modifications du dépôt distant",
+      fetchAll: "Fetch de tous les dépôts",
+      fetchAllWorking: { one: "{n} dépôt…", other: "{n} dépôts…" },
+      fetchAllDone: { one: "Fetch terminé pour {n} dépôt", other: "Fetch terminé pour {n} dépôts" },
+      fetchAllFailed: "Fetch impossible : {names}",
       pull: "Pull",
       push: "Push",
       publish: "Publier la branche",

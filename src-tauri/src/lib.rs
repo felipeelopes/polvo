@@ -123,6 +123,7 @@ pub fn run() {
             gitops::git_action,
             gitops::git_stashes,
             gitops::git_remote,
+            gitops::git_fetch_all,
             gitops::git_web_url,
             gitops::gh_prs,
             gitops::gh_pr_create,
