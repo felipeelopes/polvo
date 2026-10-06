@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.8
+
+- **Commit com retorno visual**: enquanto o commit roda (inclusive com hooks lentos), o botão mostra “Fazendo commit em …” e não pode ser clicado de novo. Ao terminar, uma linha abaixo do botão mostra o resumo do commit e um **Desfazer**, que devolve os arquivos e a mensagem para Alterações.
+- **Selos no seletor de repositório**: bolinha nos repositórios com arquivos alterados, ↑ quando há commits para enviar e ↓ quando há commits para puxar. Os projetos salvos sem sessão aberta também ganham os selos na barra lateral.
+- **Fetch automático em todos os repositórios**: a cada 5 minutos, em segundo plano, sem abrir janela de login. “Buscar em todos os repositórios”, no menu de sincronização, busca na hora e avisa quais falharam.
+- **Correções**: os botões de descartar e excluir não ficam mais com texto vermelho sobre fundo vermelho, e a dica do Ctrl + clique no terminal não sai mais da janela perto das bordas.
+
 ## 0.3.7
 
 - **Ctrl + clique abre qualquer arquivo do terminal**: Markdown no visualizador do Polvo, imagens numa prévia em tela cheia e o resto no programa padrão do Windows. Para mostrar o arquivo ou a pasta no Explorer, use **Ctrl + Shift + clique**. Executáveis e scripts nunca rodam: só aparecem selecionados no Explorer.

@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.3.8",
+    notes: {
+      pt: [
+        "**Commit com retorno visual**: enquanto o commit roda (inclusive com hooks lentos), o botão mostra “Fazendo commit em …” e não pode ser clicado de novo. Ao terminar, uma linha abaixo do botão mostra o resumo do commit e um **Desfazer**, que devolve os arquivos e a mensagem para Alterações.",
+        "**Selos no seletor de repositório**: bolinha nos repositórios com arquivos alterados, ↑ quando há commits para enviar e ↓ quando há commits para puxar. Os projetos salvos sem sessão aberta também ganham os selos na barra lateral.",
+        "**Fetch automático em todos os repositórios**: a cada 5 minutos, em segundo plano, sem abrir janela de login. “Buscar em todos os repositórios”, no menu de sincronização, busca na hora e avisa quais falharam.",
+        "**Correções**: os botões de descartar e excluir não ficam mais com texto vermelho sobre fundo vermelho, e a dica do Ctrl + clique no terminal não sai mais da janela perto das bordas.",
+      ],
+      en: [
+        "**Commit with visual feedback**: while the commit runs (slow hooks included), the button shows “Committing to …” and can't be clicked again. When it finishes, a line below the button shows the commit summary and an **Undo** that brings the files and the message back to Changes.",
+        "**Badges in the repository picker**: a dot on repositories with changed files, ↑ when there are commits to push and ↓ when there are commits to pull. Saved projects with no open session also get the badges in the sidebar.",
+        "**Automatic fetch for every repository**: every 5 minutes, in the background, without opening a sign-in window. “Fetch all repositories” in the sync menu fetches right away and tells you which ones failed.",
+        "**Fixes**: discard and delete buttons no longer show red text on a red background, and the Ctrl + click tip in the terminal no longer goes off the window near the edges.",
+      ],
+      es: [
+        "**Commit con indicación visual**: mientras el commit se ejecuta (incluso con hooks lentos), el botón muestra “Haciendo commit en …” y no se puede pulsar de nuevo. Al terminar, una línea bajo el botón muestra el resumen del commit y un **Deshacer**, que devuelve los archivos y el mensaje a Cambios.",
+        "**Indicadores en el selector de repositorio**: un punto en los repositorios con archivos modificados, ↑ cuando hay commits para enviar y ↓ cuando hay commits para traer. Los proyectos guardados sin sesión abierta también muestran los indicadores en la barra lateral.",
+        "**Fetch automático en todos los repositorios**: cada 5 minutos, en segundo plano, sin abrir ventanas de inicio de sesión. “Hacer fetch en todos los repositorios”, en el menú de sincronización, lo hace al momento y avisa cuáles fallaron.",
+        "**Correcciones**: los botones de descartar y eliminar ya no muestran texto rojo sobre fondo rojo, y la sugerencia del Ctrl + clic en el terminal ya no se sale de la ventana cerca de los bordes.",
+      ],
+      fr: [
+        "**Commit avec retour visuel** : pendant le commit (hooks lents compris), le bouton affiche « Commit sur … » et ne peut pas être recliqué. À la fin, une ligne sous le bouton montre le résumé du commit et un bouton **Annuler** qui remet les fichiers et le message dans Modifications.",
+        "**Pastilles dans le sélecteur de dépôt** : un point sur les dépôts avec des fichiers modifiés, ↑ quand il y a des commits à envoyer et ↓ quand il y a des commits à récupérer. Les projets enregistrés sans session ouverte affichent aussi les pastilles dans la barre latérale.",
+        "**Fetch automatique de tous les dépôts** : toutes les 5 minutes, en arrière-plan, sans ouvrir de fenêtre de connexion. « Fetch de tous les dépôts », dans le menu de synchronisation, le fait immédiatement et indique ceux qui ont échoué.",
+        "**Corrections** : les boutons pour ignorer et supprimer n'affichent plus du texte rouge sur fond rouge, et l'astuce du Ctrl + clic dans le terminal ne sort plus de la fenêtre près des bords.",
+      ],
+      de: [
+        "**Commit mit sichtbarem Fortschritt**: Während der Commit läuft (auch mit langsamen Hooks), zeigt der Button „Commit auf …“ und lässt sich nicht erneut klicken. Danach zeigt eine Zeile unter dem Button die Zusammenfassung des Commits und **Rückgängig**, das Dateien und Nachricht zurück in die Änderungen bringt.",
+        "**Markierungen in der Repository-Auswahl**: ein Punkt bei Repositorys mit geänderten Dateien, ↑ bei Commits zum Pushen und ↓ bei Commits zum Pullen. Gespeicherte Projekte ohne offene Sitzung zeigen die Markierungen jetzt auch in der Seitenleiste.",
+        "**Automatischer Fetch für alle Repositorys**: alle 5 Minuten im Hintergrund, ohne Anmeldefenster. „Alle Repositorys fetchen“ im Sync-Menü holt sofort und zeigt, welche fehlgeschlagen sind.",
+        "**Korrekturen**: Verwerfen- und Löschen-Buttons zeigen keinen roten Text mehr auf rotem Grund, und der Hinweis zu Strg + Klick im Terminal ragt an den Rändern nicht mehr aus dem Fenster.",
+      ],
+      it: [
+        "**Commit con riscontro visivo**: mentre il commit è in corso (anche con hook lenti), il pulsante mostra “Commit su …” e non si può cliccare di nuovo. Alla fine, una riga sotto il pulsante mostra il riepilogo del commit e **Annulla**, che riporta i file e il messaggio nelle Modifiche.",
+        "**Indicatori nel selettore del repository**: un pallino sui repository con file modificati, ↑ quando ci sono commit da inviare e ↓ quando ci sono commit da scaricare. Anche i progetti salvati senza sessioni aperte mostrano gli indicatori nella barra laterale.",
+        "**Fetch automatico di tutti i repository**: ogni 5 minuti, in background, senza aprire finestre di accesso. “Esegui fetch in tutti i repository”, nel menu di sincronizzazione, lo fa subito e indica quelli non riusciti.",
+        "**Correzioni**: i pulsanti per scartare ed eliminare non mostrano più testo rosso su sfondo rosso, e il suggerimento del Ctrl + clic nel terminale non esce più dalla finestra vicino ai bordi.",
+      ],
+      ja: [
+        "**コミットの進行が見える**：コミット中（時間のかかるフックも含む）はボタンに「… にコミット中」と表示され、もう一度押せません。完了するとボタンの下にコミットの概要と**元に戻す**が表示され、ファイルとメッセージを変更一覧に戻せます。",
+        "**リポジトリ選択にバッジ**：変更ファイルのあるリポジトリに点、プッシュするコミットがあれば ↑、プルするコミットがあれば ↓ が付きます。セッションを開いていない保存済みプロジェクトもサイドバーにバッジが出ます。",
+        "**すべてのリポジトリを自動フェッチ**：5 分ごとにバックグラウンドで、ログイン画面を開かずに実行します。同期メニューの「すべてのリポジトリをフェッチ」ですぐに実行でき、失敗したリポジトリも表示されます。",
+        "**修正**：破棄・削除ボタンが赤地に赤文字にならなくなり、ターミナルの Ctrl + クリックのヒントが端でウィンドウからはみ出さなくなりました。",
+      ],
+      zh: [
+        "**提交有进度提示**：提交进行中（包括较慢的钩子）按钮显示“正在提交到 …”，且不能再次点击。完成后按钮下方会显示提交摘要和**撤销**，可将文件和提交信息退回到更改列表。",
+        "**仓库选择器中的标记**：有已修改文件的仓库显示圆点，有待推送的提交显示 ↑，有待拉取的提交显示 ↓。没有打开会话的已保存项目也会在侧边栏显示这些标记。",
+        "**自动获取所有仓库**：每 5 分钟在后台进行，不会弹出登录窗口。同步菜单中的“获取所有仓库”可立即获取，并提示哪些失败了。",
+        "**修复**：丢弃和删除按钮不再是红底红字，终端中 Ctrl + 点击的提示在窗口边缘附近不再超出窗口。",
+      ],
+      ko: [
+        "**커밋 진행 표시**: 커밋이 진행되는 동안(느린 훅 포함) 버튼에 '…에 커밋하는 중'이 표시되고 다시 누를 수 없습니다. 완료되면 버튼 아래에 커밋 요약과 **되돌리기**가 나타나 파일과 메시지를 변경 사항으로 되돌릴 수 있습니다.",
+        "**저장소 선택기의 배지**: 변경된 파일이 있는 저장소에는 점, 푸시할 커밋이 있으면 ↑, 풀할 커밋이 있으면 ↓가 표시됩니다. 열린 세션이 없는 저장된 프로젝트도 사이드바에 배지가 표시됩니다.",
+        "**모든 저장소 자동 페치**: 5분마다 백그라운드에서 로그인 창 없이 실행됩니다. 동기화 메뉴의 '모든 저장소 페치'로 즉시 실행할 수 있고, 실패한 저장소도 알려 줍니다.",
+        "**수정**: 버리기·삭제 버튼이 더 이상 빨간 배경에 빨간 글자로 표시되지 않으며, 터미널의 Ctrl + 클릭 힌트가 가장자리에서 창 밖으로 나가지 않습니다.",
+      ],
+      ru: [
+        "**Коммит с индикацией**: пока идёт коммит (в том числе с медленными хуками), кнопка показывает «Коммит в …» и не нажимается повторно. После завершения под кнопкой появляется строка с описанием коммита и кнопкой **Отменить**, которая возвращает файлы и сообщение в Изменения.",
+        "**Значки в выборе репозитория**: точка у репозиториев с изменёнными файлами, ↑ — есть коммиты для отправки, ↓ — есть коммиты для получения. Сохранённые проекты без открытых сессий тоже получают значки на боковой панели.",
+        "**Автоматический fetch всех репозиториев**: каждые 5 минут в фоне, без окон входа. Пункт «Выполнить fetch во всех репозиториях» в меню синхронизации запускает его сразу и показывает, какие репозитории не удалось обновить.",
+        "**Исправления**: кнопки отмены изменений и удаления больше не показывают красный текст на красном фоне, а подсказка Ctrl + клик в терминале больше не выходит за край окна.",
+      ],
+    },
+  },
+  {
     version: "0.3.7",
     notes: {
       pt: [
