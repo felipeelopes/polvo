@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0
+
+- **Ditado por voz em cada chat**: clique no microfone do cabeçalho ou use **Ctrl + Shift + Espaço** (toque para começar e terminar, ou segure enquanto fala). Enter insere no chat, Ctrl + Enter insere e envia, Esc cancela.
+- **100% local, na GPU**: transcrição com Whisper no seu computador, pela placa de vídeo (WebGPU) quando houver e pelo processador quando não. Nada sai da máquina.
+- **Texto aparecendo enquanto você fala**: uma barra com a onda da sua voz em tempo real; cada frase é transcrita na pausa seguinte e fixada na tela, então ao terminar só falta a última.
+- **Feito para português e termos técnicos**: o modelo Whisper large-v3-turbo acerta “commit”, “pull request”, “TypeScript” e nomes do projeto. Em Ajustes, escolha o modelo e cadastre seu vocabulário. O modelo é baixado só no primeiro uso, com o progresso na barra, e depois funciona offline.
+
 ## 0.3.8
 
 - **Commit com retorno visual**: enquanto o commit roda (inclusive com hooks lentos), o botão mostra “Fazendo commit em …” e não pode ser clicado de novo. Ao terminar, uma linha abaixo do botão mostra o resumo do commit e um **Desfazer**, que devolve os arquivos e a mensagem para Alterações.

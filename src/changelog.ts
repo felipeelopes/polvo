@@ -9,6 +9,71 @@ export interface ReleaseNotes {
 
 export const RELEASES: ReleaseNotes[] = [
   {
+    version: "0.4.0",
+    notes: {
+      pt: [
+        "**Ditado por voz em cada chat**: clique no microfone do cabeçalho ou use **Ctrl + Shift + Espaço** (toque para começar e terminar, ou segure enquanto fala). Enter insere no chat, Ctrl + Enter insere e envia, Esc cancela.",
+        "**100% local, na GPU**: transcrição com Whisper no seu computador, pela placa de vídeo (WebGPU) quando houver e pelo processador quando não. Nada sai da máquina.",
+        "**Texto aparecendo enquanto você fala**: uma barra com a onda da sua voz em tempo real; cada frase é transcrita na pausa seguinte e fixada na tela, então ao terminar só falta a última.",
+        "**Feito para português e termos técnicos**: o modelo Whisper large-v3-turbo acerta “commit”, “pull request”, “TypeScript” e nomes do projeto. Em Ajustes, escolha o modelo e cadastre seu vocabulário. O modelo é baixado só no primeiro uso, com o progresso na barra, e depois funciona offline.",
+      ],
+      en: [
+        "**Voice dictation in every chat**: click the microphone in the header or use **Ctrl + Shift + Space** (tap to start and stop, or hold while you speak). Enter inserts into the chat, Ctrl + Enter inserts and sends, Esc cancels.",
+        "**100% local, on the GPU**: transcription with Whisper on your computer, on the graphics card (WebGPU) when available and on the processor otherwise. Nothing leaves your machine.",
+        "**Text appears as you speak**: a bar shows your voice's waveform in real time; each sentence is transcribed at the next pause and locked in, so when you finish only the last one is left.",
+        "**Built for technical terms**: the Whisper large-v3-turbo model gets “commit”, “pull request”, “TypeScript” and project names right. In Settings, pick the model and add your own vocabulary. The model downloads on first use only, with progress in the bar, and then works offline.",
+      ],
+      es: [
+        "**Dictado por voz en cada chat**: haz clic en el micrófono de la cabecera o usa **Ctrl + Mayús + Espacio** (toca para empezar y terminar, o mantén pulsado mientras hablas). Enter inserta en el chat, Ctrl + Enter inserta y envía, Esc cancela.",
+        "**100% local, en la GPU**: transcripción con Whisper en tu ordenador, en la tarjeta gráfica (WebGPU) cuando la hay y en el procesador si no. Nada sale de tu equipo.",
+        "**El texto aparece mientras hablas**: una barra muestra la onda de tu voz en tiempo real; cada frase se transcribe en la pausa siguiente y queda fija, así que al terminar solo falta la última.",
+        "**Pensado para términos técnicos**: el modelo Whisper large-v3-turbo acierta “commit”, “pull request”, “TypeScript” y nombres del proyecto. En Ajustes, elige el modelo y añade tu vocabulario. El modelo se descarga solo en el primer uso, con el progreso en la barra, y luego funciona sin conexión.",
+      ],
+      fr: [
+        "**Dictée vocale dans chaque chat** : cliquez sur le micro de l'en-tête ou utilisez **Ctrl + Maj + Espace** (appuyez pour commencer et finir, ou maintenez pendant que vous parlez). Entrée insère dans le chat, Ctrl + Entrée insère et envoie, Échap annule.",
+        "**100 % local, sur le GPU** : transcription avec Whisper sur votre ordinateur, sur la carte graphique (WebGPU) quand il y en a une, sinon sur le processeur. Rien ne quitte votre machine.",
+        "**Le texte s'affiche pendant que vous parlez** : une barre montre l'onde de votre voix en temps réel ; chaque phrase est transcrite à la pause suivante et figée, il ne reste donc que la dernière à la fin.",
+        "**Pensé pour les termes techniques** : le modèle Whisper large-v3-turbo reconnaît « commit », « pull request », « TypeScript » et les noms du projet. Dans les Réglages, choisissez le modèle et ajoutez votre vocabulaire. Le modèle n'est téléchargé qu'à la première utilisation, avec la progression dans la barre, puis fonctionne hors ligne.",
+      ],
+      de: [
+        "**Sprachdiktat in jedem Chat**: Klicke auf das Mikrofon in der Kopfzeile oder nutze **Strg + Umschalt + Leertaste** (tippen zum Starten und Beenden oder beim Sprechen gedrückt halten). Enter fügt in den Chat ein, Strg + Enter fügt ein und sendet, Esc bricht ab.",
+        "**100 % lokal, auf der GPU**: Transkription mit Whisper auf deinem Computer, auf der Grafikkarte (WebGPU), wenn vorhanden, sonst auf dem Prozessor. Nichts verlässt deinen Rechner.",
+        "**Text erscheint, während du sprichst**: Eine Leiste zeigt die Welle deiner Stimme in Echtzeit; jeder Satz wird in der nächsten Pause transkribiert und festgehalten, sodass am Ende nur noch der letzte fehlt.",
+        "**Für Fachbegriffe gemacht**: Das Modell Whisper large-v3-turbo erkennt „Commit“, „Pull Request“, „TypeScript“ und Projektnamen. In den Einstellungen wählst du das Modell und ergänzt dein Vokabular. Das Modell wird nur bei der ersten Nutzung heruntergeladen, mit Fortschritt in der Leiste, und funktioniert danach offline.",
+      ],
+      it: [
+        "**Dettatura vocale in ogni chat**: clicca sul microfono nell'intestazione o usa **Ctrl + Maiusc + Spazio** (tocca per iniziare e finire, oppure tieni premuto mentre parli). Invio inserisce nella chat, Ctrl + Invio inserisce e invia, Esc annulla.",
+        "**100% locale, sulla GPU**: trascrizione con Whisper sul tuo computer, sulla scheda video (WebGPU) quando disponibile, altrimenti sul processore. Nulla esce dal tuo computer.",
+        "**Il testo appare mentre parli**: una barra mostra l'onda della tua voce in tempo reale; ogni frase viene trascritta alla pausa successiva e fissata, così alla fine manca solo l'ultima.",
+        "**Pensato per i termini tecnici**: il modello Whisper large-v3-turbo riconosce “commit”, “pull request”, “TypeScript” e i nomi del progetto. Nelle Impostazioni scegli il modello e aggiungi il tuo vocabolario. Il modello viene scaricato solo al primo utilizzo, con l'avanzamento nella barra, e poi funziona offline.",
+      ],
+      ja: [
+        "**すべてのチャットで音声入力**：ヘッダーのマイクをクリックするか **Ctrl + Shift + Space**（タップで開始・終了、または話している間長押し）。Enter でチャットに挿入、Ctrl + Enter で挿入して送信、Esc でキャンセル。",
+        "**完全ローカル、GPU で実行**：Whisper による文字起こしをお使いのコンピューター上で実行。グラフィックカード（WebGPU）があれば GPU、なければプロセッサを使います。データは外部に送信されません。",
+        "**話しながらテキストが表示**：声の波形をリアルタイムで表示。文ごとに次の間で文字起こしされて確定するので、話し終えたときに残るのは最後の文だけです。",
+        "**専門用語に強い**：Whisper large-v3-turbo モデルが「commit」「pull request」「TypeScript」やプロジェクト名を正しく認識。設定でモデルを選び、独自の語彙を登録できます。モデルは初回使用時のみダウンロード（進行状況はバーに表示）され、以後はオフラインで動作します。",
+      ],
+      zh: [
+        "**每个对话都能语音输入**：点击标题栏的麦克风或使用 **Ctrl + Shift + 空格**（轻按开始和结束，或说话时按住）。Enter 插入到对话，Ctrl + Enter 插入并发送，Esc 取消。",
+        "**完全本地，使用 GPU**：在你的电脑上用 Whisper 转写，有显卡（WebGPU）时用显卡，否则用处理器。数据不会离开你的电脑。",
+        "**边说边出字**：实时显示你声音的波形；每句话在下一次停顿时转写并固定，说完时只剩最后一句需要处理。",
+        "**适合技术术语**：Whisper large-v3-turbo 模型能准确识别 “commit”、“pull request”、“TypeScript” 和项目名称。在设置中选择模型并添加你的词汇。模型仅在首次使用时下载（进度显示在栏中），之后可离线使用。",
+      ],
+      ko: [
+        "**모든 채팅에서 음성 입력**: 헤더의 마이크를 클릭하거나 **Ctrl + Shift + Space**를 사용하세요(탭해서 시작/종료하거나 말하는 동안 누르고 있기). Enter는 채팅에 삽입, Ctrl + Enter는 삽입 후 전송, Esc는 취소입니다.",
+        "**100% 로컬, GPU에서 실행**: Whisper로 내 컴퓨터에서 받아쓰며, 그래픽 카드(WebGPU)가 있으면 GPU를, 없으면 프로세서를 사용합니다. 데이터는 컴퓨터 밖으로 나가지 않습니다.",
+        "**말하는 동안 텍스트 표시**: 목소리 파형을 실시간으로 보여 주고, 문장마다 다음 쉼에서 받아써서 고정하므로 말을 마치면 마지막 문장만 남습니다.",
+        "**기술 용어에 강함**: Whisper large-v3-turbo 모델이 “commit”, “pull request”, “TypeScript”와 프로젝트 이름을 정확히 인식합니다. 설정에서 모델을 고르고 나만의 어휘를 추가하세요. 모델은 처음 사용할 때만 다운로드되며(진행 상황은 바에 표시) 이후에는 오프라인으로 작동합니다.",
+      ],
+      ru: [
+        "**Голосовая диктовка в каждом чате**: нажмите на микрофон в заголовке или используйте **Ctrl + Shift + Пробел** (нажмите, чтобы начать и закончить, или удерживайте, пока говорите). Enter вставляет в чат, Ctrl + Enter вставляет и отправляет, Esc отменяет.",
+        "**Полностью локально, на GPU**: распознавание с Whisper на вашем компьютере — на видеокарте (WebGPU), если она есть, иначе на процессоре. Ничего не покидает ваш компьютер.",
+        "**Текст появляется, пока вы говорите**: панель показывает волну вашего голоса в реальном времени; каждая фраза распознаётся на следующей паузе и фиксируется, так что в конце остаётся только последняя.",
+        "**Для технических терминов**: модель Whisper large-v3-turbo правильно распознаёт «commit», «pull request», «TypeScript» и названия проекта. В настройках выберите модель и добавьте свой словарь. Модель загружается только при первом использовании (прогресс виден на панели), а дальше работает офлайн.",
+      ],
+    },
+  },
+  {
     version: "0.3.8",
     notes: {
       pt: [
