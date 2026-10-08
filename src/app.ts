@@ -27,6 +27,7 @@ import type { WorkView } from "./work/view";
 import { AUTO_FETCH_S, git as gitApi } from "./git/api";
 import { defaultTool } from "./ui/projects";
 import { t, tn } from "./i18n";
+import { Voice } from "./voice/voice";
 
 /** O painel de documentos estava aberto nesta janela (reabre ao iniciar). */
 function docsWereOpen(): boolean {
@@ -54,12 +55,14 @@ const ARROWS: Record<string, [number, number]> = { ArrowLeft: [-1, 0], ArrowRigh
 /** Atalhos do app: o terminal os ignora para que cheguem aqui. */
 export function isAppShortcut(e: KeyboardEvent): boolean {
   if (isZoomKey(e)) return true;
-  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyM", "KeyG"].includes(e.code)) return true;
+  if (e.ctrlKey && e.shiftKey && !e.altKey && ["KeyN", "KeyT", "Digit1", "Digit2", "Digit3", "KeyZ", "KeyM", "KeyG", "Space"].includes(e.code)) return true;
   return e.ctrlKey && e.altKey && e.key in ARROWS;
 }
 
 export class App {
   readonly terms = new Terminals(isAppShortcut, (path) => this.openDoc(path));
+  /** Ditado por voz (o modelo só é baixado/carregado no primeiro uso). */
+  private voice = new Voice(this.terms);
   private titlebar: Titlebar;
   private rail: Sidebar;
   private tiles: TilesView;
@@ -676,6 +679,9 @@ export class App {
         void ipc.sessionStart(id);
         break;
       }
+      case "voice":
+        this.voice.toggle(id);
+        break;
       case "rename":
         if (extra) {
           store.patchLocal(id, { title: extra, titleLocked: true });
@@ -778,6 +784,9 @@ export class App {
         break;
       case "KeyG":
         this.openGit(undefined, true);
+        break;
+      case "Space":
+        this.voice.shortcutDown(e, store.active);
         break;
     }
   }

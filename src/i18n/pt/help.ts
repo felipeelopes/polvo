@@ -23,5 +23,6 @@ export default {
     openPath: "Abrir caminho do terminal: .md no Polvo, imagem em prévia, pasta no Explorer, resto no programa padrão",
     revealPath: "Mostrar arquivo ou pasta do terminal no Explorer",
     pasteFiles: "Colar arquivos copiados ou imagem no chat (vão para .polvo/pasted)",
+    voice: "Ditar no chat ativo: toque para começar e terminar, ou segure enquanto fala",
   },
 };

@@ -5,6 +5,7 @@ import "./styles/board.css";
 import "./styles/dialogs.css";
 import "./styles/logo.css";
 import "./styles/work.css";
+import "./styles/voice.css";
 
 import { App } from "./app";
 import { events, ipc } from "./core/ipc";

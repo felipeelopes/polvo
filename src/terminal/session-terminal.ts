@@ -186,6 +186,21 @@ export class SessionTerminal {
 
   private line = "";
 
+  /** O que já foi digitado na linha atual (até o Enter). */
+  get typedLine(): string {
+    return this.line;
+  }
+
+  /** Cola texto como se viesse da área de transferência (colagem entre colchetes, se o CLI pedir). */
+  paste(text: string): void {
+    this.term.paste(text);
+  }
+
+  /** Envia teclas ao CLI como se fossem digitadas. */
+  input(data: string): void {
+    this.term.input(data);
+  }
+
   /** Acompanha a linha digitada para reconhecer `/rename …` e `/color …`. */
   private trackInput(data: string): void {
     if (data.startsWith("\x1b")) return; // setas e outras teclas especiais

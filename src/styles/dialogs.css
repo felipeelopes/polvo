@@ -222,3 +222,10 @@ button.person:hover { border-color: var(--line2); background: var(--hover); }
   .mbox .sub { margin-bottom: 12px; }
   .rows .row { padding: 9px 2px; }
 }
+
+/* Ajustes do ditado por voz */
+.rows .row.voice-row:hover { background: none; }
+.voice-opts { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 9px; }
+.voice-opts div { flex: none; }
+.voice-vocab { display: block; width: 100%; margin-top: 8px; height: var(--ctl-sm); padding: 0 9px; border-radius: var(--r-sm); border: 1px solid var(--line2); background: var(--field); color: var(--text); font: 12px var(--sans); }
+.voice-vocab:focus { outline: none; border-color: var(--accent); }

@@ -8,6 +8,7 @@ import { ICON, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { openAbout } from "./about";
 import { LOCALES, t, tn } from "../i18n";
+import { MODEL_MB } from "../voice/engine";
 
 /** Seletor de idioma: "Automático" segue o idioma do Windows. */
 function languageSelect(current: string): string {
@@ -168,6 +169,9 @@ export function openSettings(): void {
   const row = (key: keyof Settings, title: string, text: string) =>
     `<div class="row" data-toggle="${key}"><div><b>${title}</b><small>${text}</small></div><span class="switch${store.settings[key] ? " on" : ""}"></span></div>`;
 
+  const seg = (key: "voiceLanguage", value: string, label: string) =>
+    `<button data-seg="${key}" data-v="${value}" class="${store.settings[key] === value ? "on" : ""}">${label}</button>`;
+
   const render = () => {
     box.innerHTML = `<h2>${t("settings.title")}</h2><div class="sub">${t("settings.sub")}</div>
       <div class="lang-row"><span class="lbl">${t("settings.language")}</span>${languageSelect(store.settings.language)}</div>
@@ -184,8 +188,18 @@ export function openSettings(): void {
         ${row("claudeUsageBridge", t("settings.usageBridge"), t("settings.usageBridgeText"))}
         ${row("explorerMenu", t("settings.explorer"), t("settings.explorerText"))}
         ${row("checkUpdates", t("settings.updates"), t("settings.updatesText"))}
+        <div class="row voice-row" style="cursor:default"><div><b>${t("settings.voice")}</b><small>${t("settings.voiceText")}</small>
+          <div class="voice-opts">
+            <select class="lang-sel" data-voicemodel title="${t("settings.voiceModel")}">${(["auto", "turbo", "small", "base"] as const)
+              .map((m) => `<option value="${m}"${store.settings.voiceModel === m ? " selected" : ""}>${t(`settings.voiceModels.${m}`, { mb: m === "auto" ? MODEL_MB.turbo.gpu : MODEL_MB[m].gpu })}</option>`)
+              .join("")}</select>
+            <div class="seg2" title="${t("settings.voiceLanguage")}">${seg("voiceLanguage", "app", t("settings.voiceLangApp"))}${seg("voiceLanguage", "auto", t("settings.voiceLangAuto"))}</div>
+          </div>
+          <input class="voice-vocab" data-vocab spellcheck="false" maxlength="400" placeholder="${t("settings.voiceVocabPlaceholder")}" title="${t("settings.voiceVocab")}">
+        </div></div>
       </div>
       <div class="mfoot" style="margin-top:16px"><button class="ghost" data-about>${t("settings.about", { version: __APP_VERSION__ })}</button><span class="hk"></span><button class="primary" data-close>${t("settings.done")}</button></div>`;
+    box.querySelector<HTMLInputElement>("[data-vocab]")!.value = store.settings.voiceVocabulary ?? "";
   };
 
   const save = async (patch: Partial<Settings>) => {
@@ -201,6 +215,10 @@ export function openSettings(): void {
   box.addEventListener("change", (e) => {
     const sel = (e.target as Element).closest<HTMLSelectElement>("[data-lang]");
     if (sel) void saveLanguage(store.settings, sel.value);
+    const vm = (e.target as Element).closest<HTMLSelectElement>("[data-voicemodel]");
+    if (vm) void save({ voiceModel: vm.value as Settings["voiceModel"] });
+    const vocab = (e.target as Element).closest<HTMLInputElement>("[data-vocab]");
+    if (vocab && vocab.value.trim() !== store.settings.voiceVocabulary) void save({ voiceVocabulary: vocab.value.trim() });
   });
   box.addEventListener("click", (e) => {
     const target = e.target as Element;
@@ -210,6 +228,8 @@ export function openSettings(): void {
     if (th && th !== store.settings.theme) void save({ theme: th });
     const tool = target.closest<HTMLElement>("[data-tool]")?.dataset.tool as ToolKind | undefined;
     if (tool) void save({ disabledTools: toggleTool(store.settings.disabledTools, tool) });
+    const sg = target.closest<HTMLElement>("[data-seg]");
+    if (sg) void save({ voiceLanguage: sg.dataset.v as Settings["voiceLanguage"] });
     if (target.closest("[data-about]")) {
       modal.remove();
       openAbout();

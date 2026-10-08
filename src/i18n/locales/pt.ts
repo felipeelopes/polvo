@@ -23,6 +23,7 @@ import docs from "../pt/docs";
 import git from "../pt/git";
 import whatsNew from "../pt/whatsNew";
 import work from "../pt/work";
+import voice from "../pt/voice";
 
 export default {
   app,
@@ -49,4 +50,5 @@ export default {
   git,
   whatsNew,
   work,
+  voice,
 };

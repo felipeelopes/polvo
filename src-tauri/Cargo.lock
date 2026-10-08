@@ -2880,6 +2880,7 @@ dependencies = [
  "tokio",
  "trash",
  "uuid",
+ "webview2-com",
  "which",
  "windows-sys 0.61.2",
  "winreg 0.55.0",

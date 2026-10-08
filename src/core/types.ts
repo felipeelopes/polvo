@@ -71,6 +71,12 @@ export interface Settings {
   theme: Theme;
   /** Terminal escuro mesmo no tema claro. */
   terminalDark: boolean;
+  /** Modelo do ditado: "auto" (large-v3-turbo na GPU, small na CPU), "turbo", "small" ou "base". */
+  voiceModel: "auto" | "turbo" | "small" | "base";
+  /** Idioma do ditado: "app" (o da interface) ou "auto" (detecta pela fala). */
+  voiceLanguage: "app" | "auto";
+  /** Nomes e termos que o usuário costuma falar (contexto para o Whisper). */
+  voiceVocabulary: string;
 }
 
 export type Theme = "auto" | "light" | "dark";

@@ -34,6 +34,13 @@ pub struct Settings {
     pub theme: String,
     /// Terminal escuro mesmo no tema claro.
     pub terminal_dark: bool,
+    /// Modelo do ditado: "auto" (large-v3-turbo na GPU, small na CPU),
+    /// "turbo", "small" ou "base".
+    pub voice_model: String,
+    /// Idioma do ditado: "app" (o da interface) ou "auto" (detecta pela fala).
+    pub voice_language: String,
+    /// Nomes e termos que o usuário costuma falar (contexto para o Whisper).
+    pub voice_vocabulary: String,
 }
 
 impl Default for Settings {
@@ -50,6 +57,9 @@ impl Default for Settings {
             language: "auto".into(),
             theme: "auto".into(),
             terminal_dark: false,
+            voice_model: "auto".into(),
+            voice_language: "app".into(),
+            voice_vocabulary: String::new(),
         }
     }
 }

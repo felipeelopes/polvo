@@ -28,6 +28,7 @@ export function openHelp(anchor: HTMLElement): void {
           <kbd>Ctrl ${t("terminal.ctrlClick.click")}</kbd><span>${t("help.keys.openPath")}</span>
           <kbd>Ctrl Shift ${t("terminal.ctrlClick.click")}</kbd><span>${t("help.keys.revealPath")}</span>
           <kbd>Ctrl V</kbd><span>${t("help.keys.pasteFiles")}</span>
+          <kbd>Ctrl Shift ${t("voice.space")}</kbd><span>${t("help.keys.voice")}</span>
         </div>`;
     },
     "help",

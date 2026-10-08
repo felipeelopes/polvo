@@ -18,6 +18,7 @@ mod settings;
 mod tools;
 mod usage;
 mod versions;
+mod voice;
 mod windows;
 mod work;
 
@@ -167,6 +168,7 @@ pub fn run() {
             work::ado::work_ado_comment,
             work::ado::work_ado_discover,
             work::ado::work_ado_pat_set,
+            voice::voice_allow_mic,
         ])
         .setup(|app| {
             let handle = app.handle().clone();

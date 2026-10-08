@@ -6,7 +6,7 @@ import { ICON, sessionColor, TOOLS, toolIcon } from "./icons";
 import { logo } from "./logo";
 import { t } from "../i18n";
 
-export type PaneAction = "split" | "git" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dmax" | "start" | "rename";
+export type PaneAction = "split" | "git" | "terminal" | "move" | "min" | "zoom" | "close" | "open" | "dmax" | "start" | "rename" | "voice";
 
 export interface PaneHandlers {
   action(action: PaneAction, id: string, extra?: string, anchor?: HTMLElement): void;
@@ -35,16 +35,17 @@ export class Pane {
     this.el = h(mode === "tile" ? "section" : "div", mode === "tile" ? "pane" : "");
     if (mode === "drawer") this.el.style.cssText = "display:flex;flex-direction:column;flex:1;min-height:0";
     this.el.style.setProperty("--acc", tool.color);
+    const voice = `<button data-a="voice" data-sid="${id}" title="${t("voice.button")} (Ctrl+Shift+${t("voice.space")})">${ICON.mic}</button>`;
     const acts =
       mode === "tile"
-        ? `<button data-a="git" title="${t("git.tabHint")}">${ICON.branch}</button>
+        ? `${voice}<button data-a="git" title="${t("git.tabHint")}">${ICON.branch}</button>
            <button data-a="terminal" title="${t("pane.openTerminal")} (Ctrl+Shift+T)">${ICON.terminal}</button>
            <button data-a="split" title="${t("pane.split")}">${ICON.split}</button>
            <button data-a="move" data-pop title="${t("pane.move")}">${ICON.move}</button>
            <button data-a="min" title="${t("pane.minimize")}">${ICON.min}</button>
            <button data-a="zoom" title="${t("pane.maximize")} (Ctrl+Shift+M)">${ICON.max}</button>
            <button data-a="close" title="${t("pane.close")}">${ICON.close}</button>`
-        : `<button data-a="git" title="${t("git.tabHint")}">${ICON.branch}</button>
+        : `${voice}<button data-a="git" title="${t("git.tabHint")}">${ICON.branch}</button>
            <button data-a="terminal" title="${t("pane.openTerminal")}">${ICON.terminal}</button>
            <button data-a="open" title="${t("pane.openInTiles")}">${ICON.open}</button>
            <button data-a="dmax" title="${t("pane.maximizeChat")} (Ctrl+Shift+M)">${ICON.max}</button>

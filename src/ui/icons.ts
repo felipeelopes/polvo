@@ -57,6 +57,8 @@ export const ICON = {
   chevron: svg('<path d="M6 4l4 4-4 4"/>', 12),
   branch: svg('<circle cx="4.5" cy="3.5" r="1.6"/><circle cx="4.5" cy="12.5" r="1.6"/><circle cx="11.5" cy="5.5" r="1.6"/><path d="M4.5 5.1v5.8M11.5 7.1c0 2.4-2.3 3-7 3.6"/>', 14),
   update: svg('<path d="M8 12.5V3.5M4.5 7L8 3.5 11.5 7"/><path d="M3 13.5h10"/>', 13),
+  mic: svg('<rect x="5.5" y="1.5" width="5" height="8.2" rx="2.5"/><path d="M3 7.6a5 5 0 0010 0M8 12.6v2"/>', 14),
+  check: svg('<path d="M3 8.5l3.2 3.2L13 4.8"/>', 13),
   terminal: svg('<rect x="1.5" y="2.5" width="13" height="11" rx="2"/><path d="M4.5 6.5l2 1.75-2 1.75M8.5 10.5h3"/>', 14),
   plus: svg('<path d="M8 3v10M3 8h10"/>', 14),
   plusSm: svg('<path d="M8 3v10M3 8h10"/>', 12),

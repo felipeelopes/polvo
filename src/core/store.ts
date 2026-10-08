@@ -24,7 +24,7 @@ class Store {
   zoom: string | null = null;
   selected: string | null = null;
   recentDirs: string[] = [];
-  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true, language: "auto", theme: "auto", terminalDark: false };
+  settings: Settings = { onboarded: false, autostart: false, autoResume: true, claudeUsageBridge: true, checkUpdates: true, disabledTools: [], explorerMenu: true, claudeBypassPermissions: true, language: "auto", theme: "auto", terminalDark: false, voiceModel: "auto", voiceLanguage: "app", voiceVocabulary: "" };
   /** Versões dos CLIs (instalada, publicada, comando de atualização). */
   versions: Partial<Record<ToolKind, ToolVersion>> = {};
   /** Informações de git por pasta de sessão (para agrupar a barra lateral). */

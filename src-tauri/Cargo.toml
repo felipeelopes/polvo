@@ -45,6 +45,8 @@ keyring = { version = "3", features = ["windows-native"] }
 [target.'cfg(windows)'.dependencies]
 winreg = "0.55"
 windows-sys = { version = "0.61", features = ["Win32_System_DataExchange", "Win32_System_Ole", "Win32_UI_Shell"] }
+# Mesma versão que o Tauri usa: libera o microfone do ditado por voz no WebView2.
+webview2-com = "0.39"
 
 [profile.release]
 codegen-units = 1

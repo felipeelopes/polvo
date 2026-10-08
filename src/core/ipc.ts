@@ -88,6 +88,8 @@ export const ipc = {
   /** Traz os arquivos para `.polvo/pasted` do projeto e devolve como referenciá-los. */
   pasteFiles: (cwd: string, paths: string[]) => invoke<string[]>("paste_files", { cwd, paths }),
   pasteImage: (cwd: string, data: string, ext: string) => invoke<string>("paste_image", { cwd, data, ext }),
+  /** Libera o microfone desta janela para o ditado (sem o pedido do WebView2). */
+  voiceAllowMic: () => invoke<void>("voice_allow_mic"),
 };
 
 function toBytes(data: ArrayBuffer | number[] | Uint8Array): Uint8Array {
